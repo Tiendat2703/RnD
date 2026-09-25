@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": "t1",
+    "speakerId": "p1",
+    "text": "Mở đầu nhé, tuần này chúng ta cần bàn về tình hình dòng tiền, đặc biệt là khoản biến động lớn đầu tháng.",
+    "timestamp": 1000
+  },
+  {
+    "id": "t2",
+    "speakerId": "p2",
+    "text": "Đúng rồi, khoản chi cho nhà cung vừa tăng đột biến, ảnh hưởng trực tiếp đến ngân sách.",
+    "timestamp": 4000
+  },
+  {
+    "id": "t3",
+    "speakerId": "p3",
+    "text": "Mọi người mở dashboard dòng tiền lên xem thử cho trực quan nhé.",
+    "timestamp": 8000
+  },
+  {
+    "id": "t4",
+    "speakerId": "p1",
+    "text": "Khoản thu từ khách hàng Acme cũng chậm hơn dự kiến vài tuần.",
+    "timestamp": 12000
+  },
+  {
+    "id": "t5",
+    "speakerId": "p4",
+    "text": "Tôi vừa thấy kế hoạch dòng tiền quý tới hơi rủi ro ở hạng mục biến động.",
+    "timestamp": 16000
+  }
+]

@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "id": "p1",
+    "name": "Linh Nguyen",
+    "avatarUrl": "",
+    "isSpeaking": true,
+    "isMuted": false
+  },
+  {
+    "id": "p2",
+    "name": "Minh Tran",
+    "avatarUrl": "",
+    "isSpeaking": false,
+    "isMuted": true
+  },
+  {
+    "id": "p3",
+    "name": "Alex Payne",
+    "avatarUrl": "",
+    "isSpeaking": false,
+    "isMuted": false
+  },
+  {
+    "id": "p4",
+    "name": "You",
+    "avatarUrl": "",
+    "isSpeaking": false,
+    "isMuted": false
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "keyword": "dòng tiền",
+    "type": "document",
+    "title": "Báo cáo Dòng tiền biến động Q4.docx",
+    "snippet": "Tổng hợp các khoản dòng tiền biến động trong quý: chi nhà cung tăng 18%, thu từ Acme chậm 2 tuần. Có biểu đồ theo tuần.",
+    "url": "#mock/document/cashflow-report"
+  },
+  {
+    "keyword": "biến động",
+    "type": "document",
+    "title": "Phân tích biến động dòng tiền.pdf",
+    "snippet": "Bóc tách từng khoản biến động bất thường so với dự báo ngân sách, kèm ghi chú nguyên nhân.",
+    "url": "#mock/document/cashflow-variance"
+  },
+  {
+    "keyword": "dashboard",
+    "type": "dashboard",
+    "title": "Dashboard dòng tiền theo thời gian thực",
+    "snippet": "Trực quan hoá dòng tiền theo tuần/tháng, lọc theo khoản thu/chi và nhà cung.",
+    "url": "#mock/dashboard/cashflow"
+  },
+  {
+    "keyword": "ngân sách",
+    "type": "document",
+    "title": "Ngân sách dòng tiền 2024.xlsx",
+    "snippet": "Bảng ngân sách chi tiết theo hạng mục, so sánh thực tế vs kế hoạch.",
+    "url": "#mock/document/cashflow-budget"
+  },
+  {
+    "keyword": "khoản thu",
+    "type": "document",
+    "title": "Theo dõi khoản thu công nợ.docx",
+    "snippet": "Danh sách khoản thu đang chậm, tuổi nợ trung bình và đề nhắc thu.",
+    "url": "#mock/document/receivables"
+  }
+]

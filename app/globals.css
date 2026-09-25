@@ -1,3 +1,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --accent: #8b5cf6; /* violet-500 — màu AI xuyên suốt (CLAUDE.md mục 8) */
+  --accent-2: #22d3ee; /* cyan-400 */
+}
+
+html,
+body {
+  background: #07070b; /* dark theme kiểu Zoom/Meet (CLAUDE.md mục 8) */
+  color: #e4e4e7;
+  min-height: 100vh;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
