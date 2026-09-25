@@ -13,6 +13,8 @@ export type TranscriptEntry = {
   speakerId: string;
   text: string;
   timestamp: number; // ms từ lúc bắt đầu mock
+  topic?: string;
+  intent?: "question" | "decision" | "action" | "summary";
 };
 
 export type AIAnalysisStatus = "idle" | "analyzing" | "done" | "error";

@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "p-01",
+    "name": "Minh Anh",
+    "isSpeaking": true,
+    "isMuted": false
+  },
+  {
+    "id": "p-02",
+    "name": "Linh Nguyễn",
+    "isSpeaking": false,
+    "isMuted": false
+  },
+  {
+    "id": "p-03",
+    "name": "Daniel Kim",
+    "isSpeaking": false,
+    "isMuted": true
+  },
+  {
+    "id": "p-04",
+    "name": "Thảo Phạm",
+    "isSpeaking": false,
+    "isMuted": false
+  }
+]

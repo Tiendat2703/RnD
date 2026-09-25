@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "AI Meeting Sidekick",
-  description: "Frontend-only MVP demo — see CLAUDE.md",
+  title: "Product weekly — Sidekick",
+  description: "A frontend-only AI meeting sidekick demo",
 };
 
 export default function RootLayout({
@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );
