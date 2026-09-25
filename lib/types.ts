@@ -15,17 +15,23 @@ export type TranscriptEntry = {
   timestamp: number; // ms từ lúc bắt đầu mock
 };
 
-// --- Luồng mới: AI lắng nghe thụ động, tự "tìm" tài liệu / dashboard (pivot giao diện) ---
+// --- Luồng: AI lắng nghe thụ động, tự "tìm" tài liệu / dashboard (pivot giao diện) ---
 
 export type FindingType = "document" | "dashboard";
 
-// "Tín hiệu" — định nghĩa tĩnh trong mocks/findings.json: từ khoá → món nội dung AI sẽ show
+export type DashboardKind = "cashflow" | "office-compare";
+
+// "Tín hiệu" — định nghĩa tĩnh theo scenario: từ khoá → món nội dung AI sẽ show.
+// dashboardKind chỉ có nghĩa khi type = "dashboard"; payload là dữ liệu mock
+// riêng cho từng loại dashboard.
 export type SignalSeed = {
-  keyword: string; // từ/cụm từ khi nghe thấy sẽ kích hoạt
+  keyword: string;
   type: FindingType;
   title: string;
   snippet: string;
-  url: string; // mock link
+  url: string;
+  dashboardKind?: DashboardKind;
+  payload?: unknown;
 };
 
 // "Finding" — một món đã được AI phát hiện & show ra trong lúc lắng nghe
@@ -36,22 +42,29 @@ export type Finding = {
   title: string;
   snippet: string;
   url: string;
+  dashboardKind?: DashboardKind;
+  payload?: unknown;
   detectedFromText: string; // câu transcript mà AI nghe được
   detectedAt: number; // ms (thời điểm phát hiện)
 };
 
-// --- Giữ các type cũ để tương thích với component AI popup/result của giai đoạn trước ---
-export type AIAnalysisStatus = "idle" | "analyzing" | "done" | "error";
-export type AIAnalysisStep = { id: string; label: string };
-export type AIArtifact = {
-  type: "document" | "slide" | "spreadsheet";
-  title: string;
-  url: string;
-};
-export type AIResult = {
+// --- Scenarios: mỗi scenario 1 cuộc họp + bộ tín hiệu riêng ---
+
+export type Scenario = {
   id: string;
-  triggeredBy: string;
-  question: string;
-  answer: string;
-  artifacts?: AIArtifact[];
+  title: string;
+  subtitle: string;
+  accentEmoji: string;
+  participants: Participant[];
+  transcript: TranscriptEntry[];
+  signals: SignalSeed[];
+};
+
+// --- Payload data cho dashboard office (scenario 2) ---
+export type OfficeOption = {
+  id: string;
+  name: string; // "Địa điểm A — Quận 1"
+  pricePerSqm: number; // USD/m2/tháng (mock)
+  sizeSqm: number; // diện tích trung bình (m2)
+  note: string;
 };

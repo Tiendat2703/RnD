@@ -1,0 +1,38 @@
+[
+  {
+    "id": "t1",
+    "speakerId": "p1",
+    "text": "Tuần tới mình cần chốt việc thuê văn phòng cho công ty, đang phân vân giữa địa điểm A ở Quận 1 và địa điểm B ở Quận 7.",
+    "timestamp": 1000
+  },
+  {
+    "id": "t2",
+    "speakerId": "p2",
+    "text": "Quận 1 thì trung tâm tiện gặp khách, nhưng Quận 7 chắc rẻ hơn. Mà chi phí thuê ở hai bên khác nhau thế nào nhỉ?",
+    "timestamp": 4000
+  },
+  {
+    "id": "t3",
+    "speakerId": "p1",
+    "text": "Đúng rồi, mình cũng chưa rõ giá trung bình mỗi mét vuông. Giá thuê văn phòng bây giờ là bao nhiêu vậy?",
+    "timestamp": 8000
+  },
+  {
+    "id": "t4",
+    "speakerId": "p2",
+    "text": "Mà diện tích trung bình để set up doanh nghiệp tầm 15 người thì cần bao nhiêu mét vuông nhỉ?",
+    "timestamp": 12000
+  },
+  {
+    "id": "t5",
+    "speakerId": "p1",
+    "text": "Hay Sidekick so sánh hai địa điểm A và B cho mình xem trực quan được không?",
+    "timestamp": 16000
+  },
+  {
+    "id": "t6",
+    "speakerId": "p2",
+    "text": "Quan trọng nhất là chi phí và diện tích, mình nên cân nh aislecce.",
+    "timestamp": 20000
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "id": "p1",
+    "name": "Hoa (CEO)",
+    "avatarUrl": "",
+    "isSpeaking": true,
+    "isMuted": false
+  },
+  {
+    "id": "p2",
+    "name": "Tuan (COO)",
+    "avatarUrl": "",
+    "isSpeaking": false,
+    "isMuted": false
+  }
+]

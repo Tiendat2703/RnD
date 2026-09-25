@@ -18,7 +18,42 @@
     "type": "dashboard",
     "title": "Dashboard dòng tiền theo thời gian thực",
     "snippet": "Trực quan hoá dòng tiền theo tuần/tháng, lọc theo khoản thu/chi và nhà cung.",
-    "url": "#mock/dashboard/cashflow"
+    "url": "#mock/dashboard/cashflow",
+    "dashboardKind": "cashflow",
+    "payload": {
+      "weeks": [
+        {
+          "label": "Tuần 1",
+          "thu": 120,
+          "chi": 80
+        },
+        {
+          "label": "Tuần 2",
+          "thu": 95,
+          "chi": 130
+        },
+        {
+          "label": "Tuần 3",
+          "thu": 160,
+          "chi": 70
+        },
+        {
+          "label": "Tuần 4",
+          "thu": 140,
+          "chi": 110
+        },
+        {
+          "label": "Tuần 5",
+          "thu": 175,
+          "chi": 145
+        },
+        {
+          "label": "Tuần 6",
+          "thu": 130,
+          "chi": 120
+        }
+      ]
+    }
   },
   {
     "keyword": "ngân sách",

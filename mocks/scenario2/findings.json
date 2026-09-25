@@ -1,0 +1,50 @@
+[
+  {
+    "keyword": "chi phí",
+    "type": "document",
+    "title": "Khảo sát giá thuê văn phòng HCM 2024.pdf",
+    "snippet": "Giá thuê văn phòng hạng B: quận 1 ~28-35 USD/m2/tháng, quận 7 ~14-20 USD/m2/tháng. Chưa kể phí quản lý và VAT.",
+    "url": "#mock/document/office-price-research"
+  },
+  {
+    "keyword": "giá",
+    "type": "document",
+    "title": "Bảng giá trung bình văn phòng theo khu vực.xlsx",
+    "snippet": "Giá trung bình theo khu vực: trung tâm (Q1, Q3) cao hơn vùng ngoài (Q7, Q2) khoảng 70-90%.",
+    "url": "#mock/document/office-price-avg"
+  },
+  {
+    "keyword": "diện tích",
+    "type": "document",
+    "title": "Tham khảo diện tích setup doanh nghiệp.docx",
+    "snippet": "Quy tắc ngón tay cái: 8-10 m2/người cho văn phòng mở. Với 15 người + phòng họp, cần khoảng 180-220 m2.",
+    "url": "#mock/document/office-size"
+  },
+  {
+    "keyword": "so sánh",
+    "type": "dashboard",
+    "title": "So sánh địa điểm A vs địa điểm B",
+    "snippet": "So sánh chi phí & diện tích giữa hai địa điểm để quyết định thuê văn phòng.",
+    "url": "#mock/dashboard/office-compare",
+    "dashboardKind": "office-compare",
+    "payload": {
+      "options": [
+        {
+          "id": "A",
+          "name": "Địa điểm A — Quận 1",
+          "pricePerSqm": 32,
+          "sizeSqm": 200,
+          "note": "Trung tâm, giao thông thuận tiện, phù hợp tiếp khách. Giá cao."
+        },
+        {
+          "id": "B",
+          "name": "Địa điểm B — Quận 7",
+          "pricePerSqm": 16,
+          "sizeSqm": 210,
+          "note": "Vùng mới, chi phí thấp ~50%, gần khu công nghệ cao. Kém trung tâm."
+        }
+      ],
+      "headcount": 15
+    }
+  }
+]

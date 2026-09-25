@@ -1,28 +1,50 @@
-// hooks/useTranscriptStream.ts — transcript giả lập + AI lắng nghe thụ động
-// Mỗi entry transcript tới → AI quét keyword trong mocks/findings.json,
+// hooks/useTranscriptStream.ts — transcript giả lập + AI lắng nghe thụ động.
+// Mỗi entry transcript tới → AI quét keyword của scenario đang chọn,
 // trùng → "phát hiện" ra 1 Finding (document/dashboard) và đẩy lên UI.
-// (Đổi concept: AI tự show tài liệu trong lúc nghe, KHÔNG user gõ câu hỏi.)
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Finding, SignalSeed, TranscriptEntry } from "../lib/types";
-import { getSignals, subscribeToTranscript } from "../lib/mockApi";
+import type {
+  Finding,
+  Participant,
+  SignalSeed,
+  TranscriptEntry,
+} from "../lib/types";
+import {
+  getParticipants,
+  getSignals,
+  subscribeToTranscript,
+} from "../lib/mockApi";
 
-export function useTranscriptStream() {
+export function useTranscriptStream(scenarioId: string) {
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [entries, setEntries] = useState<TranscriptEntry[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);
   const signaled = useRef<Set<string>>(new Set()); // tránh trùng 1 signal nhiều lần
   const signalsRef = useRef<SignalSeed[]>([]);
   const [running, setRunning] = useState(false);
 
-  // Tải signals 1 lần khi mount
+  // Tải participants + signals mỗi khi đổi scenario
   useEffect(() => {
     let alive = true;
-    getSignals().then((s) => {
-      if (alive) signalsRef.current = s;
-    });
+    setRunning(false);
+    setEntries([]);
+    setFindings([]);
+    signaled.current.clear();
+    stopRef.current?.();
+
+    Promise.all([getParticipants(scenarioId), getSignals(scenarioId)]).then(
+      ([p, s]) => {
+        if (!alive) return;
+        setParticipants(p);
+        signalsRef.current = s;
+        // tự bắt đầu nghe scenario mới
+        startRef.current();
+      },
+    );
     return () => {
       alive = false;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenarioId]);
 
   const start = useCallback(() => {
     if (running) return;
@@ -43,6 +65,8 @@ export function useTranscriptStream() {
             title: sig.title,
             snippet: sig.snippet,
             url: sig.url,
+            dashboardKind: sig.dashboardKind,
+            payload: sig.payload,
             detectedFromText: entry.text,
             detectedAt: Date.now(),
           };
@@ -51,14 +75,16 @@ export function useTranscriptStream() {
       }
     };
 
-    const unsubscribe = subscribeToTranscript((entry) => {
+    const unsubscribe = subscribeToTranscript(scenarioId, (entry) => {
       setEntries((prev) => [...prev, entry]);
       matchSignals(entry);
     });
-
-    // Lưu unsubscribe để dọn dẹp
     stopRef.current = unsubscribe;
-  }, [running]);
+  }, [running, scenarioId]);
+
+  // ref để dùng bên trong effect đổi scenario (tránh phụ thuộc cycle)
+  const startRef = useRef(start);
+  startRef.current = start;
 
   const stopRef = useRef<() => void>(() => {});
   const stop = useCallback(() => {
@@ -74,5 +100,5 @@ export function useTranscriptStream() {
     setRunning(false);
   }, []);
 
-  return { entries, findings, running, start, stop, reset };
+  return { participants, entries, findings, running, start, stop, reset };
 }

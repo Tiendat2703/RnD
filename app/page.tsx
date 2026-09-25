@@ -1,15 +1,27 @@
 "use client";
 
-// app/page.tsx — luồng mới: AI lắng nghe thụ động cuộc họp (chủ đề: dòng tiền biến động).
-// Transcript cuộc họp tự chạy → AI tự SHOW tài liệu / dashboard khi nghe keyword.
-// KHÔNG có ô nhập câu hỏi.
-import { useEffect, useMemo } from "react";
+// app/page.tsx — luồng AI lắng nghe thụ động, có 2 scenarios để chọn.
+// Bấm 1 scenario → transcript tự chạy → AI tự SHOW tài liệu / dashboard khi nghe keyword.
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Radio, Play, Square, RotateCcw, FileText, LayoutDashboard } from "lucide-react";
+import {
+  Radio,
+  Play,
+  Square,
+  RotateCcw,
+  FileText,
+  LayoutDashboard,
+} from "lucide-react";
+import { getScenarios } from "../lib/mockApi";
 import { useTranscriptStream } from "../hooks/useTranscriptStream";
 import FindingCard from "../components/ai-sidekick/FindingCard";
 import DashboardView from "../components/ai-sidekick/DashboardView";
+import OfficeCompareView from "../components/ai-sidekick/OfficeCompareView";
+import type { CashflowPayload } from "../components/ai-sidekick/DashboardView";
+import type { OfficeComparePayload } from "../components/ai-sidekick/OfficeCompareView";
 import { cn } from "../lib/utils";
+
+const SCENARIOS = getScenarios();
 
 function fmtTime(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -18,14 +30,13 @@ function fmtTime(ms: number) {
 }
 
 export default function Home() {
-  const { entries, findings, running, start, stop, reset } = useTranscriptStream();
+  const [scenarioId, setScenarioId] = useState(SCENARIOS[0].id);
+  const current = SCENARIOS.find((s) => s.id === scenarioId) ?? SCENARIOS[0];
+  const { participants, entries, findings, running, start, stop, reset } =
+    useTranscriptStream(scenarioId);
 
-  // Tự bắt đầu nghe khi tải trang
-  useEffect(() => {
-    start();
-    return () => stop();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const speakerName = (id: string) =>
+    participants.find((p) => p.id === id)?.name ?? id;
 
   const dashboards = useMemo(
     () => findings.filter((f) => f.type === "dashboard"),
@@ -48,8 +59,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="mt-0.5 text-xs text-zinc-500">
-            Chủ đề mock: <span className="text-cyan-300">Dòng tiền biến động</span>.
-            AI tự "dựng" tài liệu & dashboard trong lúc nghe.
+            AI tự "research" & dựng tài liệu/dashboard trong lúc nghe. Chọn 1 kịch bản dưới đây.
           </p>
         </div>
 
@@ -57,9 +67,7 @@ export default function Home() {
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
-              running
-                ? "bg-emerald-500/10 text-emerald-400"
-                : "bg-zinc-500/10 text-zinc-500",
+              running ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-500",
             )}
           >
             <Radio className={cn("h-3.5 w-3.5", running && "animate-pulse")} />
@@ -92,11 +100,51 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Bộ chọn scenario */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {SCENARIOS.map((s) => {
+          const active = s.id === scenarioId;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setScenarioId(s.id)}
+              className={cn(
+                "group flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition",
+                active
+                  ? "border-violet-400/40 bg-violet-500/10"
+                  : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5",
+              )}
+            >
+              <span className="text-lg leading-none">{s.accentEmoji}</span>
+              <span>
+                <span
+                  className={cn(
+                    "block text-sm font-semibold",
+                    active ? "text-zinc-100" : "text-zinc-300",
+                  )}
+                >
+                  {s.title}
+                </span>
+                <span className="block text-[11px] text-zinc-500">
+                  {s.subtitle}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-[340px_1fr]">
-        {/* TRANSCRIPT — cuộc họp tự chạy */}
-        <aside className="flex h-[460px] flex-col rounded-2xl border border-white/10 bg-[#0c0c12]">
-          <div className="border-b border-white/5 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Transcript cuộc họp
+        {/* TRANSCRIPT */}
+        <aside className="flex h-[480px] flex-col rounded-2xl border border-white/10 bg-[#0c0c12]">
+          <div className="border-b border-white/5 px-4 py-2.5">
+            <div className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Transcript cuộc họp
+            </div>
+            <div className="mt-0.5 text-[11px] text-zinc-600">
+              {current.accentEmoji} {current.title}
+            </div>
           </div>
           <div className="flex-1 space-y-2 overflow-y-auto p-3">
             <AnimatePresence initial={false}>
@@ -110,7 +158,7 @@ export default function Home() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-violet-300">
-                      {e.speakerId === "p4" ? "You" : e.speakerId}
+                      {speakerName(e.speakerId)}
                     </span>
                     <span className="text-[10px] text-zinc-600">
                       {fmtTime(e.timestamp)}
@@ -131,7 +179,7 @@ export default function Home() {
         {/* Khu vực AI "lắng nghe & show" */}
         <section className="space-y-4">
           {findings.length === 0 && (
-            <div className="flex h-[460px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-center text-sm text-zinc-600">
+            <div className="flex h-[480px] items-center justify-center rounded-2xl border border-dashed border-white/10 text-center text-sm text-zinc-600">
               <div>
                 <div className="mb-2 text-3xl">👂</div>
                 AI đang lắng nghe…
@@ -141,16 +189,28 @@ export default function Home() {
             </div>
           )}
 
-          {/* Dashboard ưu tiên hiện trên cùng khi nghe "dashboard" */}
+          {/* Dashboard ưu tiên hiện trên cùng */}
           {dashboards.length > 0 && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-cyan-300">
                 <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard được kích hoạt
               </div>
               <div className="space-y-3">
-                {dashboards.map((d) => (
-                  <DashboardView key={d.id} discoveredKeyword={d.keyword} />
-                ))}
+                {dashboards.map((d) =>
+                  d.dashboardKind === "office-compare" ? (
+                    <OfficeCompareView
+                      key={d.id}
+                      discoveredKeyword={d.keyword}
+                      payload={d.payload as OfficeComparePayload | undefined}
+                    />
+                  ) : (
+                    <DashboardView
+                      key={d.id}
+                      discoveredKeyword={d.keyword}
+                      payload={d.payload as CashflowPayload | undefined}
+                    />
+                  ),
+                )}
               </div>
             </div>
           )}
@@ -159,16 +219,14 @@ export default function Home() {
           {docs.length > 0 && (
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-zinc-400">
-                <FileText className="h-3.5 w-3.5" /> Tài liệu AI đã tìm
+                <FileText className="h-5 w-5" /> Đã tìm thấy {docs.length} tài liệu
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {docs.map((f) => (
                   <FindingCard
                     key={f.id}
                     finding={f}
-                    onOpen={(url) =>
-                      window.alert(`[MOCK] Mở tài liệu\n${url}`)
-                    }
+                    onOpen={(url) => window.alert(`[MOCK] Mở tài liệu\n${url}`)}
                   />
                 ))}
               </div>
