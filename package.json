@@ -1,0 +1,12 @@
+{
+  "name": "ai-meeting-sidekick",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Meeting Sidekick — frontend-only MVP (see CLAUDE.md)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  }
+}
