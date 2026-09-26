@@ -1,0 +1,12 @@
+**
+!package.json
+!package-lock.json
+!Dockerfile
+!scripts/
+!scripts/build-agent.mjs
+!server/
+!server/**
+!shared/
+!shared/**
+server/**/*.test.ts
+shared/**/*.test.ts
