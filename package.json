@@ -2,7 +2,7 @@
   "name": "ai-meeting-sidekick",
   "version": "0.1.0",
   "private": true,
-  "description": "AI Meeting Sidekick — frontend-only MVP (see CLAUDE.md)",
+  "description": "LiveKit voice meeting room",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,6 +11,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.24",
+    "@livekit/protocol": "^1.52.1",
+    "livekit-client": "^2.22.3",
+    "livekit-server-sdk": "^2.19.1",
     "next": "^16.3.6",
     "react": "18.3.1",
     "react-dom": "18.3.1"

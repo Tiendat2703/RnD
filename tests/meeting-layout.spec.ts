@@ -1,81 +1,37 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-async function fillTranscript(page: Page, copies = 35) {
-  await page.locator(".transcript-entry").first().waitFor();
-  await page.evaluate((count) => {
-    const list = document.querySelector<HTMLElement>(".transcript-list");
-    const entry = document.querySelector<HTMLElement>(".transcript-entry");
-
-    if (!list || !entry) throw new Error("Transcript UI not found");
-    for (let index = 0; index < count; index += 1) {
-      list.append(entry.cloneNode(true));
-    }
-  }, copies);
-}
-
-async function readLayout(page: Page) {
-  return page.evaluate(() => {
-    const panel = document.querySelector<HTMLElement>(".transcript-panel");
-    const list = document.querySelector<HTMLElement>(".transcript-list");
-
-    if (!panel || !list) throw new Error("Transcript UI not found");
-    const panelRect = panel.getBoundingClientRect();
-
-    return {
-      viewportHeight: window.innerHeight,
-      documentScrollHeight: document.documentElement.scrollHeight,
-      panelTop: panelRect.top,
-      panelBottom: panelRect.bottom,
-      panelHeight: panelRect.height,
-      listClientHeight: list.clientHeight,
-      listScrollHeight: list.scrollHeight,
-      listOverflowY: getComputedStyle(list).overflowY,
-    };
-  });
-}
-
-for (const viewport of [
-  { width: 1440, height: 900 },
-  { width: 1280, height: 720 },
-  { width: 1024, height: 600 },
-]) {
-  test(`desktop keeps a long transcript inside ${viewport.width}x${viewport.height}`, async ({ page }) => {
-    await page.setViewportSize(viewport);
-    await page.goto("/");
-    await fillTranscript(page);
-
-    const layout = await readLayout(page);
-    expect(layout.documentScrollHeight).toBeLessThanOrEqual(layout.viewportHeight);
-    expect(layout.panelBottom).toBeLessThanOrEqual(layout.viewportHeight);
-    expect(layout.listScrollHeight).toBeGreaterThan(layout.listClientHeight);
-    expect(layout.listOverflowY).toBe("auto");
-  });
-}
-
-test("mobile transcript remains a bounded bottom sheet", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-  await fillTranscript(page);
-
-  const layout = await readLayout(page);
-  expect(layout.documentScrollHeight).toBeLessThanOrEqual(layout.viewportHeight);
-  expect(layout.panelTop).toBeGreaterThanOrEqual(0);
-  expect(layout.panelBottom).toBeLessThanOrEqual(layout.viewportHeight);
-  expect(layout.panelHeight).toBeLessThanOrEqual(layout.viewportHeight * 0.73);
-  expect(layout.listScrollHeight).toBeGreaterThan(layout.listClientHeight);
+test("shows a live audio join form with an invite room prefilled", async ({ page }) => {
+  await page.goto("/?room=team-weekly");
+  await expect(page.getByRole("heading", { name: "Tham gia cuộc gọi" })).toBeVisible();
+  await expect(page.getByLabel("Tên phòng")).toHaveValue("team-weekly");
+  await expect(page.getByLabel("Tên của bạn")).toBeVisible();
+  await expect(page.getByLabel("Mã vào phòng (nếu được cấp)")).toBeVisible();
+  await expect(page.getByText("Transcript cuộc họp")).toHaveCount(0);
 });
 
-test("conversation can pause and continue without adding hidden entries", async ({ page }) => {
-  await page.goto("/", { waitUntil: "networkidle" });
+test("shows a server error when a LiveKit token cannot be issued", async ({ page }) => {
+  await page.route("**/api/livekit-token", async (route) => {
+    await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "LiveKit chưa được cấu hình trên server." }) });
+  });
+  await page.goto("/");
+  await page.getByLabel("Tên của bạn").fill("An");
+  await page.getByRole("button", { name: "Vào phòng" }).click();
+  await expect(page.getByRole("alert")).toHaveText("LiveKit chưa được cấu hình trên server.");
+});
 
-  const pauseButton = page.getByRole("button", { name: "Tạm dừng hội thoại" });
-  await pauseButton.click();
-  await expect(page.getByRole("button", { name: "Tiếp tục hội thoại" }).first()).toBeVisible();
-  const pausedCount = await page.locator(".transcript-entry").count();
-
-  await page.waitForTimeout(4_000);
-  await expect(page.locator(".transcript-entry")).toHaveCount(pausedCount);
-
-  await page.getByRole("button", { name: "Tiếp tục hội thoại" }).first().click();
-  await expect.poll(() => page.locator(".transcript-entry").count(), { timeout: 7_000 }).toBeGreaterThan(pausedCount);
+test("manual token mode accepts a LiveKit URL and token without the app token endpoint", async ({ page }) => {
+  let endpointCalled = false;
+  await page.route("**/api/livekit-token", async (route) => {
+    endpointCalled = true;
+    await route.abort();
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Dùng token có sẵn" }).click();
+  await expect(page.getByLabel("LiveKit server URL")).toBeVisible();
+  await expect(page.getByLabel("Token người tham gia")).toBeVisible();
+  await page.getByLabel("LiveKit server URL").fill("wss://example.livekit.cloud");
+  await page.getByLabel("Token người tham gia").fill("invalid-token");
+  await page.getByRole("button", { name: "Vào phòng" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Token không chứa quyền vào phòng LiveKit hợp lệ.");
+  expect(endpointCalled).toBe(false);
 });

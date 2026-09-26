@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Product weekly — Sidekick",
-  description: "A frontend-only AI meeting sidekick demo",
+  title: "Cuộc gọi LiveKit — Sidekick",
+  description: "Phòng họp âm thanh trực tiếp qua LiveKit",
 };
 
 export default function RootLayout({
