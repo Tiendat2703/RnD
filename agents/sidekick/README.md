@@ -17,7 +17,7 @@ Built for the AI Tinkerers **Agents, Everywhere** hackathon. Sidekick is a worki
 A React and TypeScript meeting workspace with live voice, written contributions, evolving documents, presentations and spreadsheets, source links, an activity feed, and a downloadable Markdown meeting record.
 
 - **GPT-Live** handles speech through browser WebRTC and delegates background work to the application.
-- **OpenAI Agents API** continues a managed work session for each meeting, using `gpt-6-astra` with low reasoning and Fast processing to propose research and revise the meeting record and drafts.
+- **OpenAI Agents API** continues a managed work session for each meeting, using `gpt-5.6-luna` with low reasoning and Fast processing to propose research and revise the meeting record and drafts.
 - **Exa** supplies research results and source URLs. The application returns actual findings to the same agent session before publishing research-backed work.
 - **Ambiguous AI** stores native documents, editable presentations, spreadsheets, and meeting records. Saves are shown as successful only after reading the result back, including the native editor content for slides and sheets.
 
@@ -63,18 +63,20 @@ The local spreadsheet preview shows formula expressions using the same row numbe
 
 “Configured” in **Your connections** means a credential is present. A successful provider operation establishes actual access.
 
-## LiveKit Cloud agent
+## LiveKit Cloud ingest agent
 
-The background meeting worker can also run as a LiveKit Cloud agent with dispatch
-name `sidekick`. It accepts microphone audio or room text, transcribes audio with
-OpenAI `gpt-live-transcribe`, runs the transcript through Sidekick, and returns
-text, meeting state, and artifact links. See [deployment and room
-protocol](docs/livekit-deployment.md). The Cloud worker is STT-only: it does not
-generate an audio reply. The React UI and GPT-Live browser connection still use
-the local application path.
+The Cloud deployment is now layer 1 of the production architecture. Agent
+`sidekick` accepts microphone audio or room text, transcribes each participant
+track with OpenAI `gpt-live-transcribe`, publishes the transcript in the room,
+and forwards final versioned events to a separately hosted backend. It does not
+run Luna, Exa, Ambiguous, or meeting reasoning inside the LiveKit job.
+
+See [LiveKit deployment and room protocol](docs/livekit-deployment.md) and the
+[layer 2 backend contract](docs/backend-integration.md). The worker does not
+synthesize an audio reply. The existing local application and its meeting
+worker remain available for local development.
 
 ## Development and verification
-
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Express server and Vite development UI on localhost:3000. |

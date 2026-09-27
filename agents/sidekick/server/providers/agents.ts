@@ -106,7 +106,7 @@ export class AgentsProvider {
       'https://api.openai.com/v1'
     ).replace(/\/$/, '');
     this.model =
-      options.model ?? process.env.OPENAI_AGENT_MODEL ?? 'gpt-6-astra';
+      options.model ?? process.env.OPENAI_AGENT_MODEL ?? 'gpt-5.6-luna';
     this.fetcher = options.fetch ?? globalThis.fetch;
     this.timeoutMs = options.timeoutMs ?? 120_000;
   }

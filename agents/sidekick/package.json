@@ -17,7 +17,7 @@
     "agent:start": "node --env-file-if-exists=.env.local dist-agent/agent.js start",
     "verify:livekit": "node scripts/verify-livekit.mjs",
     "verify:livekit:work": "node scripts/verify-livekit.mjs --work",
-    "verify:livekit:audio": "node --env-file-if-exists=.env scripts/verify-livekit.mjs --audio",
+    "verify:livekit:audio": "node --env-file-if-exists=.env.local scripts/verify-livekit.mjs --audio",
     "verify:livekit:noise": "node scripts/verify-livekit.mjs --noise"
   },
   "dependencies": {

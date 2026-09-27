@@ -21,6 +21,37 @@ function retainSession(meeting: StoredMeeting, sessionId: string) {
   meeting.agentInstructionsVersion = AGENT_INSTRUCTIONS_VERSION;
 }
 
+function modelState(meeting: StoredMeeting) {
+  const state = structuredClone(publicMeeting(meeting));
+  return {
+    ...state,
+    transcript: [],
+    activity: state.activity.slice(-20),
+    sources: state.sources.slice(-40),
+  };
+}
+
+function transcriptBatch(meeting: StoredMeeting, includeAll: boolean) {
+  const end = meeting.transcript.length;
+  const start = includeAll ? 0 : Math.min(meeting.agentTranscriptCursor ?? 0, end);
+  return {
+    end,
+    text: meeting.transcript
+      .slice(start, end)
+      .map((item) => {
+        if (item.role === "assistant") return "SIDEKICK: " + item.text;
+        const identity = item.participantIdentity?.trim().replace(/[\]\r\n]/g, "_").slice(0, 128);
+        const label = identity ? "PARTICIPANT[" + identity + "]" : "PARTICIPANT";
+        return label + ": " + item.text;
+      })
+      .join("\n"),
+  };
+}
+
+function normalizeResearchQuery(query: string) {
+  return query.trim().toLocaleLowerCase().replace(/\s+/g, " ");
+}
+
 type Providers = {
   agents: Pick<AgentsProvider, "analyze">;
   exa: Pick<ExaProvider, "search">;
@@ -94,9 +125,11 @@ export class MeetingWorker {
     meeting.error = undefined;
     this.store.save(meeting);
     try {
-      // One worker per meeting serializes workspace writes. New transcript revisions
-      // invalidate pending model output before any document mutation begins.
+      // One worker per meeting serializes workspace writes. An active run absorbs
+      // at most one new revision; later transcript stays buffered for the session scheduler.
+      let activePasses = 0;
       do {
+        activePasses++;
         await this.workspaceSync.refresh(id, {force:true});
         const revision = meeting.revision;
         const workspaceRevision = meeting.workspaceRevision ?? 0;
@@ -105,13 +138,12 @@ export class MeetingWorker {
           projection: structuredClone(artifactContent(doc)),
           snapshot: structuredClone(meeting.documentSnapshots?.[doc.id]),
         }]));
-        const transcript = meeting.transcript
-          .map(
-            (t) =>
-              `${t.role === "user" ? "PARTICIPANT" : "SIDEKICK"}: ${t.text}`,
-          )
-          .join("\n");
-        if (!transcript.trim()) {
+        const continuingSession =
+          meeting.agentInstructionsVersion === AGENT_INSTRUCTIONS_VERSION
+          && Boolean(meeting.agentSessionId);
+        const batch = transcriptBatch(meeting, !continuingSession);
+        const transcript = batch.text;
+        if (!meeting.transcript.length) {
           meeting.summary = "No conversation was recorded.";
           if (closing) {
             await this.publishRecord(meeting, true);
@@ -138,11 +170,12 @@ export class MeetingWorker {
               ? meeting.agentSessionId
               : undefined,
           transcript,
-          currentState: structuredClone(publicMeeting(meeting)),
+          currentState: modelState(meeting),
           closing,
         };
         let result = await this.providers.agents.analyze(input);
         retainSession(meeting, result.sessionId);
+        meeting.agentTranscriptCursor = batch.end;
         this.store.save(meeting);
         if (!closing && meeting.phase === "closing") continue;
         if ((meeting.workspaceRevision ?? 0) !== workspaceRevision) continue;
@@ -151,7 +184,22 @@ export class MeetingWorker {
         const researchErrors: string[] = [];
         // Closing never starts another investigation. Existing saved findings are retained.
         if (!closing) {
-          const queries = [...new Set(analysis.researchQueries)].slice(0, 2);
+          const now = Date.now();
+          const lastResearchAt = meeting.lastResearchAt ? Date.parse(meeting.lastResearchAt) : 0;
+          const researchAllowed = !lastResearchAt || now - lastResearchAt >= 60_000;
+          const previousQueries = new Set(meeting.researchQueryHistory ?? []);
+          const queries = researchAllowed
+            ? [...new Set(analysis.researchQueries)]
+                .filter((query) => !previousQueries.has(normalizeResearchQuery(query)))
+                .slice(0, 1)
+            : [];
+          if (queries.length) {
+            meeting.researchQueryHistory ??= [];
+            for (const query of queries)
+              meeting.researchQueryHistory.push(normalizeResearchQuery(query));
+            meeting.researchQueryHistory = meeting.researchQueryHistory.slice(-100);
+            meeting.lastResearchAt = new Date(now).toISOString();
+          }
           for (const query of queries)
             activity(meeting, "research", "Researching with Exa", query);
           this.store.save(meeting);
@@ -196,9 +244,9 @@ export class MeetingWorker {
           if (queries.length) {
             result = await this.providers.agents.analyze({
               sessionId: meeting.agentSessionId,
-              transcript,
+              transcript: "",
               currentState: {
-                ...structuredClone(publicMeeting(meeting)),
+                ...modelState(meeting),
                 researchResults,
                 researchErrors,
                 instruction:
@@ -298,7 +346,8 @@ export class MeetingWorker {
         this.store.save(meeting);
       } while (
         meeting.processedRevision < meeting.revision &&
-        meeting.phase !== "ended"
+        meeting.phase !== "ended" &&
+        (meeting.phase === "closing" || activePasses < 2)
       );
     } catch (error) {
       if (

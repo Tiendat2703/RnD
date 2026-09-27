@@ -13,6 +13,11 @@ export type Transcript = {
   text: string;
   at: string;
   audio?: boolean;
+  participantIdentity?: string;
+  trackSid?: string;
+  sequence?: number;
+  startedAtMs?: number;
+  endedAtMs?: number;
 };
 export type Source = { title: string; url: string; text: string };
 export type DocumentFormat = 'document' | 'presentation' | 'spreadsheet';

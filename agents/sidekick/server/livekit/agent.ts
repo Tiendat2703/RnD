@@ -7,26 +7,25 @@ import {
   type RemoteParticipant,
   type TextStreamReader,
 } from '@livekit/rtc-node';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { MeetingStore } from '../store';
-import { MeetingWorker } from '../worker';
 import { RealtimeTranscriber } from '../providers/transcription';
-import { SidekickSession } from './session';
+import {
+  TranscriptForwarder,
+  transcriptEventId,
+  transcriptForwarderConfigFromEnv,
+  type FinalTranscriptEvent,
+} from './backend-transcript';
 import { evaluateSpeech } from './speech-gate';
 
 export const INPUT_TOPICS = ['lk.chat', 'sidekick.transcript', 'sidekick.command'] as const;
 
 export default defineAgent({
   entry: async (ctx) => {
-    // Per-job storage: never share cached MeetingStore instances across processes.
-    // Cloud disk is temporary; native artifacts remain in Ambiguous.
-    const store = new MeetingStore(mkdtempSync(join(tmpdir(), 'sidekick-')));
     let connected = false;
     let stopping = false;
     let readers = 0;
+    let sequence = 0;
+    let roomName = '';
     const vad = new inference.VAD({
       minSpeechDuration: 350,
       minSilenceDuration: 800,
@@ -36,13 +35,74 @@ export default defineAgent({
       deactivationThreshold: 0.5,
     });
     const audioJobs = new Map<string, { stop: () => void; task: Promise<void> }>();
-    const session = new SidekickSession(store, new MeetingWorker(store), async output => {
-      if (!connected) return;
-      const local = ctx.room.localParticipant;
-      if (!local) return;
-      await local.sendText(JSON.stringify(output), { topic: 'sidekick.state' });
-      if (output.text) await local.sendText(output.text, { topic: 'lk.chat' });
+    const forwarder = new TranscriptForwarder({
+      ...transcriptForwarderConfigFromEnv(),
+      onPermanentFailure: async (event, error) => {
+        console.warn(JSON.stringify({
+          event: 'sidekick.transcript.delivery_failed',
+          eventId: event.eventId,
+          roomName: event.roomName,
+          status: error.message,
+        }));
+        if (connected) await ctx.room.localParticipant?.sendText(
+          'Sidekick could not deliver a transcript to the meeting backend.',
+          { topic: 'sidekick.error', destinationIdentities: [event.participant.identity] },
+        ).catch(() => undefined);
+      },
     });
+
+    async function sendState(destinationIdentities?: string[]) {
+      if (!connected) return;
+      await ctx.room.localParticipant?.sendText(JSON.stringify({
+        schemaVersion: 1,
+        type: 'ingest.state',
+        roomName: roomName,
+        ready: true,
+        sttModel: 'gpt-live-transcribe',
+        backend: {
+          configured: forwarder.configured,
+          pending: forwarder.pending,
+        },
+      }), { topic: 'sidekick.state', destinationIdentities });
+    }
+
+    function forwardFinalTranscript(input: {
+      participantIdentity: string;
+      source: 'audio' | 'text';
+      sourceId: string;
+      text: string;
+      trackSid?: string;
+      startedAtMs?: number;
+      endedAtMs?: number;
+    }): FinalTranscriptEvent {
+      const event: FinalTranscriptEvent = {
+        schemaVersion: 1,
+        type: 'transcript.final',
+        eventId: transcriptEventId({
+          roomName: roomName,
+          participantIdentity: input.participantIdentity,
+          sourceId: input.sourceId,
+        }),
+        meetingId: roomName,
+        roomName: roomName,
+        sequence: ++sequence,
+        participant: {
+          identity: input.participantIdentity,
+          ...(input.trackSid ? { trackSid: input.trackSid } : {}),
+        },
+        source: input.source,
+        sourceId: input.sourceId,
+        text: input.text,
+        ...(
+          input.startedAtMs !== undefined || input.endedAtMs !== undefined
+            ? { timing: { startedAtMs: input.startedAtMs, endedAtMs: input.endedAtMs } }
+            : {}
+        ),
+        createdAt: new Date().toISOString(),
+      };
+      forwarder.enqueue(event);
+      return event;
+    }
 
     async function receive(reader: TextStreamReader, identity: string, topic: string) {
       const participant = ctx.room.remoteParticipants.get(identity);
@@ -52,12 +112,12 @@ export default defineAgent({
       }
       readers++;
       let timedOut = false;
-      const timer = setTimeout(() => { timedOut = true; void reader.close(); }, 15000);
+      const timer = setTimeout(() => { timedOut = true; void reader.close(); }, 15_000);
       try {
         let text = '';
         for await (const chunk of reader) {
           text += chunk;
-          if (text.length > 16000) throw new Error('Input is too long.');
+          if (text.length > 16_000) throw new Error('Input is too long.');
         }
         clearTimeout(timer);
         if (stopping) return;
@@ -65,16 +125,23 @@ export default defineAgent({
         if (topic === 'sidekick.command') {
           const command: unknown = JSON.parse(text);
           const type = command && typeof command === 'object' && 'type' in command ? command.type : undefined;
-          if (type === 'state') await session.sendState();
-          else if (type === 'close') await session.close();
-          else throw new Error('Unknown command.');
+          if (type === 'state') await sendState([identity]);
+          else if (type === 'close') {
+            await forwarder.drain();
+            await sendState([identity]);
+          } else throw new Error('Unknown command.');
         } else {
-          await session.submit(identity, reader.info.streamId, text);
+          forwardFinalTranscript({
+            participantIdentity: identity,
+            source: 'text',
+            sourceId: `text:${topic}:${reader.info.streamId}`,
+            text,
+          });
         }
       } catch {
-        // Provider details and payloads are not logged. Existing worker errors are in public state.
+        // Provider details, credentials, and transcript payloads are never logged.
         if (connected) await ctx.room.localParticipant?.sendText(
-          'Sidekick could not process this message. Check sidekick.state for meeting status.',
+          'Sidekick could not ingest this message. Check sidekick.state for ingest status.',
           { topic: 'sidekick.error', destinationIdentities: [identity] },
         ).catch(() => undefined);
       } finally {
@@ -122,11 +189,22 @@ export default defineAgent({
           partials.set(itemId, text);
           await publishTranscript(participant.identity, trackSid, itemId, text, false);
         },
-        onTranscript: async ({ itemId, transcript }) => {
+        onTranscript: async ({ itemId, transcript, metadata }) => {
           partials.delete(itemId);
           await publishTranscript(participant.identity, trackSid, itemId, transcript, true)
             .catch(() => undefined);
-          await session.submit(participant.identity, `stt:${trackSid}:${itemId}`, transcript);
+          const event = forwardFinalTranscript({
+            participantIdentity: participant.identity,
+            source: 'audio',
+            sourceId: `stt:${trackSid}:${itemId}`,
+            trackSid,
+            text: transcript,
+            startedAtMs: metadata?.startedAtMs,
+            endedAtMs: metadata?.endedAtMs,
+          });
+          await ctx.room.localParticipant?.sendText(JSON.stringify(event), {
+            topic: 'sidekick.transcript.final',
+          }).catch(() => undefined);
         },
         onError: async error => {
           console.warn(error.message);
@@ -145,7 +223,11 @@ export default defineAgent({
             if (event.type === VADEventType.END_OF_SPEECH && event.frames.length) {
               const quality = evaluateSpeech(event.frames, event.speechDuration);
               if (quality.accepted) {
-                transcriber.transcribe(event.frames.map(frame => frame.data));
+                transcriber.transcribe(event.frames.map(frame => frame.data), {
+                  trackSid,
+                  startedAtMs: Math.max(0, event.timestamp - event.speechDuration),
+                  endedAtMs: event.timestamp,
+                });
               } else {
                 console.info(
                   `Ignored non-speech audio (${quality.reason}; `
@@ -212,24 +294,29 @@ export default defineAgent({
       for (const job of audioJobs.values()) job.stop();
       await Promise.allSettled([...audioJobs.values()].map(job => job.task));
       await vad.close();
-      await session.close().catch(() => { console.warn('Sidekick finalization did not complete.'); });
+      const drained = await forwarder.drain();
+      if (!drained) console.warn('Sidekick stopped before all backend transcript requests completed.');
     });
 
     await ctx.connect(undefined, AutoSubscribe.AUDIO_ONLY);
+    roomName = ctx.room.name ?? '';
+    if (!roomName) throw new Error('LiveKit room name is required after connecting.');
     connected = true;
     await ctx.room.localParticipant?.setAttributes({
-      'sidekick.meeting_id': session.meetingId,
+      'sidekick.meeting_id': roomName,
+      'sidekick.mode': 'transcript-ingest',
       'sidekick.input': 'audio,text',
       'sidekick.stt': 'gpt-live-transcribe',
+      'sidekick.backend': forwarder.configured ? 'configured' : 'disabled',
     });
-    await session.sendState();
-    console.info('Sidekick joined a room and is ready for audio or text input.');
+    await sendState();
+    console.info('Sidekick ingest joined a room and is ready for audio or text input.');
   },
 });
 
 cli.runApp(new ServerOptions({
   agent: fileURLToPath(import.meta.url),
   agentName: process.env.LIVEKIT_AGENT_NAME || 'sidekick',
-  shutdownProcessTimeout: 300000,
-  drainTimeout: 300000,
+  shutdownProcessTimeout: 60_000,
+  drainTimeout: 60_000,
 }));

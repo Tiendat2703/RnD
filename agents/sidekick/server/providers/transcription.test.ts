@@ -52,7 +52,7 @@ describe('OpenAI realtime transcription', () => {
         audio: {
           input: {
             format: { type: 'audio/pcm', rate: 24_000 },
-            transcription: { model: 'gpt-live-transcribe', delay: 'medium', languages: ['vi', 'en'] },
+            transcription: { model: 'gpt-live-transcribe', delay: 'low', languages: ['vi', 'en'] },
             turn_detection: null,
           },
         },
@@ -103,6 +103,15 @@ describe('OpenAI realtime transcription', () => {
     });
     await transcriber.connect();
 
+    transcriber.transcribe([new Int16Array([1, 2])], {
+      trackSid: 'track-a',
+      startedAtMs: 100,
+      endedAtMs: 900,
+    });
+    message(socket, {
+      type: 'input_audio_buffer.committed',
+      item_id: 'item-1',
+    });
     message(socket, {
       type: 'conversation.item.input_audio_transcription.completed',
       item_id: 'item-1',
@@ -114,7 +123,11 @@ describe('OpenAI realtime transcription', () => {
     });
     await new Promise(resolve => setImmediate(resolve));
 
-    expect(onTranscript).toHaveBeenCalledWith({ itemId: 'item-1', transcript: 'Xin chào Sidekick.' });
+    expect(onTranscript).toHaveBeenCalledWith({
+      itemId: 'item-1',
+      transcript: 'Xin chào Sidekick.',
+      metadata: { trackSid: 'track-a', startedAtMs: 100, endedAtMs: 900 },
+    });
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({
       message: 'OpenAI transcription failed (rate_limit-exceeded).',
     }));
