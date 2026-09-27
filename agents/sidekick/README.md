@@ -66,9 +66,12 @@ The local spreadsheet preview shows formula expressions using the same row numbe
 ## LiveKit Cloud agent
 
 The background meeting worker can also run as a LiveKit Cloud agent with dispatch
-name `sidekick`. It accepts room text/transcripts and returns meeting state and
-artifact links. See [deployment and room protocol](docs/livekit-deployment.md).
-The React UI and GPT-Live browser connection still use the local application path.
+name `sidekick`. It accepts microphone audio or room text, transcribes audio with
+OpenAI `gpt-live-transcribe`, runs the transcript through Sidekick, and returns
+text, meeting state, and artifact links. See [deployment and room
+protocol](docs/livekit-deployment.md). The Cloud worker is STT-only: it does not
+generate an audio reply. The React UI and GPT-Live browser connection still use
+the local application path.
 
 ## Development and verification
 

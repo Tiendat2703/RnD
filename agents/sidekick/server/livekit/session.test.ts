@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MeetingStore } from '../store';
 import { MeetingWorker } from '../worker';
+import { AmbiguousProvider } from '../providers/ambiguous';
 import { SidekickSession, type SessionOutput } from './session';
 
 const directories: string[] = [];
@@ -112,5 +113,30 @@ describe('Sidekick LiveKit session', () => {
     expect(session.snapshot().summary).toBe('Prepare a pilot.');
     expect(save).toHaveBeenCalled();
     expect(search).not.toHaveBeenCalled();
+  });
+
+  it('returns the meeting record save failure reason to the room', async () => {
+    const { store, outputs } = setup();
+    const analyze = vi.fn(async () => ({
+      sessionId: 'managed-session',
+      text: JSON.stringify({
+        title: 'Pilot', summary: 'Prepare a pilot.', decisions: [], pending: [],
+        ambiguities: [], followUps: [], researchQueries: [], spokenResponse: '',
+        documents: [],
+      }),
+    }));
+    const worker = new MeetingWorker(store, {
+      agents: { analyze },
+      exa: { search: vi.fn(async () => []) },
+      workspace: new AmbiguousProvider(''),
+    });
+    const session = new SidekickSession(store, worker, async output => { outputs.push(output); });
+
+    await session.submit('alice', 'one', 'Please prepare a pilot proposal.');
+
+    expect(session.snapshot().recordSaveStatus).toBe('failed');
+    expect(outputs.at(-1)?.text).toContain(
+      'Ambiguous AI is not configured. Add AMBIGUOUS_API_KEY to .env.local.',
+    );
   });
 });

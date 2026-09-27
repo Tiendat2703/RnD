@@ -1,10 +1,20 @@
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { Room, dispose } from '@livekit/rtc-node';
+import {
+  AudioFrame,
+  AudioSource,
+  LocalAudioTrack,
+  Room,
+  TrackSource,
+  dispose,
+} from '@livekit/rtc-node';
 
 // Uses the authenticated CLI; credentials and join tokens are never printed.
-// This only checks registration, dispatch and data round-trips. No model calls.
+// The default smoke check makes no provider calls. --work also exercises one
+// synthetic model turn and the meeting-record workspace save. --audio adds
+// OpenAI TTS -> LiveKit audio -> OpenAI STT -> Sidekick -> room text.
+// --noise confirms that background noise does not create Sidekick work.
 function resolveLiveKitCLI() {
   const override = process.env.LIVEKIT_CLI;
   if (override) return override;
@@ -42,7 +52,74 @@ function resolveLiveKitCLI() {
 const cliPath = resolveLiveKitCLI();
 const project = process.env.LIVEKIT_PROJECT || 'demo';
 const url = process.env.LIVEKIT_URL || 'wss://demo-m6ejx9q0.livekit.cloud';
+const verifyWork = process.argv.includes('--work');
+const verifyAudio = process.argv.includes('--audio');
+const verifyNoise = process.argv.includes('--noise');
 const roomName = 'sidekick-smoke-' + Date.now();
+
+async function createSyntheticSpeech() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is required for --audio verification.');
+  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini-tts',
+      voice: 'marin',
+      input: 'Xác nhận kiểm thử âm thanh. Kế hoạch thí điểm kéo dài hai tuần.',
+      instructions: 'Speak clearly in Vietnamese at a natural pace.',
+      response_format: 'pcm',
+    }),
+  });
+  if (!response.ok) throw new Error(`Synthetic speech generation failed (HTTP ${response.status}).`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.byteLength < 4 || bytes.byteLength % 2) throw new Error('Synthetic speech returned invalid PCM16 audio.');
+  const pcm = new Int16Array(bytes.byteLength / 2);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  for (let index = 0; index < pcm.length; index++) pcm[index] = view.getInt16(index * 2, true);
+  return pcm;
+}
+
+function createSyntheticNoise() {
+  const pcm = new Int16Array(24_000 * 5);
+  let seed = 19;
+  for (let index = 0; index < pcm.length; index++) {
+    seed = (seed * 16_807) % 2_147_483_647;
+    pcm[index] = Math.round(((seed / 2_147_483_647) * 2 - 1) * 1_200);
+  }
+  for (const second of [1, 2, 3, 4]) pcm[second * 24_000] = 12_000;
+  return pcm;
+}
+
+async function publishSyntheticAudio(room, pcm) {
+  const sampleRate = 24_000;
+  const samplesPerFrame = 480;
+  const leadingSilence = new Int16Array(Math.floor(sampleRate * 0.3));
+  const trailingSilence = new Int16Array(sampleRate);
+  const samples = new Int16Array(leadingSilence.length + pcm.length + trailingSilence.length);
+  samples.set(pcm, leadingSilence.length);
+  const source = new AudioSource(sampleRate, 1);
+  const track = LocalAudioTrack.createAudioTrack('sidekick-verification-microphone', source);
+  const publication = await room.localParticipant.publishTrack(track, {
+    source: TrackSource.SOURCE_MICROPHONE,
+  });
+  try {
+    for (let start = 0; start < samples.length; start += samplesPerFrame) {
+      const frameData = new Int16Array(samplesPerFrame);
+      frameData.set(samples.subarray(start, Math.min(start + samplesPerFrame, samples.length)));
+      await source.captureFrame(new AudioFrame(frameData, sampleRate, 1, samplesPerFrame));
+    }
+    await source.waitForPlayout();
+  } catch (error) {
+    if (publication.sid) await room.localParticipant.unpublishTrack(publication.sid).catch(() => undefined);
+    await track.close().catch(() => undefined);
+    throw error;
+  }
+  return async () => {
+    if (publication.sid) await room.localParticipant.unpublishTrack(publication.sid).catch(() => undefined);
+    await track.close().catch(() => undefined);
+  };
+}
 const tokenResult = spawnSync(cliPath, [
   '--project', project, 'token', 'create', '--room', roomName,
   '--identity', 'sidekick-verifier', '--join', '--agent', 'sidekick',
@@ -61,6 +138,11 @@ const token = tokenResult.stdout.trim();
 if (!token || token.split('.').length !== 3) throw new Error('CLI did not return a valid token.');
 
 const room = new Room();
+room.registerTextStreamHandler('lk.chat', reader => {
+  // The work check validates structured sidekick.state output below. Drain the
+  // mirrored chat response so the RTC client does not report an unhandled topic.
+  void reader.readAll().catch(() => undefined);
+});
 let resolveState;
 let rejectState;
 const stateReceived = new Promise((resolve, reject) => {
@@ -69,6 +151,7 @@ const stateReceived = new Promise((resolve, reject) => {
 });
 let agentIdentity;
 let timer;
+let closeAudioTrack;
 room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
   void reader.readAll().then(text => {
     const output = JSON.parse(text);
@@ -100,9 +183,96 @@ try {
     topic: 'sidekick.command', destinationIdentities: [agentIdentity],
   });
   await roundTrip;
-  console.log(JSON.stringify({ success: true, room: roomName, agent: agentIdentity, checks: ['dispatch', 'room join', 'state command round-trip'] }));
+  clearTimeout(timer);
+  const checks = ['dispatch', 'room join', 'state command round-trip'];
+  let work;
+  if (verifyNoise) {
+    room.unregisterTextStreamHandler('sidekick.state');
+    closeAudioTrack = await publishSyntheticAudio(room, createSyntheticNoise());
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    const quietState = new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('Noise verification state timed out.')), 15000);
+      room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
+        void reader.readAll().then(text => {
+          const output = JSON.parse(text);
+          if (participant.identity === agentIdentity && output.type === 'state'
+            && output.meeting?.id === state.meeting.id) resolve(output);
+        }).catch(reject);
+      });
+    });
+    await room.localParticipant.sendText(JSON.stringify({ type: 'state' }), {
+      topic: 'sidekick.command', destinationIdentities: [agentIdentity],
+    });
+    const result = await quietState;
+    clearTimeout(timer);
+    const transcriptEntries = result.meeting.transcript?.length || 0;
+    work = {
+      transcriptEntries,
+      processedRevision: result.meeting.processedRevision,
+      failure: transcriptEntries === 0 ? null : 'Background noise created a transcript.',
+    };
+    checks.push('LiveKit noise publish', 'no STT transcript', 'no Sidekick work');
+    if (work.failure) process.exitCode = 1;
+  } else if (verifyWork || verifyAudio) {
+    room.unregisterTextStreamHandler('sidekick.state');
+    const resultReceived = new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('Synthetic work result timed out.')), 180000);
+      room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
+        void reader.readAll().then(text => {
+          const output = JSON.parse(text);
+          if (participant.identity === agentIdentity && output.type === 'result'
+            && output.meeting?.id === state.meeting.id
+            && output.meeting.processedRevision > 0) resolve(output);
+        }).catch(reject);
+      });
+    });
+    if (verifyAudio) {
+      const pcm = await createSyntheticSpeech();
+      closeAudioTrack = await publishSyntheticAudio(room, pcm);
+    } else {
+      await room.localParticipant.sendText(
+        'Synthetic verification only: summarize that the pilot lasts two weeks. Do not research or create additional artifacts.',
+        { topic: 'lk.chat', destinationIdentities: [agentIdentity] },
+      );
+    }
+    const result = await resultReceived;
+    clearTimeout(timer);
+    const failedDocument = result.meeting.documents?.find(document => document.saveStatus === 'failed');
+    const failure = result.meeting.error
+      || failedDocument?.error
+      || (result.meeting.recordSaveStatus === 'failed'
+        ? result.meeting.recordDocument?.error || 'Meeting record save failed.'
+        : undefined);
+    work = {
+      summaryProduced: Boolean(result.meeting.summary),
+      recordSaveStatus: result.meeting.recordSaveStatus,
+      failure: failure || null,
+      ...(verifyAudio ? {
+        transcript: result.meeting.transcript?.at(-1)?.text || null,
+      } : {}),
+    };
+    if (verifyAudio) {
+      const transcript = result.meeting.transcript?.at(-1)?.text || '';
+      checks.push('LiveKit audio publish', 'OpenAI STT transcript', 'Sidekick model turn', 'meeting record save');
+      if (!/two weeks|2 weeks|hai tuần|hai tuan/i.test(transcript)) {
+        work.failure = work.failure || 'The STT transcript did not contain the expected two-week statement.';
+      }
+    } else {
+      checks.push('synthetic model turn', 'meeting record save');
+    }
+    if (failure) process.exitCode = 1;
+    if (work.failure) process.exitCode = 1;
+  }
+  console.log(JSON.stringify({
+    success: process.exitCode !== 1,
+    room: roomName,
+    agent: agentIdentity,
+    checks,
+    ...(work ? { work } : {}),
+  }));
 } finally {
   clearTimeout(timer);
+  await closeAudioTrack?.();
   await room.disconnect();
   await dispose();
   // Only delete the uniquely named verification room created by this script.

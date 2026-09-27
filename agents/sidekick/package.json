@@ -15,7 +15,10 @@
     "agent:build": "node scripts/build-agent.mjs",
     "agent:dev": "npm run agent:build && node --env-file-if-exists=.env.local dist-agent/agent.js dev",
     "agent:start": "node --env-file-if-exists=.env.local dist-agent/agent.js start",
-    "verify:livekit": "node scripts/verify-livekit.mjs"
+    "verify:livekit": "node scripts/verify-livekit.mjs",
+    "verify:livekit:work": "node scripts/verify-livekit.mjs --work",
+    "verify:livekit:audio": "node --env-file-if-exists=.env scripts/verify-livekit.mjs --audio",
+    "verify:livekit:noise": "node scripts/verify-livekit.mjs --noise"
   },
   "dependencies": {
     "@livekit/agents": "^1.9.1",
@@ -26,6 +29,7 @@
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
+    "ws": "^8.21.3",
     "zod": "^4.1.5"
   },
   "devDependencies": {
@@ -33,6 +37,7 @@
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.2",
     "esbuild": "^0.28.2",
     "tsx": "^4.20.5",

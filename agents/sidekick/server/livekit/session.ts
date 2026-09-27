@@ -15,7 +15,9 @@ export function resultText(meeting: Meeting): string {
   const errors = [
     meeting.error,
     ...meeting.documents.filter(d => d.saveStatus === 'failed').map(d => d.error || 'Document save failed.'),
-    meeting.recordSaveStatus === 'failed' ? 'Meeting record save failed.' : undefined,
+    meeting.recordSaveStatus === 'failed'
+      ? meeting.recordDocument?.error || 'Meeting record save failed.'
+      : undefined,
   ].filter(Boolean);
   const links = [
     ...meeting.documents.filter(d => d.saveStatus === 'saved' && d.url).map(d => d.title + ': ' + d.url),
