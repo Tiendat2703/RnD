@@ -1,6 +1,6 @@
 # Sidekick Voice
 
-Phòng gọi âm thanh và video trực tiếp qua LiveKit. Người tham gia cùng tên phòng có thể nghe, nói và chia sẻ camera. Giao diện không phát transcript hay người tham gia giả lập.
+Phòng gọi âm thanh và video trực tiếp qua LiveKit. Người tham gia cùng tên phòng có thể nghe, nói và chia sẻ camera. Giao diện hiển thị transcript nhận được qua LiveKit và không phát người tham gia giả lập.
 
 ## Thử nhanh khi chưa cấu hình backend
 
