@@ -44,7 +44,7 @@ describe('LiveKit backend transcript forwarding', () => {
     expect(await forwarder.drain()).toBe(true);
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, init] = fetch.mock.calls[0] as unknown as [URL, RequestInit];
-    expect(url).toEqual(new URL(`https://backend.example.com${TRANSCRIPT_PATH}`));
+    expect(url).toEqual(new URL('https://backend.example.com/base'));
     expect(init.headers).toMatchObject({
       authorization: 'Bearer internal-token',
       'idempotency-key': 'event-1',
@@ -90,8 +90,11 @@ describe('LiveKit backend transcript forwarding', () => {
     expect(unauthenticated.configured).toBe(true);
     unauthenticated.enqueue(event(3));
     await unauthenticated.drain();
-    const [, unauthenticatedInit] = unauthenticatedFetch.mock.calls[0] as unknown as [URL, RequestInit];
+    const [unauthenticatedUrl, unauthenticatedInit] = unauthenticatedFetch.mock.calls[0] as unknown as [URL, RequestInit];
     expect(unauthenticatedInit.headers).not.toHaveProperty('authorization');
+    expect(unauthenticatedUrl).toEqual(
+      new URL(`https://backend.example.com${TRANSCRIPT_PATH}`),
+    );
     expect(() => new TranscriptForwarder({
       backendUrl: 'http://backend.example.com', token: 'token',
     })).toThrow(/HTTPS/);

@@ -77,8 +77,7 @@ function endpointFor(rawUrl: string): URL {
   if (base.protocol !== 'https:' && !(base.protocol === 'http:' && local)) {
     throw new Error('SIDEKICK_BACKEND_URL must use HTTPS (HTTP is allowed only for localhost).');
   }
-  base.pathname = TRANSCRIPT_PATH;
-  base.search = '';
+  if (!base.pathname || base.pathname === '/') base.pathname = TRANSCRIPT_PATH;
   base.hash = '';
   return base;
 }

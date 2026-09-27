@@ -42,8 +42,7 @@ SIDEKICK_BACKEND_TOKEN=
 ```
 
 `SIDEKICK_BACKEND_URL` must use HTTPS. Plain HTTP is accepted only for
-`localhost` development. The worker appends `/v1/livekit/transcripts` to the
-configured origin. The MVP can call the backend without a token. When a token is set, the worker includes it as a Bearer credential.
+`localhost` development. A URL with no path uses `/v1/livekit/transcripts`; a complete URL with a path, such as an n8n webhook, is used exactly as configured. The MVP can call the backend without a token. When a token is set, the worker includes it as a Bearer credential.
 Cloud automatically injects LiveKit connection credentials.
 
 ## Build and deploy
