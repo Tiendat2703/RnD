@@ -10,7 +10,6 @@ Create this public HTTPS endpoint:
 
 ```http
 POST /v1/livekit/transcripts
-Authorization: Bearer <SIDEKICK_BACKEND_TOKEN>
 Idempotency-Key: <eventId>
 Content-Type: application/json
 ```
@@ -51,11 +50,9 @@ Validate at least these constraints:
 - sequence is a positive integer;
 - the JSON body has a small hard size limit such as 32 KB.
 
-## 2. Authenticate and accept durably
+## 2. Accept durably
 
-Use a long random service token stored only in both server environments. Compare
-the bearer value without logging it. Do not accept this endpoint from browser
-code.
+The current MVP accepts this endpoint without authentication. Keep it on HTTPS and do not call it from browser code. If a token is configured later, layer 1 automatically sends it as a Bearer credential.
 
 In one short database transaction:
 
@@ -72,7 +69,6 @@ Minimal Express shape:
 
 ```ts
 app.post('/v1/livekit/transcripts', express.json({ limit: '32kb' }), async (req, res) => {
-  requireInternalBearer(req, process.env.SIDEKICK_BACKEND_TOKEN);
   const event = FinalTranscriptEventSchema.parse(req.body);
 
   await db.transaction(async tx => {
@@ -191,7 +187,7 @@ Create an ignored `.env.livekit` in the layer 1 project:
 ```dotenv
 OPENAI_API_KEY=<existing OpenAI project key>
 SIDEKICK_BACKEND_URL=https://api.example.com
-SIDEKICK_BACKEND_TOKEN=<same random service token used by layer 2>
+# SIDEKICK_BACKEND_TOKEN=<optional future service token>
 ```
 
 Apply it to the existing deployment:
@@ -214,7 +210,7 @@ sentence, and verify all three records share the same `eventId`/meeting:
 
 ## 7. Production controls
 
-- Rotate the internal token without exposing it to participants.
+- Add and rotate an internal token before moving beyond the unauthenticated MVP.
 - Put layer 2 near the LiveKit agent region to reduce the extra network hop.
 - Add metrics for accepted, duplicate, rejected, queued, completed, and failed
   transcript events.
@@ -223,4 +219,4 @@ sentence, and verify all three records share the same `eventId`/meeting:
 - Use a durable outbox/queue for reasoning. The Cloud worker queue only covers
   short network failures and deployment shutdown.
 - Give staging and production separate LiveKit projects, backend databases, and
-  service tokens.
+  service credentials when authentication is enabled.

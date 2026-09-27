@@ -108,9 +108,6 @@ export class TranscriptForwarder {
   private active = 0;
 
   constructor(options: TranscriptForwarderOptions = {}) {
-    if (options.backendUrl && !options.token) {
-      throw new Error('SIDEKICK_BACKEND_TOKEN is required when SIDEKICK_BACKEND_URL is configured.');
-    }
     this.endpoint = options.backendUrl ? endpointFor(options.backendUrl) : undefined;
     this.token = options.token;
     this.configured = Boolean(this.endpoint);
@@ -174,7 +171,7 @@ export class TranscriptForwarder {
   }
 
   private async deliver(event: FinalTranscriptEvent): Promise<void> {
-    if (!this.endpoint || !this.token) return;
+    if (!this.endpoint) return;
     let lastError = new Error('Backend transcript delivery failed.');
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
       const controller = new AbortController();
@@ -184,7 +181,7 @@ export class TranscriptForwarder {
         response = await this.fetch(this.endpoint, {
           method: 'POST',
           headers: {
-            authorization: `Bearer ${this.token}`,
+            ...(this.token ? { authorization: `Bearer ${this.token}` } : {}),
             'content-type': 'application/json',
             'idempotency-key': event.eventId,
             'user-agent': 'sidekick-livekit-ingest/1',

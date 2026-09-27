@@ -31,6 +31,7 @@ backend handoff when layer 2 is available:
 ```dotenv
 OPENAI_API_KEY=
 SIDEKICK_BACKEND_URL=https://api.example.com
+# Optional for this MVP. When set, the worker sends Authorization: Bearer.
 SIDEKICK_BACKEND_TOKEN=
 
 # Optional defaults
@@ -42,7 +43,7 @@ SIDEKICK_BACKEND_TOKEN=
 
 `SIDEKICK_BACKEND_URL` must use HTTPS. Plain HTTP is accepted only for
 `localhost` development. The worker appends `/v1/livekit/transcripts` to the
-configured origin. A backend token is mandatory whenever the URL is present.
+configured origin. The MVP can call the backend without a token. When a token is set, the worker includes it as a Bearer credential.
 Cloud automatically injects LiveKit connection credentials.
 
 ## Build and deploy

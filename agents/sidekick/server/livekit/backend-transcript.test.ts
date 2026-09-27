@@ -83,7 +83,15 @@ describe('LiveKit backend transcript forwarding', () => {
     expect(disabled.configured).toBe(false);
     expect(disabled.enqueue(event())).toBe(false);
 
-    expect(() => new TranscriptForwarder({ backendUrl: 'https://backend.example.com' })).toThrow(/TOKEN/);
+    const unauthenticatedFetch = vi.fn(async () => new Response(null, { status: 202 }));
+    const unauthenticated = new TranscriptForwarder({
+      backendUrl: 'https://backend.example.com', fetch: unauthenticatedFetch,
+    });
+    expect(unauthenticated.configured).toBe(true);
+    unauthenticated.enqueue(event(3));
+    await unauthenticated.drain();
+    const [, unauthenticatedInit] = unauthenticatedFetch.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(unauthenticatedInit.headers).not.toHaveProperty('authorization');
     expect(() => new TranscriptForwarder({
       backendUrl: 'http://backend.example.com', token: 'token',
     })).toThrow(/HTTPS/);
