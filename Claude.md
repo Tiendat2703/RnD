@@ -1,196 +1,56 @@
-# CLAUDE.md — AI Meeting Sidekick (MVP, frontend-only)
+# CLAUDE.md — MeetMateAI
 
-> File này là bản đặc tả kỹ thuật + hướng dẫn setup dành cho **AI coding agent** (Claude Code, Cursor, v.v.) và cho **team dev** dùng chung làm nguồn sự thật (single source of truth) khi build dự án. Đọc kỹ trước khi tạo bất kỳ file code nào.
+Nguồn sự thật cho dev và AI coding agent. Cập nhật 03/11/2026 (Phase 0). Bản cũ mô tả "AI Meeting Sidekick frontend-only" đã bị thay thế hoàn toàn.
 
----
+## 1. Sản phẩm
 
-## 1. Bối cảnh & nguồn cảm hứng
+MeetMateAI là trợ lý AI trong cuộc họp (dự án RnD to Startup 2026, tài liệu: `RTS2026 - Bản Mô tả - MeetMateAI`). Chu trình: Talk → Understand → Research → Verify → Create. Điểm khác biệt: gán **trạng thái bằng chứng** cho nhận định (Supported / Partially Supported / Contradicted / Insufficient Evidence) và hiểu hội thoại Việt–Anh.
 
-Dự án lấy cảm hứng từ **Sidekick** — dự án giành **giải Nhất (First Place)** tại hackathon toàn cầu **AI Tinkerers "Agents Everywhere"** (tài trợ bởi OpenAI, gần 700 dự án dự thi). Sidekick do **Alexander Payne** (chapter Hong Kong) xây dựng, được mô tả là *"an AI meeting teammate that researches questions and creates documents, slides, and spreadsheets while the team talks"* — một đồng đội AI ngồi trong cuộc họp, tự nghiên cứu câu hỏi và tạo tài liệu/slide/spreadsheet ngay trong lúc mọi người đang nói chuyện. Sidekick dùng OpenAI, Exa và Ambiguous AI, và còn thắng thêm giải "Best Use of Ambiguous AI".
+## 2. Quyết định kiến trúc (Phase 0)
 
-**Lưu ý quan trọng:** chúng ta **không** sao chép code hay tài sản của Sidekick (không có repo public chính thức của dự án đó). File này chỉ dùng ý tưởng/concept làm điểm tham chiếu để tự thiết kế lại một MVP tương tự, độc lập, theo cách của team mình.
+Ba nguồn đang mô tả ba kiến trúc khác nhau, nên chia làm hai lớp:
 
-## 2. Mục tiêu MVP
-
-Xây một **frontend-only demo** (không có backend thật) mô phỏng trải nghiệm "trợ lý AI trong cuộc họp", gồm đúng 2 mảng UI chính:
-
-1. **Giao diện cuộc họp** — lưới người tham gia + panel transcript/chat, giống Zoom/Google Meet.
-2. **Popup "AI đang phân tích"** — overlay xuất hiện khi AI được kích hoạt (thủ công hoặc tự động theo mock transcript), hiển thị trạng thái "đang suy nghĩ" rồi trả về kết quả (câu trả lời / tài liệu được tạo / action item).
-
-Toàn bộ "backend" (gọi AI, tạo tài liệu, tìm kiếm...) đều là **mock**: dữ liệu tĩnh + `setTimeout`/Promise giả lập độ trễ, không gọi API thật.
-
-### Trong phạm vi (in-scope)
-- Giao diện meeting room (mock video tile, danh sách participant, transcript giả lập chạy dần theo thời gian).
-- Nút/trigger "Ask Sidekick" hoặc auto-trigger khi transcript xuất hiện câu hỏi (mock).
-- Popup/overlay "AI đang phân tích" có animation, có thể hiện các bước giả lập ("Đang đọc câu hỏi…", "Đang tìm kiếm…", "Đang tổng hợp…").
-- Kết quả trả về dạng card: câu trả lời ngắn + CTA giả (ví dụ "Xem tài liệu đã tạo", "Thêm vào slide") — click vào chỉ mở mock data, không có file thật.
-- Toàn bộ state chạy client-side, không cần đăng nhập, không cần DB.
-
-### Ngoài phạm vi (out-of-scope, để sau)
-- Video/audio call thật (WebRTC, Zoom SDK…).
-- Tích hợp AI thật (OpenAI, Exa…).
-- Tạo tài liệu/slide/spreadsheet thật (Google Docs/Slides API, Notion…).
-- Auth, lưu trữ dữ liệu, real-time đa người dùng (WebSocket).
-
-## 3. Tech stack đề xuất
-
-| Hạng mục | Lựa chọn | Ghi chú |
+| Lớp | Nội dung | Trạng thái |
 |---|---|---|
-| Framework | Next.js 14 (App Router) + TypeScript | Có thể đổi sang Vite + React nếu team muốn nhẹ hơn |
-| Styling | Tailwind CSS + shadcn/ui | Tốc độ dựng UI nhanh, dễ tuỳ biến |
-| State | React Context hoặc Zustand | Không cần Redux cho scope này |
-| Mock backend | Hàm async nội bộ giả lập fetch (`lib/mockApi.ts`), có thể nâng cấp lên MSW (Mock Service Worker) nếu muốn intercept fetch thật | Thiết kế để sau này swap sang API thật chỉ cần đổi implementation, không đổi interface |
-| Icon | lucide-react | |
-| Animation | Framer Motion | Cho popup "đang phân tích" mượt hơn |
-| Package manager | pnpm (hoặc npm nếu team quen hơn) | |
+| **Demo (MVP hiện tại)** | Chrome extension MV3: nghe tab Meet + micro → Blaze STT → tách chủ đề → Exa → viết lý do → gõ vào chat Meet. Khóa API ở `chrome.storage.local`, không backend. Plan: `2026-11-01-meetmate-extension.md` | **Chưa có code** (`extension/` chưa tồn tại) |
+| **Web console** | Next.js trong repo này, dữ liệu mẫu. Là "bản mô phỏng giao diện mục tiêu", không phải prototype chạy thật, không đấu nối AI | Có, lint + build xanh |
+| **Lớp mục tiêu (roadmap)** | Document pipeline + RAG, Supabase (Postgres, pgvector, Storage, RLS), Context Router, Knowledge Card, Measurement & Logging, evidence status | Chưa có; chỉ được viết là "mục tiêu", không viết ở thì hiện tại |
 
-Agent build có thể tự do đề xuất thay thế nếu có lý do rõ ràng, nhưng phải giữ nguyên tắc: **không có backend thật, mọi dữ liệu mock nằm trong `/mocks` hoặc `/lib/mockApi.ts`**.
+Ảnh kiến trúc System Architecture (MVP) trong tài liệu vẽ **lớp mục tiêu**; khi dùng trong tài liệu phải ghi nhãn đó.
 
-## 4. Cấu trúc thư mục đề xuất
+## 3. Cấu trúc repo
 
-```
-project-root/
-├─ CLAUDE.md
-├─ README.md
-├─ package.json
-├─ app/                          # hoặc src/app nếu dùng App Router
-│  ├─ layout.tsx
-│  ├─ page.tsx                   # trang meeting chính
-│  └─ globals.css
-├─ components/
-│  ├─ meeting/
-│  │  ├─ MeetingRoom.tsx         # container chính
-│  │  ├─ ParticipantGrid.tsx
-│  │  ├─ ParticipantTile.tsx
-│  │  ├─ TranscriptPanel.tsx     # transcript giả lập chạy dần
-│  │  └─ MeetingControls.tsx     # mic/cam/leave (chỉ UI, không chức năng thật)
-│  ├─ ai-sidekick/
-│  │  ├─ AskSidekickButton.tsx
-│  │  ├─ AIAnalyzingPopup.tsx    # overlay "đang phân tích"
-│  │  ├─ AIResultCard.tsx        # kết quả trả về
-│  │  └─ AISidekickPanel.tsx     # (tuỳ chọn) panel lịch sử các câu hỏi đã hỏi
-│  └─ ui/                        # shadcn components (button, dialog, spinner...)
-├─ mocks/
-│  ├─ participants.json
-│  ├─ transcript.json
-│  └─ ai-responses.json
-├─ lib/
-│  ├─ mockApi.ts                 # toàn bộ hàm giả lập gọi AI
-│  ├─ types.ts                   # type/interface dùng chung
-│  └─ utils.ts
-├─ hooks/
-│  ├─ useTranscriptStream.ts     # giả lập transcript chạy theo thời gian
-│  └─ useAIAnalysis.ts           # quản lý state: idle → analyzing → result
-└─ public/
+- `app/`, `components/`, `hooks/`, `lib/`, `mocks/`: web console Next.js 16, React 18, TypeScript, không Tailwind. CSS thường (`app/globals.css`, `app/dashboard/dashboard.css`).
+- `lib/types.ts`: hợp đồng dữ liệu web ↔ extension (`LIMITS`, `Topic`, `ResearchResult`…). Sửa hằng số ở đây, không sửa ở nơi dùng.
+- `lib/mockApi.ts`: chỗ giả lập AI. Chỉ đổi phần bên trong hàm khi nối backend thật, không đổi chữ ký.
+- `agents/sidekick/`: code nhập từ dự án hackathon Sidekick (OpenAI/LiveKit/Exa/Ambiguous). Có `package.json` riêng. **Không sửa** trừ khi task nêu rõ; nó chưa dùng Blaze.
+- `designs/`, `MEETMATE-DESIGN.md`: hợp đồng thiết kế. `DESIGN.md` chỉ là capture tham khảo từ sản phẩm khác, **không** dùng logo, tên, copy, minh họa hay phông chữ từ đó.
+- `2026-11-0x-*.md`: kế hoạch và sổ đối chiếu (extension, conflict register, replatform, consistency checklist).
+
+## 4. Lệnh
+
+```sh
+npm ci
+npm run dev        # web console
+npm run lint       # tsc --noEmit
+npm run build
+npm run test:e2e   # Playwright (tests/)
 ```
 
-## 5. Data model (types.ts)
+Trước khi sửa Next.js, đọc `AGENTS.md` và `node_modules/next/dist/docs/` — phiên bản này có breaking changes.
 
-```ts
-export type Participant = {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-  isSpeaking: boolean;
-  isMuted: boolean;
-};
+## 5. Quy ước
 
-export type TranscriptEntry = {
-  id: string;
-  speakerId: string;
-  text: string;
-  timestamp: number; // ms từ lúc bắt đầu mock
-};
+- Mọi chữ hiển thị cho người dùng bằng **tiếng Việt**. Thương hiệu chỉ là **MeetMate / MeetMateAI**.
+- Dữ liệu giả nằm trong `mocks/` hoặc `lib/dashboardData.ts`, không hardcode trong component.
+- Web app không bao giờ giữ khóa Blaze/Exa; không có `fetch`/`wss` ra ngoài trong `lib/mockApi.ts` cho đến khi có quyết định backend.
+- Không tuyên bố trong UI hoặc tài liệu điều code chưa làm. Số liệu chưa đo gọi là "mục tiêu"/"mô phỏng".
+- Nhánh `feature/<tên>`, PR review trước khi merge vào `main`.
 
-export type AIAnalysisStatus = "idle" | "analyzing" | "done" | "error";
+## 6. Kiểm tra trước khi nộp
 
-export type AIAnalysisStep = {
-  id: string;
-  label: string; // vd: "Đang đọc câu hỏi…"
-};
+Chạy 9 lệnh grep ở mục 2 của `2026-11-02-consistency-checklist.md`. Trạng thái 03/11/2026: không còn chuỗi hiển thị "Sidekick"/"interview" trong `app components lib`; còn lại là tên thư mục `components/ai-sidekick/`, `AISidekickPanel` và vài comment (việc đổi tên để sau, không ảnh hưởng người dùng).
 
-export type AIResult = {
-  id: string;
-  triggeredBy: string;      // transcript entry id hoặc "manual"
-  question: string;
-  answer: string;
-  artifacts?: {
-    type: "document" | "slide" | "spreadsheet";
-    title: string;
-    url: string; // mock link, không cần trỏ đến file thật
-  }[];
-};
-```
+## 7. Việc tiếp theo
 
-## 6. Mock backend contract (`lib/mockApi.ts`)
-
-Thiết kế các hàm sau như thể chúng đang gọi API thật — sau này chỉ cần thay nội dung bên trong, **không đổi chữ ký hàm**, để phần UI không phải sửa:
-
-```ts
-// Giả lập AI phân tích 1 câu hỏi từ transcript, có độ trễ 2-4s
-export async function analyzeQuestion(question: string): Promise<AIResult>;
-
-// Giả lập lấy participants ban đầu
-export async function getParticipants(): Promise<Participant[]>;
-
-// Giả lập stream transcript (dùng interval, không phải API call thật)
-export function subscribeToTranscript(
-  onEntry: (entry: TranscriptEntry) => void
-): () => void; // trả về hàm unsubscribe
-```
-
-`analyzeQuestion` nên trả về kết quả từ `mocks/ai-responses.json` (chọn ngẫu nhiên hoặc theo keyword khớp với câu hỏi), kèm `setTimeout` 2000–4000ms để mô phỏng "AI đang suy nghĩ" một cách thuyết phục.
-
-## 7. Luồng người dùng (User flow)
-
-1. Vào trang → thấy `MeetingRoom`: lưới participant (video tile là ảnh avatar tĩnh + hiệu ứng "đang nói" nhấp nháy viền), `TranscriptPanel` bên phải chạy dần từng dòng transcript mock (dùng `useTranscriptStream`, mỗi dòng xuất hiện cách nhau 2-3s).
-2. Có 2 cách kích hoạt AI:
-   - **Thủ công**: người dùng bấm nút "Ask Sidekick", nhập/chọn câu hỏi.
-   - **Tự động (demo)**: khi transcript xuất hiện 1 dòng chứa dấu `?` hoặc nằm trong danh sách "câu hỏi mẫu" trong `mocks/transcript.json`, tự trigger sau vài giây.
-3. Khi trigger → `AIAnalyzingPopup` hiện lên (overlay, có thể là modal góc màn hình hoặc dialog giữa màn hình), hiển thị spinner + text các bước xử lý giả lập, đổi label mỗi ~1s ("Đang đọc câu hỏi…" → "Đang tìm kiếm…" → "Đang tổng hợp…").
-4. Sau khi `analyzeQuestion` resolve (2-4s) → popup chuyển thành `AIResultCard`: câu trả lời + (nếu có) nút mở "tài liệu" mock.
-5. Người dùng đóng popup (nút X hoặc click ra ngoài) → quay lại theo dõi meeting, có thể xem lại lịch sử câu hỏi trong `AISidekickPanel` (tuỳ chọn, làm sau nếu còn thời gian).
-
-## 8. UI/UX guideline
-
-- Layout tối màu (dark theme) kiểu Zoom/Meet: nền xám đậm/đen, tile video bo góc, avatar tròn.
-- Popup "AI đang phân tích" nên có hiệu ứng glow/pulse nhẹ quanh viền hoặc icon để tạo cảm giác "AI đang sống", tránh spinner mặc định nhàm chán.
-- Dùng **1 màu accent** xuyên suốt cho mọi thứ liên quan AI (ví dụ tím/xanh cyan) để phân biệt rõ với UI meeting thường.
-- Ưu tiên rõ ràng, ít chi tiết thừa — đây là MVP demo, không cần đầy đủ tính năng như Zoom thật.
-- Tránh trông giống template AI generic mặc định; xem thêm skill `frontend-design` nếu agent có quyền truy cập để lấy hướng dẫn chi tiết hơn về typography/màu sắc.
-
-## 9. Checklist triển khai cho agent
-
-- [ ] Khởi tạo project (Next.js/Vite + TS + Tailwind + shadcn).
-- [ ] Định nghĩa types trong `lib/types.ts`.
-- [ ] Tạo mock data: `participants.json`, `transcript.json`, `ai-responses.json`.
-- [ ] Viết `lib/mockApi.ts` theo đúng contract ở mục 6.
-- [ ] Build `MeetingRoom` + `ParticipantGrid` + `ParticipantTile`.
-- [ ] Build `TranscriptPanel` + hook `useTranscriptStream`.
-- [ ] Build `AskSidekickButton` + hook `useAIAnalysis` (quản lý state idle/analyzing/done).
-- [ ] Build `AIAnalyzingPopup` (có animation từng bước) + `AIResultCard`.
-- [ ] Nối trigger tự động từ transcript vào `useAIAnalysis`.
-- [ ] Responsive cơ bản (desktop trước, mobile sau nếu còn thời gian).
-- [ ] Polish animation (Framer Motion cho popup mở/đóng).
-- [ ] Viết `README.md` ngắn cho team (cách chạy local, cách thêm mock data mới).
-
-## 10. Tiêu chí hoàn thành (Definition of Done cho MVP)
-
-- Chạy được `pnpm dev` (hoặc `npm run dev`) và thấy giao diện meeting với transcript tự chạy, không lỗi console.
-- Bấm "Ask Sidekick" (hoặc để tự động trigger) → thấy popup "đang phân tích" → sau vài giây thấy kết quả, không cần backend/API key nào.
-- Không có bất kỳ network call nào ra ngoài (mọi thứ chạy local/mock) — dễ deploy demo lên Vercel tĩnh.
-- Code có type rõ ràng, tách UI khỏi mock data (để sau này nối API thật chỉ sửa `lib/mockApi.ts`).
-
-## 11. Định hướng mở rộng sau MVP (không làm ngay)
-
-- Thay `mockApi.ts` bằng gọi API thật (OpenAI cho phân tích, Exa cho research, tool gọi Google Docs/Slides API để tạo tài liệu thật).
-- Video call thật qua WebRTC hoặc SDK bên thứ ba.
-- Đồng bộ real-time nhiều người dùng (WebSocket/Pusher).
-- Auth + lưu lịch sử meeting.
-
-## 12. Quy ước làm việc nhóm
-
-- Nhánh: `main` (ổn định) — mỗi tính năng làm trên nhánh riêng `feature/ten-tinh-nang`, PR review trước khi merge.
-- Commit message ngắn gọn, tiếng Anh hoặc tiếng Việt đều được, miễn nhất quán trong team.
-- Mọi mock data đặt trong `/mocks`, **không** hardcode dữ liệu giả trực tiếp trong component.
-- Khi giao việc cho AI coding agent, luôn trỏ agent đọc file `CLAUDE.md` này trước tiên để agent bám đúng scope, tránh việc agent tự ý thêm backend/API thật ngoài kế hoạch.
+Phase 1: làm tài liệu trung thực. Phase 2: dựng `extension/` theo plan. Phase 3: evidence status. Phase 4: document pipeline + RAG. Chi tiết trong lộ trình đã thống nhất.

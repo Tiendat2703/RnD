@@ -1,4 +1,4 @@
-# RnD
+# MeetMateAI
 
 ## Frontend
 

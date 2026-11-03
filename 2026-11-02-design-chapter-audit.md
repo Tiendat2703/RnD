@@ -1,6 +1,6 @@
 # Audit chương III — `RTS2026 - Bản Mô tả - MeetMateAI ….docx` theo hướng Chrome extension
 
-Ngày: 02/11/2026. Nguồn thẩm quyền về phạm vi: `E:\RnD\2026-11-01-meetmate-extension.md`.
+Ngày: 02/11/2026. Nguồn thẩm quyền về phạm vi: `2026-11-01-meetmate-extension.md`.
 File này là **phần phân tích**. Toàn văn tiếng Việt để dán nằm ở `2026-11-02-chapter-III-vi.md`.
 Không sửa `.docx` bằng script (11 MB, style bảng và ảnh của template) — mọi thứ dưới đây để bạn dán thủ công.
 

@@ -1,6 +1,6 @@
 # Sổ theo dõi xung đột — frontend hiện tại ↔ hướng MeetMateAI ↔ bản mô tả RTS2026
 
-Ngày kiểm tra: 02/11/2026 · Phạm vi quét: `app/`, `components/`, `hooks/`, `lib/`, `mocks/`, `tests/`, `scripts/`, `package.json` (loại trừ `agents/sidekick`, `node_modules`) · Nguồn thẩm quyền về phạm vi: [`2026-11-01-meetmate-extension.md`](/E:/RnD/2026-11-01-meetmate-extension.md) · Nguồn tuyên bố: `RTS2026 - Bản Mô tả - MeetMateAI ….docx`
+Ngày kiểm tra: 02/11/2026 · Phạm vi quét: `app/`, `components/`, `hooks/`, `lib/`, `mocks/`, `tests/`, `scripts/`, `package.json` (loại trừ `agents/sidekick`, `node_modules`) · Nguồn thẩm quyền về phạm vi: [`2026-11-01-meetmate-extension.md`](./2026-11-01-meetmate-extension.md) · Nguồn tuyên bố: `RTS2026 - Bản Mô tả - MeetMateAI ….docx`
 
 ## Cách đọc
 
@@ -44,7 +44,7 @@ Ngày kiểm tra: 02/11/2026 · Phạm vi quét: `app/`, `components/`, `hooks/`
 | `lib/mockApi.ts:1`, `lib/types.ts:1`, `components/ai-sidekick/*.tsx:1-3` | comment dẫn "CLAUDE.md Mục 4/5/6/7" | spec cũ | SỬA-CHUỖI (comment tiếng Việt) | S |
 | `icons.tsx` `IconLogo` | logo dựng theo đối thủ | thương hiệu bên khác | SỬA-HÀNH-VI (mark riêng cho MeetMate) | S |
 
-** Ranh giới thương hiệu (nói một lần, áp dụng cho cả repo):** `E:\RnD\DESIGN.md` tự mô tả là *capture tham khảo từ CSS production của một bên khác, không phải giấy phép thương hiệu*. Cơ chế tương tác được tái sử dụng; **logo, tên sản phẩm, copy marketing, minh họa, phông chữ thì không.**
+** Ranh giới thương hiệu (nói một lần, áp dụng cho cả repo):** `DESIGN.md` tự mô tả là *capture tham khảo từ CSS production của một bên khác, không phải giấy phép thương hiệu*. Cơ chế tương tác được tái sử dụng; **logo, tên sản phẩm, copy marketing, minh họa, phông chữ thì không.**
 
 ## A2. Khung shell: nút/chip/phím tắt nhìn thấy trên **mọi** route
 

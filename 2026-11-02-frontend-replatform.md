@@ -1,6 +1,6 @@
 # Kế hoạch sửa frontend — dashboard thành MeetMateAI web console
 
-File này thực thi [`2026-11-02-frontend-conflict-register.md`](/E:/RnD/2026-11-02-frontend-conflict-register.md). Nguyên tắc: **đổi nhãn trước khi dựng lại**, giữ route và CSS, mỗi stage kết thúc bằng app chạy được + suite xanh. Không đụng `agents/sidekick/`, không sửa `.docx`, không sửa `2026-11-01-meetmate-extension.md`.
+File này thực thi [`2026-11-02-frontend-conflict-register.md`](./2026-11-02-frontend-conflict-register.md). Nguyên tắc: **đổi nhãn trước khi dựng lại**, giữ route và CSS, mỗi stage kết thúc bằng app chạy được + suite xanh. Không đụng `agents/sidekick/`, không sửa `.docx`, không sửa `2026-11-01-meetmate-extension.md`.
 
 Quyết định nền (đã chốt): dashboard **là form giao diện chính để phát triển tiếp**, nhưng nó **không phải prototype của bản demo**. Bản demo là tiện ích Chrome. Web console được trình bày trong `III.3.3` với tư cách *"bản mô phỏng giao diện mục tiêu, dữ liệu mẫu, không đấu nối luồng AI"*.
 

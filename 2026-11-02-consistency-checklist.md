@@ -35,7 +35,7 @@ Ba phía phải khớp nhau, không phải hai:
 ## 2. Chín hàng bắt buộc phải grep trước khi nộp
 
 ```bash
-cd /e/RnD
+cd /e/meetmate
 grep -rniE "sidekick"        app components lib package.json        # kỳ vọng: 0 (trừ DESIGN.md, agents/)
 grep -rniE "interview|resume|headshot|mock interview" app components lib   # kỳ vọng: 0
 grep -rniE "gemini|gpt-5|openai|anthropic"            components lib       # kỳ vọng: 0 (trừ agents/)
