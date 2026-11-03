@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>MeetMate popup — mở nhầm tab</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+</style>
+</helmet>
+<div style="width: 360px; height: 520px; box-sizing: border-box; padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 14px; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="display: flex; align-items: baseline; gap: 8px">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; color: #58636F; letter-spacing: 0.04em">0.1.0</span>
+    <span style="margin-left: auto; padding: 3px 9px; border-radius: 999px; border: 1px solid #7E8B99; color: #58636F; font-size: 11px; font-weight: 600">Chưa chạy</span>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center; padding: 22px 18px; border: 1px solid #DCE2E8; border-radius: 14px; background: #FFFFFF; text-align: center">
+    <svg width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#7E8B99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block">
+      <rect x="4" y="9" width="40" height="26" rx="3.5"></rect><path d="M17 42h14"></path><path d="M24 35v7"></path>
+      <rect x="27.5" y="16.5" width="12" height="11" rx="2.5" fill="#EEF1F4" stroke="#0E7C86"></rect>
+      <path d="M8.5 13.5l12 12" stroke="#A62B22"></path>
+    </svg>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-family: Overpass, sans-serif; font-size: 16px; font-weight: 700; line-height: 21px; letter-spacing: -0.01em; color: #14181D">Hãy mở MeetMate trong tab Google Meet</span>
+      <span style="font-size: 12.5px; line-height: 17px; color: #58636F">MeetMate nghe đúng tab mà nó được mở. Ở tab khác, không có âm thanh nào để nghe.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 9px 11px; border-radius: 10px; background: #F6F8FA; border: 1px solid #EEF1F4">
+      <span style="font-size: 10.5px; letter-spacing: 0.04em; color: #58636F">TAB HIỆN TẠI</span>
+      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11.5px; color: #14181D; overflow-wrap: anywhere">notes.example.com/danh-gia-goi-sme</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; box-sizing: border-box; border: 0; border-radius: 12px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="display: block"><path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5"></path></svg>
+      Mở Google Meet
+    </button>
+    <p style="margin: 0; font-size: 11px; line-height: 15px; color: #58636F">Sau khi vào phòng họp, bấm icon MeetMate <b>ở tab đó</b> rồi bấm Bắt đầu.</p>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 8px; padding-top: 11px; border-top: 1px solid #DCE2E8">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5.5"></path><path d="M12 7.8h.01"></path></svg>
+    <span style="font-size: 10.5px; line-height: 14px; color: #58636F">Bot không vào phòng họp. Không ai thấy MeetMate ngoài trừ bạn.</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":360,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Cài MeetMate — ba bước nạp tiện ích vào Chrome</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+a:focus-visible, button:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; width: 720px; height: 600px; padding: 30px 32px; display: flex; flex-direction: column; gap: 18px; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="display: flex; align-items: baseline; gap: 10px">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">0.1.0 · Chrome MV3</span>
+    <span style="margin-left: auto; padding: 4px 10px; border-radius: 999px; background: #E1EFF1; color: #0A5F67; font-size: 11px; font-weight: 700">3 bước · khoảng 2 phút</span>
+  </div>
+
+  <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 30px; font-weight: 800; line-height: 36px; letter-spacing: -0.025em">Cài MeetMate</h1>
+  <p style="margin: -8px 0 0; font-size: 13px; line-height: 20px; color: #58636F; max-width: 60ch">Bản 0.1 chưa lên Chrome Web Store, nên bạn nạp từ thư mục. Chỉ cần Chrome 116 trở lên và một tài khoản Blaze cùng một khóa Exa.</p>
+
+  <div style="display: flex; flex-direction: column; gap: 10px">
+    <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+      <div style="display: flex; gap: 12px; box-sizing: border-box; padding: 13px 15px; border: 1px solid #DCE2E8; border-radius: 14px; background: #FFFFFF">
+        <span style="flex: none; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 13px; font-weight: 800">{{s.n}}</span>
+        <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+          <span style="font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em">{{s.title}}</span>
+          <span style="font-size: 12.5px; line-height: 18px; color: #58636F">{{s.body}}</span>
+          <code style="align-self: flex-start; padding: 4px 8px; border-radius: 7px; background: #F6F8FA; border: 1px solid #DCE2E8; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11.5px; color: #14181D">{{s.code}}</code>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+    <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 13px 15px; border: 1px solid #DCE2E8; border-radius: 14px; background: #FFFFFF">
+      <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; color: #58636F">LẤY KHÓA Ở ĐÂU</span>
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <a href="https://blaze.vn" style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; text-decoration: none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14417F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M10.5 13.5l3-3"></path><path d="M8.5 12l-2 2a3.2 3.2 0 01-4.5-4.5l2-2"></path><path d="M15.5 12l2-2a3.2 3.2 0 014.5 4.5l-2 2"></path></svg>
+          blaze.vn · khóa STT và LLM
+        </a>
+        <a href="https://dashboard.exa.ai" style="display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; text-decoration: none">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14417F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M10.5 13.5l3-3"></path><path d="M8.5 12l-2 2a3.2 3.2 0 01-4.5-4.5l2-2"></path><path d="M15.5 12l2-2a3.2 3.2 0 014.5 4.5l-2 2"></path></svg>
+          dashboard.exa.ai · khóa tìm nguồn
+        </a>
+        <span style="font-size: 11.5px; line-height: 16px; color: #58636F">Dán một lần, tiện ích giữ trong bộ nhớ máy bạn, không gửi đi đâu.</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 13px 15px; border: 1px solid #DCE2E8; border-radius: 14px; background: #FFFFFF">
+      <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; color: #58636F">TRƯỚC KHI BẤM BẮT ĐẦU</span>
+      <sc-for list="{{checks}}" as="c" hint-placeholder-count="3">
+        <span style="display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 17px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block; margin-top: 2px"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+          {{c}}
+        </span>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="margin-top: auto; display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+    <a href="P-Idle.dc.html" style="display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; box-sizing: border-box; border-radius: 12px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 14px; font-weight: 700; text-decoration: none">
+      Mở popup sau khi cài
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" aria-hidden="true" style="display: block"><path d="M5 12h13"></path><path d="M12.5 6.5L18 12l-5.5 5.5"></path></svg>
+    </a>
+    <span style="font-size: 11.5px; line-height: 16px; color: #58636F; max-width: 40ch">MeetMate không có máy chủ riêng: âm thanh đi từ máy bạn tới Blaze, kết quả tìm đi từ Exa về máy bạn.</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":720,"height":600}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      steps: [
+        { n: '1', title: 'Mở trang tiện ích của Chrome', body: 'Bật công tắc Chế độ dành cho nhà phát triển ở góc phải trên.', code: 'chrome://extensions' },
+        { n: '2', title: 'Nạp tiện ích đã giải nén', body: 'Chọn thư mục chứa MeetMate. Chrome sẽ hiện thẻ MeetMate 0.1.0 trong danh sách.', code: 'Nạp tiện ích đã giải nén → thư mục extension/' },
+        { n: '3', title: 'Ghim biểu tượng và dán hai khóa', body: 'Bấm icon tiện ích trên thanh công cụ, điền Khóa Blaze và Khóa Exa một lần.', code: 'popup → Khóa Blaze · Khóa Exa → Bắt đầu' }
+      ],
+      checks: [
+        'Tab Google Meet đang mở trong cửa sổ hiện tại',
+        'Đã cho phép micro khi popup hỏi (xem MicPerm.dc.html)',
+        'Tài khoản Blaze còn hạn mức phiên realtime'
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

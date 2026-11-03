@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Bốn tin MeetMate trong khung chat Meet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+</style>
+</helmet>
+<div style="width: 360px; height: 720px; box-sizing: border-box; display: flex; flex-direction: column; background: #FFFFFF; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="flex: none; display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #DCE2E8">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M4 5.5h16v11H9.5L4 20z"></path></svg>
+    <span style="font-size: 13px; font-weight: 600; color: #14181D">Cuộc trò chuyện</span>
+    <span style="margin-left: auto; font-size: 11px; color: #58636F">Mọi người trong phòng</span>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 14px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <span style="font-size: 10.5px; color: #58636F">Minh · 03:08</span>
+      <span style="font-size: 12.5px; line-height: 17px; color: #14181D">Khoan, để mình tra xem thị trường đang niêm yết bao nhiêu.</span>
+    </div>
+
+    <sc-for list="{{messages}}" as="m" hint-placeholder-count="4">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="display: flex; align-items: baseline; gap: 6px">
+          <span style="font-size: 10.5px; color: #58636F">{{m.sender}} · {{m.time}}</span>
+          <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 9.5px; color: #58636F">{{m.chars}} ký tự</span>
+        </div>
+        <div style="border-left: 3px solid #0E7C86; padding: 8px 10px; border-radius: 0 8px 8px 0; background: #F6F8FA">
+          <div style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; font-weight: 500; color: #0A5F67; margin-bottom: 4px">{{m.head}}</div>
+          <sc-if value="{{m.isTopic}}" hint-placeholder-val="{{false}}">
+            <div style="font-size: 12.5px; line-height: 17px; color: #14181D">{{m.body}}</div>
+          </sc-if>
+          <sc-if value="{{m.isSource}}" hint-placeholder-val="{{true}}">
+            <div style="font-size: 12.5px; font-weight: 600; line-height: 17px; color: #14181D">{{m.title}}</div>
+            <a href="https://example.com" style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; line-height: 16px; color: #14417F; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all; display: block">{{m.url}}</a>
+            <div style="font-size: 12px; line-height: 17px; color: #14181D"><span style="font-weight: 600; color: #0A5F67">Vì sao chọn:</span> {{m.body}}</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+
+    <div style="display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px dashed #7E8B99; border-radius: 8px; background: #EEF1F4">
+      <span style="font-size: 11px; font-weight: 600; color: #58636F">Khoảng trống giữa 03:31 và 03:34 là có chủ ý</span>
+      <span style="font-size: 11px; line-height: 15px; color: #58636F">Tin <span style="font-family: &quot;Overpass Mono&quot;, monospace">[3/4]</span> của chủ đề A bị hủy trước khi gửi. Meet không có dòng hệ thống, nên vụ hủy <b>không</b> hiện ở đây — chỉ hiện trong popup và thẻ kết quả.</span>
+    </div>
+
+  </div>
+
+  <div style="flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid #DCE2E8; background: #F6F8FA">
+    <span style="flex: 1; font-size: 12px; color: #58636F">Nhập tin nhắn…</span>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M4 12l16-7-5 7 5 7z"></path></svg>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"sender":{"editor":"text","default":"Bạn (MeetMate gõ)"},"$preview":{"width":360,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const sender = this.props.sender ?? 'Bạn (MeetMate gõ)';
+    const topic = (time, chars, head, body) => ({ sender, time, chars, head, body, isTopic: true, isSource: false });
+    const source = (time, chars, head, title, url, body) => ({ sender, time, chars, head, title, url, body, isTopic: false, isSource: true });
+    return {
+      sender,
+      messages: [
+        topic('03:31', 268, 'MeetMate: Chủ đề: Bảng giá gói SME Việt Nam',
+          'Thị trường SaaS Việt Nam dưới 20 nhân viên phổ biến ở khoảng 300.000–800.000 đồng mỗi tháng; các gói niêm yết công khai thường quy theo năm.'),
+        source('03:32', 181, 'MeetMate: [1/4] Bảng giá gói SME Việt Nam',
+          'Bảng giá — Base.vn', 'https://example.com/base/bang-gia',
+          'Niêm yết công khai theo người dùng/tháng và có bậc SME.'),
+        source('03:33', 196, 'MeetMate: [2/4] Bảng giá gói SME Việt Nam',
+          'Bảng giá — Misa amis', 'https://example.com/misa/bang-gia',
+          'Gói khởi tạo cho doanh nghiệp nhỏ, ghi rõ số user và thời hạn.'),
+        topic('03:34', 214, 'MeetMate: Chủ đề: Tỷ lệ chuyển đổi freemium',
+          'Mặt bằng chuyển đổi freemium sang trả phí thường ở khoảng 2–5%, phụ thuộc vào độ sâu của bậc miễn phí.')
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

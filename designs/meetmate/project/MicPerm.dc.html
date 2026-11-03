@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Trang xin quyền micro của MeetMate</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; padding: 40px 32px 48px; display: flex; flex-direction: column; gap: 28px; min-height: 100%; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="display: flex; align-items: baseline; gap: 10px">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">mic-permission.html · chạy một lần cho cả trình duyệt</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start">
+
+    <div style="display: flex; flex-direction: column; gap: 18px; box-sizing: border-box; padding: 26px 28px; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span style="flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 13px; background: #E1EFF1">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="display: block"><rect x="8.5" y="2.5" width="7" height="12.5" rx="3.5"></rect><path d="M5 12a7 7 0 0 0 14 0"></path><path d="M12 19v2.5"></path></svg>
+        </span>
+        <div style="display: flex; flex-direction: column; gap: 2px">
+          <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 22px; font-weight: 700; line-height: 28px; letter-spacing: -0.02em">Cho MeetMate nghe micro của bạn</h1>
+          <span style="font-size: 12.5px; color: #58636F">Chrome sẽ hỏi đúng một lần. Sau đó mọi cuộc họp đều chạy luôn.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; gap: 11px; align-items: flex-start">
+          <span style="flex: none; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: #0E7C86; color: #FFFFFF; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; font-weight: 500">1</span>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 13.5px; font-weight: 600; line-height: 18px">Micro của bạn</span>
+            <span style="font-size: 12.5px; line-height: 17px; color: #58636F">Meeting là hai nguồn âm. Thiếu micro thì MeetMate chỉ nghe được người khác, và ý của bạn không vào được chủ đề nào.</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 11px; align-items: flex-start">
+          <span style="flex: none; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: #E1EFF1; color: #0A5F67; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; font-weight: 500">2</span>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 13.5px; font-weight: 600; line-height: 18px">Âm thanh tab thì không cần quyền này</span>
+            <span style="font-size: 12.5px; line-height: 17px; color: #58636F">tabCapture lấy tiếng của tab Meet ngay trong cú bấm Bắt đầu.</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 11px; align-items: flex-start">
+          <span style="flex: none; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 7px; background: #E1EFF1; color: #0A5F67; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; font-weight: 500">3</span>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 13.5px; font-weight: 600; line-height: 18px">Không có gì được lưu lại trên máy chủ</span>
+            <span style="font-size: 12.5px; line-height: 17px; color: #58636F">Âm thanh đi thẳng sang Blaze STT rồi thành chữ trong bộ nhớ tab. Tắt MeetMate là hết.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center">
+        <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 22px; box-sizing: border-box; border: 0; border-radius: 12px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Cho phép micro</button>
+        <span style="font-size: 12px; color: #58636F">Tab này sẽ tự đóng sau khi bạn chọn.</span>
+      </div>
+
+      <div style="display: flex; gap: 9px; align-items: flex-start; padding: 11px 13px; border-radius: 11px; background: #FFF3DB; border: 1px solid #F0D9A8">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6E4A00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block; margin-top: 1px"><path d="M12 3.8L21.2 20H2.8z"></path><path d="M12 9.5v4.5"></path><path d="M12 17h.01"></path></svg>
+        <span style="font-size: 12px; line-height: 16px; color: #6E4A00">Đeo tai nghe khi bật micro. Nếu bạn bật loa, micro sẽ bắt lại đúng câu người khác vừa nói và MeetMate nhận diện nó là câu trùng trong cửa sổ 5 giây.</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; padding: 18px 20px; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #0A5F67">ĐỊNH DẠNG YÊU CẦU</span>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <sc-for list="{{specs}}" as="s" hint-placeholder-count="5">
+            <div style="display: flex; gap: 10px; align-items: baseline; padding: 5px 0; border-bottom: 1px solid #EEF1F4">
+              <span style="flex: none; width: 118px; font-size: 11.5px; color: #58636F">{{s.k}}</span>
+              <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11.5px; color: #14181D">{{s.v}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 16px 20px; border: 1px dashed #7E8B99; border-radius: 16px; background: #EEF1F4">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #58636F">NẾU BẠN BẤM KHÔNG</span>
+        <span style="font-size: 12.5px; line-height: 17px; color: #14181D">MeetMate không hỏng. Nó chạy với một nguồn âm và popup hiện dòng cảnh báo màu hổ phách: “Không dùng được micro — chỉ nghe âm thanh từ người khác”.</span>
+        <span style="font-size: 12.5px; line-height: 17px; color: #14181D">Muốn bật lại: icon MeetMate → <b>Bật lại micro</b>, hoặc xóa quyền ở <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px">chrome://settings/content/microphone</span>.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display: flex; gap: 24px; flex-wrap: wrap; padding-top: 16px; border-top: 1px solid #DCE2E8">
+    <a href="P-NoMic.dc.html" style="font-size: 12.5px; font-weight: 600; text-decoration: none; color: #14417F">← Xem trạng thái suy giảm trong popup</a>
+    <a href="P-Idle.dc.html" style="font-size: 12.5px; font-weight: 600; text-decoration: none; color: #14417F">Popup khi đã có khóa</a>
+    <span style="margin-left: auto; font-size: 11.5px; color: #58636F">Trang này là một phần của tiện ích, không phải web app — không có tài khoản, không có máy chủ MeetMate.</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      specs: [
+        { k: 'Model STT', v: 'blaze-stt-1.5-realtime' },
+        { k: 'Ngôn ngữ', v: 'language = vi' },
+        { k: 'Lấy mẫu', v: '16 000 Hz · s16le' },
+        { k: 'Frame', v: '1 600 mẫu = 100 ms' },
+        { k: 'Cửa sổ transcript', v: '120 000 ms' },
+        { k: 'Khử trùng', v: '5 000 ms' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

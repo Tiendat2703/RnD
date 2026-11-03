@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Tài liệu — lớp mục tiêu chưa đấu nối với luồng AI</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 100%; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <header style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-sizing: border-box; height: 64px; padding: 0 24px; background: #FFFFFF; border-bottom: 1px solid #DCE2E8">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <nav style="display: flex; align-items: center; gap: 2px" aria-label="Điều hướng chính">
+      <a href="Meetings.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cuộc họp</a>
+      <a href="Docs.dc.html" aria-current="page" style="padding: 7px 12px; border-radius: 9px; background: #E1EFF1; color: #0A5F67; font-size: 13.5px; font-weight: 600; text-decoration: none">Tài liệu</a>
+      <a href="Install.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cài MeetMate</a>
+      <a href="Upgrade.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Nâng cấp</a>
+      <a href="Account.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Tài khoản</a>
+    </nav>
+    <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; border: 1px dashed #7E8B99; color: #58636F; font-size: 11px; font-weight: 600">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="display: block"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5.5M12 7.8h.01"></path></svg>
+      Lớp mục tiêu — chưa đấu nối với luồng AI
+    </span>
+  </header>
+
+  <main style="box-sizing: border-box; padding: 22px 24px 32px; max-width: 1400px; display: flex; flex-direction: column; gap: 18px">
+
+    <div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+        <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 32px">Tài liệu</h1>
+        <p style="margin: 0; font-size: 13px; line-height: 20px; color: #58636F; max-width: 66ch">Bản ghi và bộ nguồn của mỗi cuộc họp, xuất được ra file. Đây là nơi thay thế mục hồ sơ cũ: nội dung sinh ra từ phiên đã nghe, không phải thứ bạn tải lên.</p>
+      </div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 10px">
+        <label for="dq" style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; box-sizing: border-box; border: 1px solid #7E8B99; border-radius: 10px; background: #FFFFFF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+          <span id="dql" style="display: none">Tìm tài liệu</span>
+          <input id="dq" type="search" placeholder="Tìm trong bản ghi…" aria-labelledby="dql" style="width: 180px; border: 0; background: none; font-family: inherit; font-size: 13px">
+        </label>
+        <button type="button" style="display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; box-sizing: border-box; border: 1px solid #7E8B99; border-radius: 10px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14181D" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" style="display: block"><path d="M12 4v11"></path><path d="M7.5 10.5L12 15l4.5-4.5"></path><path d="M5 19h14"></path></svg>
+          Xuất .md
+        </button>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap">
+
+      <div style="flex: 0 1 320px; min-width: 260px; display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{docs}}" as="d" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; padding: 11px 13px; border: 1px solid {{d.bd}}; border-radius: 12px; background: {{d.bg}}">
+            <span style="font-family: Overpass, sans-serif; font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em; line-height: 18px">{{d.title}}</span>
+            <span style="font-size: 11.5px; color: #58636F">{{d.when}} · {{d.kind}}</span>
+            <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: {{d.monoFg}}">{{d.size}}</span>
+          </div>
+        </sc-for>
+        <span style="padding: 2px 4px; font-size: 11.5px; line-height: 16px; color: #58636F">Bốn loại file trên một cuộc họp. Chưa có máy chủ lưu: bật đồng bộ là một quyết định riêng.</span>
+      </div>
+
+      <div style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 0; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid #DCE2E8">
+          <span style="font-family: Overpass, sans-serif; font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em">Chốt giá gói SME · bộ nguồn</span>
+          <span style="padding: 3px 8px; border-radius: 999px; background: #E1EFF1; color: #0A5F67; font-size: 10.5px; font-weight: 700">6 chủ đề · 21 nguồn</span>
+          <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">31 thg 10, 2026 · 14:20</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 14px; padding: 16px">
+          <sc-for list="{{topics}}" as="t" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: baseline; gap: 10px">
+                <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; color: #0A5F67">{{t.eyebrow}}</span>
+                <span style="font-family: Overpass, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -0.01em">{{t.title}}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 5px; box-sizing: border-box; padding: 10px 12px; border-left: 2px solid #0E7C86; border-radius: 0 10px 10px 0; background: #F6F8FA">
+                <sc-for list="{{t.rows}}" as="r" hint-placeholder-count="3">
+                  <div style="display: flex; flex-direction: column; gap: 1px">
+                    <a href="{{r.url}}" style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; line-height: 15px; color: #14417F; text-decoration: underline; text-decoration-color: #1B5FBF; overflow-wrap: anywhere">{{r.url}}</a>
+                    <span style="font-size: 11.5px; line-height: 16px; color: #58636F">{{r.title}} · {{r.chars}} ký tự</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <div style="display: flex; align-items: center; gap: 10px; padding-top: 12px; border-top: 1px solid #DCE2E8">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M4 12.5l5 5L20 6.5"></path></svg>
+            <span style="font-size: 11.5px; line-height: 16px; color: #58636F">Mỗi đường dẫn trong tài liệu đều có mặt trong kết quả tìm nguồn của phiên đó. Tin đã gửi: 4/4, tin bị hủy: 1.</span>
+            <button type="button" style="margin-left: auto; height: 32px; padding: 0 12px; border: 1px solid #7E8B99; border-radius: 9px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Xem tin đã gửi</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const src = (n, title, url) => ({ url, title, chars: [112, 86, 143, 97, 68][n % 5] });
+    return {
+      docs: [
+        { title: 'Chốt giá gói SME', when: '31 thg 10, 2026', kind: 'bản ghi', size: '12,4 KB · transcript.md', bg: '#FFFFFF', bd: '#7E8B99', monoFg: '#58636F' },
+        { title: 'Chốt giá gói SME', when: '31 thg 10, 2026', kind: 'bộ nguồn', size: '6 KB · sources.json', bg: '#F6F8FA', bd: '#DCE2E8', monoFg: '#58636F' },
+        { title: 'Chốt giá gói SME', when: '31 thg 10, 2026', kind: 'tin đã gửi', size: '4 tin · 859 ký tự', bg: '#FFFFFF', bd: '#DCE2E8', monoFg: '#0A5F67' },
+        { title: 'Chốt giá gói SME', when: '31 thg 10, 2026', kind: 'tóm tắt', size: '3 chủ đề · 900 ký tự', bg: '#FFFFFF', bd: '#DCE2E8', monoFg: '#58636F' },
+        { title: 'Đồng bộ tiến độ sprint 12', when: 'Hôm nay', kind: 'đang ghi', size: '12 phút · 2 chủ đề', bg: '#EEF6F7', bd: '#0E7C86', monoFg: '#0A5F67' }
+      ],
+      topics: [
+        {
+          eyebrow: 'CHỦ ĐỀ 01',
+          title: 'Bảng giá gói SME Việt Nam',
+          rows: [
+            src(0, 'Bảng giá SME — Blaze', 'https://blaze.vn/bang-gia-sme'),
+            src(1, 'So sánh gói theo số ghế', 'https://meks.md/so-sanh-goi-the'),
+            src(2, 'Hỏi đáp về thanh toán', 'https://help.blaze.vn/thanh-toan')
+          ]
+        },
+        {
+          eyebrow: 'CHỦ ĐỀ 02',
+          title: 'Rào cản pháp lý khi lưu transcript',
+          rows: [
+            src(3, 'Quy định lưu âm thanh cuộc gọi', 'https://thuvienphapluat.vn/luu-am-thanh'),
+            src(4, 'GDPR với bản ghi họp', 'https://gdpr.eu/meeting-transcripts')
+          ]
+        }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

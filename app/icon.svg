@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- app/icon.svg — dấu MeetMate. Next đưa nó ra ở /icon.svg và dùng làm
+       favicon, thay cho /favicon.ico 404 mà console của trang "/" vẫn kêu.
+       Nền #12171D là ground của chrome tối, nét #3FA3AE là petrol — màu
+       "thứ MeetMate tự viết ra". Ở 16px, nét mảnh 1,5 biến mất nên nét ở
+       đây dày 2 và khoảng hở giữa hai nét ≥ 1 đơn vị. -->
+  <rect width="24" height="24" rx="5.5" fill="#12171D"/>
+  <g fill="none" stroke="#3FA3AE" stroke-width="2" stroke-linecap="round">
+    <path d="M4 14c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+    <path d="M8 14v3a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-3"/>
+  </g>
+  <circle cx="12" cy="4.5" r="1.6" fill="#7FD2DB"/>
+</svg>

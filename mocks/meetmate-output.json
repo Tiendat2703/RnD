@@ -1,0 +1,49 @@
+{
+  "atMs": 68000,
+  "events": [
+    {
+      "kind": "topic",
+      "topic": {
+        "topic": "Bảng giá gói SME Việt Nam",
+        "keywords": ["SME", "giá", "gói", "VND", "thị trường"],
+        "query": "bảng giá phần mềm cho SME Việt Nam 2026"
+      }
+    },
+    {
+      "kind": "posted",
+      "message": "MeetMate: Chủ đề: Bảng giá gói SME Việt Nam\nThị trường SaaS Việt Nam dưới 20 nhân viên phổ biến ở khoảng 300.000–800.000 đồng mỗi tháng; các gói niêm yết công khai thường quy theo năm."
+    },
+    {
+      "kind": "posted",
+      "message": "MeetMate: [1/4] Bảng giá — Base.vn\nhttps://example.com/base/bang-gia\nVì sao chọn: Niêm yết công khai theo người dùng/tháng và có bậc SME."
+    },
+    {
+      "kind": "posted",
+      "message": "MeetMate: [2/4] Bảng giá — Misa amis\nhttps://example.com/misa/bang-gia\nVì sao chọn: Gói khởi tạo cho doanh nghiệp nhỏ, ghi rõ số user và thời hạn."
+    },
+    {
+      "kind": "cancelled",
+      "pending": "MeetMate: [3/4] …",
+      "reason": "Chủ đề đổi sang “Tỷ lệ chuyển đổi freemium” trước khi tin này gửi."
+    },
+    {
+      "kind": "topic",
+      "topic": {
+        "topic": "Tỷ lệ chuyển đổi freemium",
+        "keywords": ["freemium", "chuyển đổi"],
+        "query": "freemium to paid conversion rate benchmark 2026"
+      }
+    },
+    {
+      "kind": "posted",
+      "message": "MeetMate: Chủ đề: Tỷ lệ chuyển đổi freemium\nMặt bằng chuyển đổi freemium sang trả phí thường ở khoảng 2–5%, phụ thuộc vào độ sâu của bậc miễn phí."
+    },
+    {
+      "kind": "idle",
+      "from": 180000,
+      "to": 190000,
+      "posted": 0,
+      "note": "l-10 và l-11 là chuyện phiếm → chủ đề rỗng → không gửi gì."
+    }
+  ]
+}

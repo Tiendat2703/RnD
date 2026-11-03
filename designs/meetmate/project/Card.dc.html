@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Thẻ kết quả research — bốn tin và một tin bị hủy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+</style>
+</helmet>
+<div style="width: 600px; height: 520px; box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="display: flex; align-items: center; gap: 10px">
+    <span style="font-family: Overpass, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: #58636F">Kết quả research</span>
+    <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">03:31 · 5 tin · 1 hủy</span>
+  </div>
+
+  <sc-for list="{{posts}}" as="p" hint-placeholder-count="4">
+    <div style="display: flex; flex-direction: column; gap: {{p.gap}}; box-sizing: border-box; padding: {{p.pad}}; border-radius: 12px; border: 1px solid {{p.border}}; background: {{p.bg}}; position: relative">
+      <div style="display: flex; align-items: center; gap: 7px">
+        <span style="padding: 2px 7px; border-radius: 5px; background: {{p.eyebrowBg}}; color: {{p.eyebrowFg}}; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.02em; flex: none">{{p.eyebrow}}</span>
+        <sc-if value="{{p.isTopic}}" hint-placeholder-val="{{false}}">
+          <span style="font-size: 10.5px; color: #58636F; overflow-wrap: anywhere">{{p.query}}</span>
+        </sc-if>
+        <sc-if value="{{p.isCancelled}}" hint-placeholder-val="{{false}}">
+          <span style="margin-left: auto; padding: 2px 7px; border-radius: 5px; background: #DCE2E8; color: #58636F; font-size: 10px; font-weight: 600; flex: none">đã hủy</span>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{p.isTopic}}" hint-placeholder-val="{{false}}">
+        <div style="font-family: Overpass, sans-serif; font-size: 16px; font-weight: 700; line-height: 21px; letter-spacing: -0.01em; color: #14181D">{{p.title}}</div>
+        <div style="font-size: 12.5px; line-height: 17px; color: #14181D">{{p.reason}}</div>
+      </sc-if>
+
+      <sc-if value="{{p.isSource}}" hint-placeholder-val="{{false}}">
+        <div style="font-size: {{p.titleSize}}; font-weight: 500; line-height: 17px; color: {{p.bodyFg}}">{{p.title}}</div>
+        <a href="https://example.com" style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; line-height: 15px; color: {{p.urlFg}}; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all">{{p.url}}</a>
+        <div style="font-size: {{p.titleSize}}; line-height: 17px; color: {{p.bodyFg}}"><span style="font-weight: 600; color: {{p.reasonFg}}">Vì sao chọn:</span> {{p.reason}}</div>
+      </sc-if>
+    </div>
+  </sc-for>
+
+  <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #DCE2E8; display: flex; align-items: center; gap: 7px">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M20 6.5L9.5 17 4 11.5"></path></svg>
+    <span style="font-size: 10.5px; line-height: 14px; color: #58636F">Mọi đường dẫn đều nằm trong kết quả tìm nguồn · mỗi tin ≤ 450 ký tự, gửi cách nhau 600 ms</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#0E7C86"},"$preview":{"width":600,"height":520}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const accent = this.props.accent ?? '#0E7C86';
+    const dark = '#0A5F67';
+    const topic = {
+      isTopic: true, isSource: false, isCancelled: false,
+      gap: '7px', pad: '11px 12px', border: '#DCE2E8', bg: '#FFFFFF',
+      eyebrowBg: accent, eyebrowFg: '#FFFFFF', eyebrow: 'MeetMate: Chủ đề',
+      title: 'Bảng giá gói SME Việt Nam',
+      query: 'truy vấn: bảng giá phần mềm cho SME Việt Nam 2026',
+      reason: 'Thị trường SaaS Việt Nam dưới 20 nhân viên phổ biến ở khoảng 300.000–800.000 đồng mỗi tháng; các gói niêm yết công khai thường quy theo năm.'
+    };
+    const src = (i, n, title, url, reason, cancelled) => ({
+      isTopic: false, isSource: true, isCancelled: !!cancelled,
+      gap: '5px', pad: cancelled ? '8px 12px' : '10px 12px',
+      border: cancelled ? '#DCE2E8' : '#DCE2E8',
+      bg: cancelled ? '#EEF1F4' : '#FFFFFF',
+      eyebrowBg: cancelled ? '#DCE2E8' : '#E1EFF1',
+      eyebrowFg: cancelled ? '#58636F' : dark,
+      eyebrow: 'MeetMate: [' + i + '/' + n + ']',
+      title, url, reason,
+      titleSize: cancelled ? '11.5px' : '12.5px',
+      bodyFg: cancelled ? '#58636F' : '#14181D',
+      urlFg: cancelled ? '#58636F' : '#14417F',
+      reasonFg: cancelled ? '#58636F' : dark
+    });
+    const secondTopic = {
+      isTopic: true, isSource: false, isCancelled: false,
+      gap: '6px', pad: '10px 12px', border: accent, bg: '#FFFFFF',
+      eyebrowBg: accent, eyebrowFg: '#FFFFFF', eyebrow: 'MeetMate: Chủ đề',
+      title: 'Tỷ lệ chuyển đổi freemium',
+      query: 'chủ đề mới — 4 tin của chủ đề cũ đang chờ bị hủy',
+      reason: 'Mặt bằng chuyển đổi freemium sang trả phí thường ở khoảng 2–5%, phụ thuộc vào độ sâu của bậc miễn phí.'
+    };
+    return {
+      accent,
+      posts: [
+        topic,
+        src(1, 4, 'Bảng giá — Base.vn', 'https://example.com/base/bang-gia', 'Niêm yết công khai theo người dùng/tháng và có bậc SME.', false),
+        src(3, 4, 'Bảng giá — Topline AMIS', 'https://example.com/topline/amis-bang-gia', 'Gói khởi tạo cho doanh nghiệp nhỏ, ghi rõ số user và thời hạn.', true),
+        secondTopic
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

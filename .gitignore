@@ -1,0 +1,46 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+/playwright-report/
+/test-results/
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env*.local
+.env
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# scratch: ảnh chụp UI, log chạy suite, file của trình phục vụ canvas —
+# đây là output của scripts/, dựng lại được, không đưa vào repo
+/shots/
+/artifacts/
+/.run/
+/.dev-server.log
+/.final-gate.log
+/.shots-run.log
+/.smoke-run.log
+designs/*/.artifact-server.json
+designs/*/.artifact-server.log

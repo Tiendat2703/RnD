@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Trang upgrade — gói &amp; giá là một route, không phải một khung</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 100%; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <header style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-sizing: border-box; height: 64px; padding: 0 24px; background: #FFFFFF; border-bottom: 1px solid #DCE2E8">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <nav style="display: flex; align-items: center; gap: 2px" aria-label="Điều hướng chính">
+      <a href="Meetings.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cuộc họp</a>
+      <a href="Docs.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Tài liệu</a>
+      <a href="Install.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cài MeetMate</a>
+      <a href="Upgrade.dc.html" aria-current="page" style="padding: 7px 12px; border-radius: 9px; background: #E1EFF1; color: #0A5F67; font-size: 13.5px; font-weight: 600; text-decoration: none">Nâng cấp</a>
+      <a href="Account.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Tài khoản</a>
+    </nav>
+    <span style="margin-left: auto; font-size: 11.5px; color: #58636F">trần anh khoa · máy này</span>
+  </header>
+
+  <main style="box-sizing: border-box; padding: 22px 24px 40px; max-width: 1240px; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; flex-direction: column; gap: 5px">
+      <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 32px">Gói &amp; giá</h1>
+      <p style="margin: 0; font-size: 13px; line-height: 20px; color: #58636F; max-width: 72ch">Đọc một bảng giá là việc của mắt, không phải của ngón tay — nên trang này dùng hết bề ngang: quyết định ở cột trái, lý do ở cột phải, và hai cột cùng đọc ra một con số.</p>
+    </div>
+
+    <div role="note" style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-radius: 12px; background: #14181D; color: #FFFFFF; font-size: 13px; font-weight: 600; text-align: center">
+      <span style="flex: none; padding: 3px 10px; border-radius: 999px; background: #FFFFFF; color: #14181D; font-family: &quot;Overpass Mono&quot;, ui-monospace, monospace; font-size: 12px; letter-spacing: 0.05em">DEAL50</span>
+      <span>Ưu đãi có thời hạn: mã DEAL50 giảm 50% chu kỳ đầu tiên.</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start">
+
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+
+        <div role="radiogroup" aria-label="Chọn cách tính tiền" style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #F6F8FA">
+          <button type="button" role="radio" aria-checked="true" style="flex: 1 1 0; min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(20,24,29,0.14); color: #14181D; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Không giới hạn</button>
+          <button type="button" role="radio" aria-checked="false" style="flex: 1 1 0; min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: #58636F; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Tín dụng</button>
+          <button type="button" role="radio" aria-checked="false" style="flex: 1 1 0; min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: #58636F; font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer">Tùy chọn</button>
+        </div>
+
+        <section aria-label="Gói Không giới hạn" style="display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; padding: 18px; border: 1px solid #DCE2E8; border-radius: 16px; background: #F6F8FA">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <h2 style="margin: 0; font-family: Overpass, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.01em">Không giới hạn</h2>
+              <p style="margin: 0; font-size: 13px; line-height: 20px; color: #58636F; max-width: 44ch">Một gói, không đồng hồ đếm. Tất cả bên dưới đều đã nằm trong giá.</p>
+            </div>
+            <span style="flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; background: #14181D; color: #FFFFFF; font-size: 12px; font-weight: 600">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block; flex: none"><path d="M13 2.5 4.5 13.5h6l-1.5 8 8.5-11h-6z"></path></svg>
+              Nên chọn
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap">
+            <button type="button" style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid #7E8B99; border-radius: 999px; background: transparent; color: #14181D; font-family: inherit; font-size: 12px; cursor: pointer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#14181D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block; flex: none"><path d="M3.5 9.5V7.2A1.7 1.7 0 0 1 5.2 5.5h13.6a1.7 1.7 0 0 1 1.7 1.7v2.3a2.5 2.5 0 0 0 0 5v2.3a1.7 1.7 0 0 1-1.7 1.7H5.2a1.7 1.7 0 0 1-1.7-1.7v-2.3a2.5 2.5 0 0 0 0-5z"></path><path d="M12 6.5v11"></path></svg>
+              <span>mã <strong style="font-family: &quot;Overpass Mono&quot;, ui-monospace, monospace; letter-spacing: 0.05em">DEAL50</strong></span>
+            </button>
+            <div role="radiogroup" aria-label="Cách hiển thị giá" style="display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: #E7EBF0">
+              <button type="button" role="radio" aria-checked="false" style="min-height: 28px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #58636F; font-family: inherit; font-size: 12px; cursor: pointer">Tổng</button>
+              <button type="button" role="radio" aria-checked="true" style="min-height: 28px; padding: 0 10px; border: 0; border-radius: 7px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(20,24,29,0.14); color: #14181D; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Mỗi tháng</button>
+              <button type="button" role="radio" aria-checked="false" style="min-height: 28px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: #58636F; font-family: inherit; font-size: 12px; cursor: pointer">Mỗi cuộc gọi</button>
+            </div>
+          </div>
+
+          <div role="radiogroup" aria-label="Kỳ hạn thanh toán" style="display: flex; flex-direction: column; gap: 8px">
+            <button type="button" role="radio" aria-checked="false" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF; color: #14181D; font-family: inherit; text-align: left; cursor: pointer">
+              <span aria-hidden="true" style="flex: none; width: 18px; height: 18px; border: 1.5px solid rgba(20,24,29,0.35); border-radius: 50%"></span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600">Hàng tháng
+                  <em style="padding: 2px 7px; border-radius: 999px; background: #E1EFF1; color: #0A5F67; font-family: Overpass, sans-serif; font-size: 10px; font-style: normal; font-weight: 700">Nhiều người chọn</em>
+                </span>
+              </span>
+              <span style="display: flex; align-items: baseline; justify-content: flex-end; gap: 6px; flex-wrap: wrap; flex: none">
+                <s style="color: #58636F; font-size: 12px; opacity: 0.75">$149.90</s>
+                <strong style="font-family: Overpass, sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.01em">$74.95</strong>
+                <span style="font-size: 12px; color: #58636F">/ tháng</span>
+              </span>
+            </button>
+            <button type="button" role="radio" aria-checked="true" style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid #14181D; box-shadow: 0 0 0 1px #14181D; border-radius: 12px; background: #FFFFFF; color: #14181D; font-family: inherit; text-align: left; cursor: pointer">
+              <span aria-hidden="true" style="flex: none; display: grid; place-items: center; width: 18px; height: 18px; border: 1.5px solid #14181D; border-radius: 50%"><span style="width: 10px; height: 10px; border-radius: 50%; background: #14181D"></span></span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600">Hàng năm
+                  <em style="padding: 2px 7px; border-radius: 999px; background: #E1EFF1; color: #0A5F67; font-family: Overpass, sans-serif; font-size: 10px; font-style: normal; font-weight: 700">Hời nhất</em>
+                </span>
+              </span>
+              <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex: none">
+                <span style="display: flex; align-items: baseline; gap: 6px">
+                  <s style="color: #58636F; font-size: 12px; opacity: 0.75">$49.99</s>
+                  <strong style="font-family: Overpass, sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.01em">$25.00</strong>
+                  <span style="font-size: 12px; color: #58636F">/ tháng</span>
+                </span>
+                <em style="font-style: normal; font-size: 11.5px; color: #58636F">$299.95 / năm</em>
+              </span>
+            </button>
+          </div>
+
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+            <sc-for list="{{features}}" as="f" hint-placeholder-count="4">
+              <li style="display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 19px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#14181D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block; margin-top: 2px"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"></path></svg>
+                {{f}}
+              </li>
+            </sc-for>
+          </ul>
+
+          <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: 11px; background: #14181D; color: #FFFFFF; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Dùng Không giới hạn · Năm $299.95</button>
+
+          <p style="margin: 0; font-size: 12.5px; color: #58636F">
+            hoặc, chỉ cần một tuần?
+            <button type="button" style="padding: 0; border: 0; background: none; color: #14417F; font-family: inherit; font-size: 12.5px; font-weight: 600; text-decoration: underline; text-decoration-color: #9DB6D6; cursor: pointer">Gói tuần $39.00 <s style="opacity: 0.75; text-decoration: none">$78.00</s></button>
+          </p>
+        </section>
+
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+
+        <section aria-labelledby="upg-bal" style="display: flex; flex-direction: column; box-sizing: border-box; padding: 16px; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+          <p id="upg-bal" style="margin: 0 0 8px; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #58636F">Gói hiện tại</p>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <strong style="font-size: 14px; font-weight: 600">Miễn phí</strong>
+            <span style="font-size: 12px; line-height: 17px; color: #58636F">Bạn đang ở mức miễn phí. Nâng cấp để không phải đếm tín dụng.</span>
+          </div>
+          <div role="img" aria-label="Còn 6 trong 9 phiên miễn phí" style="position: relative; margin-top: 12px; height: 4px; border-radius: 999px; background: #DCE2E8">
+            <span style="position: absolute; inset: 0 auto 0 0; width: 66%; border-radius: 999px; background: #14181D"></span>
+          </div>
+          <span style="margin-top: 6px; font-size: 11.5px; color: #58636F">6 trong 9 phiên còn lại</span>
+          <p style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid #DCE2E8; font-size: 12px; color: #58636F">
+            Chưa gắn phương thức thanh toán
+            <a href="Account.dc.html" style="display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; text-decoration: none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14417F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block; flex: none"><path d="M6 3.5h12v17l-3-2-3 2-3-2-3 2z"></path><path d="M9 8.5h6M9 12.5h4"></path></svg>
+              Lịch sử thanh toán
+            </a>
+          </p>
+        </section>
+
+        <section aria-labelledby="upg-matrix" style="display: flex; flex-direction: column; box-sizing: border-box; padding: 16px; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+          <p id="upg-matrix" style="margin: 0 0 8px; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #58636F">Mỗi gói gồm gì</p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12px">
+            <thead>
+              <tr>
+                <th scope="col" style="padding: 7px 8px; text-align: left; vertical-align: bottom"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)">Gói</span></th>
+                <th scope="col" style="padding: 7px 8px; text-align: left; vertical-align: bottom; border-bottom: 2px solid #DCE2E8; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap">Miễn phí<em style="display: block; font-family: &quot;Be Vietnam Pro&quot;, sans-serif; font-style: normal; font-weight: 400; font-size: 10.5px; line-height: 14px; color: #58636F">gói này</em></th>
+                <th scope="col" style="padding: 7px 8px; text-align: left; vertical-align: bottom; border-bottom: 2px solid #DCE2E8; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap">Tín dụng<em style="display: block; font-family: &quot;Be Vietnam Pro&quot;, sans-serif; font-style: normal; font-weight: 400; font-size: 10.5px; line-height: 14px; color: #58636F">mua một lần</em></th>
+                <th scope="col" aria-current="true" style="padding: 7px 8px; text-align: left; vertical-align: bottom; border-bottom: 2px solid #DCE2E8; box-shadow: inset 0 -2px 0 #14181D; background: #F6F8FA; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap">Không giới hạn<em style="display: block; font-family: &quot;Be Vietnam Pro&quot;, sans-serif; font-style: normal; font-weight: 400; font-size: 10.5px; line-height: 14px; color: #58636F">không đồng hồ đếm</em></th>
+                <th scope="col" style="padding: 7px 8px; text-align: left; vertical-align: bottom; border-bottom: 2px solid #DCE2E8; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap">Tùy chọn<em style="display: block; font-family: &quot;Be Vietnam Pro&quot;, sans-serif; font-style: normal; font-weight: 400; font-size: 10.5px; line-height: 14px; color: #58636F">chỉ công cụ</em></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{matrix}}" as="r" hint-placeholder-count="5">
+                <tr>
+                  <th scope="row" style="padding: 7px 8px; text-align: left; font-weight: 600; border-bottom: 1px solid #DCE2E8">{{r.object}}</th>
+                  <td style="padding: 7px 8px; border-bottom: 1px solid #DCE2E8">{{r.free}}</td>
+                  <td style="padding: 7px 8px; border-bottom: 1px solid #DCE2E8">{{r.credits}}</td>
+                  <td style="padding: 7px 8px; border-bottom: 1px solid #DCE2E8; background: #F6F8FA">{{r.unlimited}}</td>
+                  <td style="padding: 7px 8px; border-bottom: 1px solid #DCE2E8">{{r.custom}}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </section>
+
+        <section aria-labelledby="upg-eq" style="display: flex; flex-direction: column; box-sizing: border-box; padding: 16px; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+          <p id="upg-eq" style="margin: 0 0 8px; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; color: #58636F">Một tín dụng mua gì</p>
+          <ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px">
+            <sc-for list="{{equations}}" as="e" hint-placeholder-count="4">
+              <li style="display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 18px; color: #58636F">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block; margin-top: 2px"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"></path></svg>
+                {{e}}
+              </li>
+            </sc-for>
+          </ul>
+        </section>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      features: [
+        'Không giới hạn cuộc gọi trực tiếp (và mock)',
+        'Chế độ riêng tư đầy đủ',
+        'Không giới hạn lượt tải resume PDF',
+        'Không giới hạn ảnh chân dung AI'
+      ],
+      matrix: [
+        { object: 'Cuộc gọi trực tiếp (và mock)', free: 'Tính vào 9 phiên', credits: '0,5 tín dụng / 30 phút', unlimited: 'Không giới hạn', custom: 'Vẫn tính tín dụng' },
+        { object: 'Tải resume PDF', free: '—', credits: '0,5 tín dụng', unlimited: 'Không giới hạn', custom: 'Không giới hạn với Resume Maker' },
+        { object: 'Ảnh chân dung AI', free: '—', credits: '0,5 tín dụng', unlimited: 'Không giới hạn', custom: 'Không giới hạn với Headshots' },
+        { object: 'Chế độ riêng tư', free: '—', credits: 'Có', unlimited: 'Có', custom: '—' },
+        { object: 'Giữ resume ấm (5 phút)', free: '0,5 tín dụng', credits: '0,5 tín dụng', unlimited: 'Có', custom: '0,5 tín dụng' }
+      ],
+      equations: [
+        '0,5 tín dụng = 30 phút cuộc gọi trực tiếp hoặc mock',
+        '0,5 tín dụng = 1 lượt tải resume PDF',
+        '0,5 tín dụng = 1 ảnh chân dung AI',
+        'Rời cuộc gọi giữ phiên ấm 5 phút; vào lại tính 0,5 chứ không tính cả cuộc'
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

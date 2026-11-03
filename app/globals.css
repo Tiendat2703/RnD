@@ -1,0 +1,685 @@
+/*
+ * app/globals.css — chrome của trang `/` (MeetMate đang nghe một cuộc họp).
+ *
+ * Dashboard có stylesheet và token scope riêng (`.dash` trong
+ * app/dashboard/dashboard.css) nên các quy tắc ở đó không dùng được cho route
+ * này. Hai chrome vì vậy có hai bộ rule — nhưng CHỮ thì dùng chung một nguồn
+ * (lib/formatChat.ts, lib/types.ts): định dạng tin, trần 450 ký tự, nhãn kênh
+ * âm, nhãn pipeline, chuỗi trạng thái suy giảm. Tách phần chữ là tách lời hứa
+ * khỏi thứ người dùng thật sự nhận được.
+ *
+ * Xám nhỏ nhất ở đây là --ink-3 (#8D97A3 ≈ 4.9:1 trên nền panel). Bản cũ dùng
+ * #5F626C/#686B75/#777A84 cho nhãn 9–10px — mắt tốt còn phải nheo, và người ta
+ * đọc kết quả research chính bằng những nhãn đó.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #12171D; /* MeetMate ground, dark tier */
+  --panel: #16202B;
+  --line: rgba(255, 255, 255, 0.08);
+  --edge: #3E4C59; /* biên control: để phân cách thì hairline đủ, để bo một ô nhập thì không */
+
+  --ink-1: #E6EAF0;
+  --ink-2: #BFCAD6;
+  --ink-3: #8D97A3;
+
+  /* MeetMate roles — cùng tên với dashboard.css để sau này gộp một chỗ còn hiểu được */
+  --provenance: #3FA3AE; /* petrol: thứ MeetMate tự viết ra */
+  --provenance-ink: #0B1E20; /* chữ trên nền petrol — trắng chỉ đạt 2.96:1 */
+  --provenance-soft: #7FD2DB; /* petrol làm chữ trên nền tối */
+  --provenance-tint: rgba(63, 163, 174, 0.14);
+  --source: #9BC4F2; /* một trang ngoài đang nói, không phải MeetMate */
+  --source-line: #4E7FB5;
+  --boundary: #5A6875;
+  --warn-band: #3A2F14;
+  --warn-text: #F0CE8C;
+  --stage-pending: #2A3441;
+  --chat-bg: #1A2431;
+
+  --muted: var(--ink-2);
+  --accent: var(--provenance);
+  --accent-ink: var(--provenance-ink);
+  --danger: #E4655E;
+
+  --font-ui: var(--font-bv), "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-op), Overpass, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-opm), "Overpass Mono", ui-monospace, Menlo, monospace;
+
+  --sp-xxs: 4px;
+  --sp-xs: 8px;
+  --sp-sm: 12px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --radius-field: 10px;
+  --radius-card: 12px;
+  --radius-pill: 9999px;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+body {
+  color: var(--ink-1);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input { color: inherit; font: inherit; }
+button { border: 0; background: transparent; cursor: pointer; }
+button:focus-visible,
+input:focus-visible,
+a:focus-visible { outline: 2px solid var(--provenance-soft); outline-offset: 2px; }
+
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* 1. Shell + header — một đồng hồ duy nhất                            */
+/* ------------------------------------------------------------------ */
+
+.meeting-shell {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(circle at 34% -15%, rgba(63, 163, 174, 0.06), transparent 30%), var(--bg);
+}
+
+.meeting-header {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(8, 10, 15, 0.9);
+}
+
+.meeting-brand,
+.meeting-meta,
+.meeting-title { display: flex; align-items: center; }
+
+.meeting-brand__mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--provenance-ink);
+  background: var(--provenance);
+}
+
+.meeting-brand__word {
+  margin-left: 10px;
+  color: var(--ink-1);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.meeting-brand__divider { width: 1px; height: 28px; margin: 0 18px; background: var(--line); }
+.meeting-title { align-items: flex-start; flex-direction: column; gap: 3px; }
+.meeting-title strong { font-size: 14px; font-weight: 650; }
+.meeting-title span { color: var(--ink-3); font-size: 11px; }
+.meeting-meta { gap: 8px; color: var(--ink-2); font-size: 12px; }
+
+.meeting-clock,
+.meeting-meta__console {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-field);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.meeting-clock {
+  min-width: 66px;
+  justify-content: center;
+  color: var(--ink-1);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.meeting-meta__console { color: var(--ink-2); text-decoration: none; transition: color 180ms ease, background 180ms ease; }
+.meeting-meta__console:hover { color: var(--ink-1); background: rgba(255, 255, 255, 0.06); }
+.meeting-meta__console svg { width: 14px; }
+
+.meeting-content {
+  height: calc(100vh - 76px);
+  height: calc(100dvh - 76px);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 374px;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.meeting-shell--focused .meeting-content { grid-template-columns: 1fr; }
+
+.meeting-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md);
+  padding: 18px 18px 128px;
+}
+
+.meeting-stage__topline {
+  height: 26px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  color: var(--ink-3);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.recording-status { display: flex; align-items: center; gap: 7px; }
+.recording-status span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--provenance);
+  box-shadow: 0 0 0 4px rgba(63, 163, 174, 0.1);
+  animation: listening-pulse 2s ease-in-out infinite;
+}
+/* pause là một trạng thái thật, không phải animation chạy chậm lại */
+.recording-status[data-on="no"] span { background: var(--boundary); box-shadow: none; animation: none; }
+
+.meeting-topic { display: flex; align-items: center; gap: 8px; color: var(--ink-3); font-size: 10px; }
+.meeting-topic span {
+  padding: 3px 6px;
+  border: 1px solid rgba(63, 163, 174, 0.16);
+  border-radius: 5px;
+  color: var(--provenance-soft);
+  background: rgba(63, 163, 174, 0.055);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. StatusBar — trạng thái suy giảm (chuỗi từ lib/types.ts)           */
+/* ------------------------------------------------------------------ */
+
+.status-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-xs);
+  padding: var(--sp-xs) var(--sp-sm);
+  border-left: 2px solid var(--warn-text);
+  border-radius: 0 var(--radius-field) var(--radius-field) 0;
+  background: var(--warn-band);
+  color: var(--warn-text);
+  font-size: 12.5px;
+  line-height: 17px;
+}
+.status-bar svg { flex: 0 0 auto; width: 15px; height: 15px; margin-top: 1px; }
+
+/* ------------------------------------------------------------------ */
+/* 3. Dải nguồn âm — hai lane thay cho lưới người tham gia             */
+/* ------------------------------------------------------------------ */
+
+.mmk-sources {
+  /* lane chiếm đúng chỗ lưới avatar từng giữ: sân khấu của MeetMate là âm
+     thanh, nên khoảng giữa trang không được rỗng */
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: var(--sp-xs);
+  padding: var(--sp-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.mmk-src {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  min-height: 0;
+  padding: var(--sp-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-field);
+  background: rgba(255, 255, 255, 0.014);
+  color: var(--ink-3);
+  transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+}
+.mmk-src[data-on="yes"] {
+  border-color: rgba(63, 163, 174, 0.22);
+  background: var(--provenance-tint);
+  color: var(--ink-1);
+}
+
+.mmk-src__head { flex: 0 0 auto; display: flex; align-items: center; gap: var(--sp-sm); }
+.mmk-src__icon { display: grid; place-items: center; width: 22px; color: var(--provenance-soft); }
+.mmk-src__label { color: inherit; font-family: var(--font-display); font-size: 12px; font-weight: 700; }
+.mmk-src__count { margin-left: auto; color: var(--ink-3); font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+.mmk-src__bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.mmk-src__bars i { width: 2px; height: 5px; border-radius: 2px; background: var(--provenance); opacity: 0.28; }
+.mmk-src__bars i:nth-child(2) { height: 11px; }
+.mmk-src[data-on="yes"] .mmk-src__bars i { opacity: 1; animation: level-bar 760ms ease-in-out infinite alternate; }
+.mmk-src[data-on="yes"] .mmk-src__bars i:nth-child(2) { animation-delay: -500ms; }
+.mmk-src[data-on="yes"] .mmk-src__bars i:nth-child(3) { animation-delay: -250ms; }
+
+.mmk-src__lines {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 7px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, transparent, #000 22%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%);
+}
+
+.mmk-src__line { display: flex; align-items: baseline; gap: 8px; margin: 0; color: var(--ink-3); font-size: 12px; line-height: 16px; }
+.mmk-src__line.is-newest { color: var(--ink-1); font-size: 13px; line-height: 19px; }
+.mmk-src__stamp { flex: 0 0 auto; color: var(--ink-3); font-family: var(--font-mono); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.mmk-src__text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.mmk-src__quiet { margin: auto 0; color: var(--ink-3); font-size: 12px; text-align: center; }
+
+.mmk-sources__note { margin: 0; max-width: 62ch; color: var(--ink-3); font-size: 11.5px; line-height: 17px; }
+
+/* ------------------------------------------------------------------ */
+/* 4. Pipeline — MeetMate đang ở bước nào                               */
+/* ------------------------------------------------------------------ */
+
+.mmk-analyzing {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  padding: var(--sp-md);
+  border: 1px solid rgba(63, 163, 174, 0.24);
+  border-radius: var(--radius-card);
+  background: rgba(63, 163, 174, 0.06);
+}
+
+.mmk-analyzing__head { display: flex; align-items: center; gap: var(--sp-xs); flex-wrap: wrap; }
+.mmk-analyzing__head strong { color: var(--ink-1); font-family: var(--font-display); font-size: 14px; font-weight: 700; }
+.mmk-analyzing__topic { color: var(--provenance-soft); font-size: 12px; }
+
+.mmk-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 13px; }
+.mmk-bars i { width: 2px; height: 6px; border-radius: 2px; background: var(--provenance); animation: level-bar 700ms ease-in-out infinite alternate; }
+.mmk-bars i:nth-child(2) { height: 13px; animation-delay: -480ms; }
+.mmk-bars i:nth-child(3) { height: 9px; animation-delay: -240ms; }
+
+.mmk-stages { display: flex; flex-wrap: wrap; gap: 6px var(--sp-md); margin: 0; padding: 0; list-style: none; }
+.mmk-stage { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.mmk-stage__dot { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--stage-pending); }
+.mmk-stage__label { color: var(--ink-3); font-size: 11px; line-height: 15px; }
+.mmk-stage[data-state="active"] .mmk-stage__dot { background: var(--provenance); box-shadow: 0 0 0 3px rgba(63, 163, 174, 0.22); }
+.mmk-stage[data-state="active"] .mmk-stage__label { color: var(--ink-1); font-weight: 600; }
+.mmk-stage[data-state="done"] .mmk-stage__dot { background: var(--provenance-soft); }
+.mmk-stage[data-state="done"] .mmk-stage__label { color: var(--provenance-soft); }
+@media (prefers-reduced-motion: no-preference) {
+  .mmk-stage[data-state="active"] .mmk-stage__dot { animation: stage-pulse 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mmk-stage[data-state="active"] .mmk-stage__dot { box-shadow: none; }
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Control bar                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Không còn caption dính đáy: hai lane ở mục 3 đã là caption, mỗi lane một
+   kênh. Một caption thứ ba dưới lane chỉ lặp lại đúng một dòng chữ. */
+.meeting-controls__wrap {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+.meeting-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(17, 20, 27, 0.88);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+}
+.meeting-control { min-width: 61px; display: flex; align-items: center; flex-direction: column; gap: 4px; padding: 0; color: var(--ink-2); }
+.meeting-control__icon {
+  width: 39px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: transform 180ms ease, color 180ms ease, background 180ms ease;
+}
+.meeting-control:hover .meeting-control__icon { color: #fff; background: rgba(255, 255, 255, 0.09); transform: translateY(-1px); }
+.meeting-control__icon svg { width: 17px; height: 17px; }
+.meeting-control__label { color: var(--ink-3); font-size: 9.5px; white-space: nowrap; }
+.meeting-control.is-off .meeting-control__icon { color: var(--provenance-soft); background: var(--provenance-tint); }
+
+.meeting-controls__hint { margin: 0; max-width: 46ch; color: var(--ink-3); font-size: 10.5px; line-height: 15px; text-align: center; }
+
+/* ------------------------------------------------------------------ */
+/* 6. Bảng bản ghi                                                     */
+/* ------------------------------------------------------------------ */
+
+.transcript-panel {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+}
+.transcript-panel__header { display: flex; align-items: center; justify-content: space-between; padding: 22px 20px 17px; }
+.transcript-panel__eyebrow { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; color: var(--ink-3); font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--provenance); box-shadow: 0 0 0 3px rgba(63, 163, 174, 0.12); }
+.live-dot.is-paused { background: var(--boundary); box-shadow: none; }
+.transcript-panel h2 { margin: 0; font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.025em; }
+.transcript-panel__actions { display: flex; gap: 4px; }
+.icon-button { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; color: var(--ink-3); }
+.icon-button:hover,
+.icon-button.is-active { color: var(--ink-1); background: rgba(255, 255, 255, 0.06); }
+.icon-button svg { width: 16px; }
+
+.transcript-search {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px 12px;
+  padding: 0 11px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-field);
+  background: rgba(255, 255, 255, 0.035);
+}
+.transcript-search svg { width: 14px; color: var(--ink-3); }
+.transcript-search input { width: 100%; border: 0; outline: 0; background: transparent; font-size: 12px; }
+.transcript-search input::placeholder { color: var(--ink-3); }
+
+.transcript-tabs { height: 42px; display: flex; gap: 20px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+.transcript-tabs button { position: relative; padding: 0 1px; color: var(--ink-3); font-size: 11.5px; font-weight: 600; }
+.transcript-tabs button.is-active { color: var(--ink-1); }
+.transcript-tabs button.is-active::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--provenance);
+  content: "";
+}
+.transcript-tabs span { margin-left: 3px; color: var(--provenance-soft); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.transcript-list,
+.transcript-sources {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 15px 24px 20px;
+  scrollbar-color: #2C3039 transparent;
+  scrollbar-width: thin;
+}
+.transcript-date { margin: 0 0 15px; color: var(--ink-3); font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+.transcript-topic { display: flex; align-items: center; gap: 8px; margin: 12px 0 7px; color: var(--provenance-soft); font-family: var(--font-display); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; }
+.transcript-topic::after { height: 1px; flex: 1; background: linear-gradient(90deg, var(--line), transparent); content: ""; }
+.transcript-topic span { width: 5px; height: 5px; border-radius: 50%; background: var(--provenance); box-shadow: 0 0 0 3px rgba(63, 163, 174, 0.07); }
+
+.transcript-entry { position: relative; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; padding: 9px 6px 13px 0; border-radius: 11px; transition: background 180ms ease; }
+.transcript-entry:hover { background: rgba(255, 255, 255, 0.018); }
+.transcript-entry--latest::before { position: absolute; top: 10px; bottom: 13px; left: -10px; width: 2px; border-radius: 2px; background: var(--provenance); content: ""; }
+/* nhãn kênh, không phải tên người: extension chỉ biết âm thanh đến từ đâu */
+.transcript-entry__who { padding-top: 2px; color: var(--ink-3); font-family: var(--font-display); font-size: 9.5px; font-weight: 700; line-height: 13px; }
+.transcript-entry__meta { display: flex; align-items: center; justify-content: flex-end; height: 16px; }
+.transcript-entry__meta time { color: var(--ink-3); font-family: var(--font-mono); font-size: 9.5px; font-variant-numeric: tabular-nums; }
+.transcript-entry__content p { margin: 2px 0 0; color: var(--ink-1); font-size: 12.5px; line-height: 1.58; }
+
+.transcript-listening { display: flex; align-items: center; gap: 9px; margin: 10px 0 0 84px; color: var(--ink-3); font-size: 11px; }
+.audio-wave { height: 15px; display: flex; align-items: center; gap: 2px; }
+.audio-wave i { width: 2px; height: 5px; border-radius: 2px; background: var(--provenance); animation: level-bar 750ms ease-in-out infinite alternate; }
+.audio-wave i:nth-child(2) { height: 12px; animation-delay: -550ms; }
+.audio-wave i:nth-child(3) { height: 8px; animation-delay: -300ms; }
+.audio-wave i:nth-child(4) { height: 4px; animation-delay: -150ms; }
+
+.conversation-status {
+  width: calc(100% - 84px);
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 12px 0 0 84px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 10.5px;
+}
+.conversation-status:hover { color: var(--ink-1); background: rgba(255, 255, 255, 0.055); }
+.conversation-status svg { width: 13px; }
+.conversation-status--complete { color: var(--provenance-soft); border-color: rgba(63, 163, 174, 0.2); background: rgba(63, 163, 174, 0.06); }
+
+.transcript-empty { height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 30px; color: var(--ink-3); text-align: center; }
+.transcript-empty svg { width: 24px; }
+.transcript-empty p { font-size: 12px; }
+.transcript-empty__line { margin: 0; color: var(--ink-3); font-size: 12px; line-height: 18px; }
+
+.transcript-panel__footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 10.5px;
+  line-height: 15px;
+}
+.transcript-panel__footer svg { flex: 0 0 auto; width: 14px; margin-top: 1px; }
+
+/* ------------------------------------------------------------------ */
+/* 7. Dòng thời gian chủ đề + các tin đã gửi                             */
+/* ------------------------------------------------------------------ */
+
+.mmk-panel { display: flex; flex-direction: column; gap: var(--sp-md); min-width: 0; }
+.mmk-panel__foot { margin: 0; color: var(--ink-3); font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+.mmk-panel__empty { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; min-height: 220px; padding: 30px; color: var(--ink-3); text-align: center; }
+.mmk-panel__empty svg { width: 22px; color: var(--provenance-soft); }
+.mmk-panel__empty p { max-width: 32ch; margin: 0; font-size: 12px; line-height: 18px; }
+
+.mmk-topic { display: flex; flex-direction: column; gap: var(--sp-xs); padding-top: var(--sp-sm); border-top: 1px solid var(--line); }
+.mmk-panel > .mmk-topic:first-child { padding-top: 0; border-top: 0; }
+.mmk-topic__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-sm); }
+.mmk-topic__name { margin: 0; color: var(--ink-1); font-family: var(--font-display); font-size: 13.5px; font-weight: 700; line-height: 19px; letter-spacing: -0.01em; }
+.mmk-topic__state {
+  flex: 0 0 auto;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--provenance-tint);
+  color: var(--provenance-soft);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.mmk-topic__state.is-done { background: var(--provenance); color: var(--provenance-ink); }
+.mmk-topic__state.is-killed,
+.mmk-topic__state.is-off { background: rgba(255, 255, 255, 0.07); color: var(--ink-3); }
+.mmk-topic__query { display: flex; align-items: baseline; gap: 6px; margin: 0; color: var(--ink-3); font-family: var(--font-mono); font-size: 11px; line-height: 16px; overflow-wrap: anywhere; }
+.mmk-topic__query svg { align-self: center; flex: 0 0 auto; color: var(--boundary); }
+.mmk-topic__waiting { margin: 0; color: var(--ink-3); font-size: 12px; font-style: italic; }
+.mmk-topic__empty {
+  margin: 0;
+  padding: var(--sp-xs) var(--sp-sm);
+  border-left: 2px solid var(--warn-text);
+  border-radius: 0 var(--radius-field) var(--radius-field) 0;
+  background: rgba(240, 206, 140, 0.07);
+  color: var(--warn-text);
+  font-size: 11.5px;
+  line-height: 17px;
+}
+
+.mmk-posts { display: flex; flex-direction: column; gap: var(--sp-xs); margin: 0; padding: 0; list-style: none; }
+.mmk-post {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--sp-sm);
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--provenance);
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  background: var(--chat-bg);
+}
+.mmk-post.is-cancelled { border-left-color: var(--boundary); opacity: 0.75; }
+.mmk-post__eyebrow { margin: 0; color: var(--provenance-soft); font-family: var(--font-display); font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; }
+.mmk-post__title { margin: 0; color: var(--ink-1); font-size: 12.5px; font-weight: 600; line-height: 18px; }
+.mmk-post.is-cancelled .mmk-post__title { text-decoration: line-through; text-decoration-thickness: 1px; }
+.mmk-post__url {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--source);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  text-decoration: underline;
+  text-decoration-color: var(--source-line);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere; /* cắt một URL là gửi một nguồn mở không được */
+}
+.mmk-post__url svg { align-self: center; flex: 0 0 auto; }
+.mmk-post__why { margin: 0; color: var(--ink-2); font-size: 11.5px; line-height: 17px; }
+.mmk-post__foot { display: flex; align-items: baseline; gap: var(--sp-xs); padding-top: 5px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 10.5px; line-height: 15px; }
+.mmk-post__flag { display: inline-flex; align-items: center; gap: 5px; }
+.mmk-post__flag svg { width: 11px; height: 11px; }
+.mmk-post.is-sent .mmk-post__flag { color: var(--provenance-soft); }
+.mmk-post__count { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ */
+/* 8. Chuyển động                                                      */
+/* ------------------------------------------------------------------ */
+
+@keyframes level-bar { from { transform: scaleY(0.55); } to { transform: scaleY(1); } }
+@keyframes listening-pulse { 50% { box-shadow: 0 0 0 6px rgba(63, 163, 174, 0.03); } }
+@keyframes stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(63, 163, 174, 0.28); }
+  50% { box-shadow: 0 0 0 5px rgba(63, 163, 174, 0.08); }
+}
+
+@media (min-width: 1440px) {
+  .meeting-content { grid-template-columns: minmax(0, 1fr) 410px; }
+  .meeting-stage { padding-inline: 24px; }
+}
+
+@media (max-width: 980px) {
+  .meeting-content { grid-template-columns: minmax(0, 1fr) 330px; }
+  .meeting-brand__word,
+  .meeting-meta__console { display: none !important; }
+  .meeting-brand__divider { margin-left: 13px; }
+  .meeting-control { min-width: 53px; }
+}
+
+@media (max-width: 760px) {
+  .meeting-header { height: 64px; padding: 0 14px; }
+  .meeting-brand__divider,
+  .meeting-title span { display: none !important; }
+  .meeting-title { margin-left: 10px; }
+  .meeting-clock { min-width: 60px; }
+  .meeting-content { height: calc(100vh - 64px); height: calc(100dvh - 64px); grid-template-columns: 1fr; }
+  .meeting-stage { padding: 12px 12px 108px; }
+  .transcript-panel { position: fixed; right: 0; bottom: 0; left: 0; z-index: 30; height: min(72vh, 620px); border-top: 1px solid var(--line); border-left: 0; border-radius: 20px 20px 0 0; box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.58); }
+  .transcript-panel__header { padding-top: 17px; }
+  .meeting-controls__wrap { bottom: 12px; }
+  /* Sheet 72vh phủ lên dải nút của sân khấu: hai cặp nút cùng làm một việc, mà
+     một cặp thì nhìn thấy được và cặp kia bị che — bấm vào khoảng không. Khi
+     sheet đang mở, dải nút ẩn đi và hoàn lại 108px đã chừa sẵn cho nó; bảng
+     mang nút Tạm dừng + Đóng của riêng nó. Đóng bảng thì dải nút hiện lại, và
+     đó là lúc nó là đường duy nhất để mở bảng trở lại — nên không ai bị kẹt.
+     `:has()` cần Chrome 105 / Safari 15.4 / Firefox 121; không có nó thì chỉ
+     còn là bố cục cũ, không hỏng gì thêm. */
+  .meeting-content:has(.transcript-panel) .meeting-controls__wrap { display: none; }
+  .meeting-content:has(.transcript-panel) .meeting-stage { padding-bottom: 12px; }
+  .meeting-controls { gap: 3px; padding: 6px; }
+  .meeting-control { min-width: 49px; }
+  .meeting-control__icon { width: 36px; height: 34px; }
+  .meeting-control__label { display: none; }
+  .meeting-controls__hint { display: none; }
+}
+
+@media (max-width: 470px) {
+  .meeting-header { padding-inline: 10px; }
+  .meeting-brand__mark { width: 31px; height: 31px; }
+  .meeting-title strong { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .meeting-meta { gap: 4px; }
+  .meeting-control { min-width: 43px; }
+  /* Màn hình nhỏ: hai lane co về dạng hai dòng trạng thái. Bản ghi đã có bảng
+     ở dưới chiếm 72vh rồi — để hai chỗ cùng liệt kê dòng chữ là tự mâu thuẫn. */
+  .mmk-sources { grid-template-rows: auto auto auto; }
+  .mmk-src__lines { display: none; }
+  .transcript-entry { grid-template-columns: 62px minmax(0, 1fr); }
+  .transcript-listening,
+  .conversation-status { margin-left: 72px; }
+  .conversation-status { width: calc(100% - 72px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}

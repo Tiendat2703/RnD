@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Cuộc họp — danh sách theo tháng với bốn trạng thái</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 100%; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <header style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-sizing: border-box; height: 64px; padding: 0 24px; background: #FFFFFF; border-bottom: 1px solid #DCE2E8">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <nav style="display: flex; align-items: center; gap: 2px" aria-label="Điều hướng chính">
+      <a href="Meetings.dc.html" aria-current="page" style="padding: 7px 12px; border-radius: 9px; background: #E1EFF1; color: #0A5F67; font-size: 13.5px; font-weight: 600; text-decoration: none">Cuộc họp</a>
+      <a href="Docs.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Tài liệu</a>
+      <a href="Install.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cài MeetMate</a>
+      <a href="Upgrade.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Nâng cấp</a>
+      <a href="Account.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Tài khoản</a>
+    </nav>
+    <span style="margin-left: auto; font-size: 11.5px; color: #58636F">Khung điều hướng đầy đủ: <a href="Shell.dc.html">Shell.dc.html</a></span>
+  </header>
+
+  <main style="box-sizing: border-box; padding: 22px 24px 32px; max-width: 1400px; display: flex; flex-direction: column; gap: 20px">
+
+    <div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 5px; min-width: 0">
+        <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 32px">Cuộc họp</h1>
+        <p style="margin: 0; font-size: 13px; line-height: 20px; color: #58636F; max-width: 62ch">Mỗi mục là một phiên MeetMate đã nghe. Số nguồn là số đường dẫn đã đi vào chat Meet — không có nguồn nào nằm ngoài kết quả tìm.</p>
+      </div>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+        <label for="sort" style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #58636F">
+          Sắp xếp
+          <select id="sort" style="height: 36px; padding: 0 10px; box-sizing: border-box; border: 1px solid #7E8B99; border-radius: 10px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 12.5px">
+            <option>Mới nhất trước</option>
+            <option>Nhiều nguồn nhất</option>
+            <option>Dài nhất</option>
+          </select>
+        </label>
+        <button type="button" style="height: 36px; padding: 0 15px; box-sizing: border-box; border: 0; border-radius: 10px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 13px; font-weight: 700; cursor: pointer">Cuộc họp mới</button>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+      <sc-for list="{{kinds}}" as="k" hint-placeholder-count="5">
+        <button type="button" aria-pressed="{{k.on}}" style="height: 32px; padding: 0 12px; box-sizing: border-box; border-radius: 999px; border: 1px solid {{k.bd}}; background: {{k.bg}}; color: {{k.fg}}; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">{{k.label}}</button>
+      </sc-for>
+      <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11.5px; color: #58636F">18 phiên · 11:24 · 47 chủ đề · 163 nguồn</span>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #58636F">THÁNG 10, 2026<span style="font-family: &quot;Overpass Mono&quot;, monospace; font-weight: 400; letter-spacing: 0; font-size: 11.5px">5 phiên</span></h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px">
+        <sc-for list="{{oct}}" as="m" hint-placeholder-count="5">
+          <a href="{{m.to}}" style="display: flex; flex-direction: column; gap: 8px; padding: 8px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: inherit">
+            <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 12px; border-radius: 12px; background: {{m.tile}}; min-height: 96px">
+              <div style="display: flex; align-items: center; gap: 6px">
+                <span style="font-size: 10.5px; letter-spacing: 0.04em; color: #58636F">{{m.date}}</span>
+                <span style="margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: {{m.kindFg}}">{{m.kind}}</span>
+              </div>
+              <span style="font-family: Overpass, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 19px; letter-spacing: -0.01em">{{m.title}}</span>
+              <span style="margin-top: auto; font-size: 11.5px; color: #58636F">{{m.dur}}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 0 4px 2px">
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: {{m.pillBg}}; color: {{m.pillFg}}; font-size: 10.5px; font-weight: 700">
+                <span style="width: 5px; height: 5px; border-radius: 50%; background: {{m.dot}}" aria-hidden="true"></span>{{m.status}}
+              </span>
+              <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">{{m.topics}} chủ đề · {{m.sources}} nguồn</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; color: #58636F">THÁNG 9, 2026<span style="font-family: &quot;Overpass Mono&quot;, monospace; font-weight: 400; letter-spacing: 0; font-size: 11.5px">4 phiên</span></h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px">
+        <sc-for list="{{sep}}" as="m" hint-placeholder-count="4">
+          <a href="{{m.to}}" style="display: flex; flex-direction: column; gap: 8px; padding: 8px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: inherit">
+            <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 12px; border-radius: 12px; background: {{m.tile}}; min-height: 96px">
+              <div style="display: flex; align-items: center; gap: 6px">
+                <span style="font-size: 10.5px; letter-spacing: 0.04em; color: #58636F">{{m.date}}</span>
+                <span style="margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: {{m.kindFg}}">{{m.kind}}</span>
+              </div>
+              <span style="font-family: Overpass, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 19px; letter-spacing: -0.01em">{{m.title}}</span>
+              <span style="margin-top: auto; font-size: 11.5px; color: #58636F">{{m.dur}}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 0 4px 2px">
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: {{m.pillBg}}; color: {{m.pillFg}}; font-size: 10.5px; font-weight: 700">
+                <span style="width: 5px; height: 5px; border-radius: 50%; background: {{m.dot}}" aria-hidden="true"></span>{{m.status}}
+              </span>
+              <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">{{m.topics}} chủ đề · {{m.sources}} nguồn</span>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 14px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF">
+      <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; color: #58636F">TRẠNG THÁI</span>
+      <sc-for list="{{legend}}" as="l" hint-placeholder-count="4">
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; color: #14181D">
+          <span style="padding: 2px 7px; border-radius: 999px; background: {{l.bg}}; color: {{l.fg}}; font-size: 10px; font-weight: 700">{{l.pill}}</span>{{l.mean}}
+        </span>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 4px">
+      <span style="font-size: 11.5px; line-height: 17px; color: #58636F; max-width: 74ch">Danh sách đọc từ bộ nhớ của tiện ích trên máy bạn. Ở bản 0.1 chưa có máy chủ riêng: đổi máy là chưa có lịch sử cũ.</span>
+      <button type="button" style="margin-left: auto; height: 34px; padding: 0 13px; border: 1px solid #7E8B99; border-radius: 10px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Tải thêm</button>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const kinds = [
+      { label: 'Tất cả', on: true, bg: '#14181D', fg: '#FFFFFF', bd: '#14181D' },
+      { label: 'Sản phẩm', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' },
+      { label: 'Nghiên cứu', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' },
+      { label: 'Đào tạo', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' },
+      { label: 'Bản lẻ', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' }
+    ];
+    const card = (date, kind, title, dur, status, topics, sources, to, tone) => ({
+      date, kind, title, dur, status, topics, sources, to,
+      kindFg: '#58636F',
+      tile: tone === 'live' ? '#EEF6F7' : tone === 'warn' ? '#FFFBF0' : '#F6F8FA',
+      pillBg: tone === 'live' ? '#0E7C86' : tone === 'done' ? '#E1EFF1' : tone === 'warn' ? '#FFF3DB' : '#A62B22',
+      pillFg: tone === 'live' ? '#FFFFFF' : tone === 'done' ? '#0A5F67' : tone === 'warn' ? '#6E4A00' : '#FFFFFF',
+      dot: tone === 'live' ? '#FFFFFF' : tone === 'done' ? '#0E7C86' : tone === 'warn' ? '#6E4A00' : '#FFFFFF'
+    });
+    return {
+      kinds,
+      oct: [
+        card('Hôm nay · 09:41', 'SẢN PHẨM', 'Đồng bộ tiến độ sprint 12', 'đang nghe · 12 phút', 'ĐANG NGHE', 2, 7, 'Card.dc.html', 'live'),
+        card('31 thg 10, 2026', 'SẢN PHẨM', 'Chốt giá gói SME', '45 phút', 'ĐÃ XONG', 6, 21, 'Card.dc.html', 'done'),
+        card('28 thg 10, 2026', 'SẢN PHẨM', 'Review kênh phân phối B2B', '32 phút', 'ĐÃ XONG', 4, 14, 'Card.dc.html', 'done'),
+        card('24 thg 10, 2026', 'ĐÀO TẠO', 'Họp lớp bồi dưỡng dữ liệu KPI', '58 phút', 'CHỈ NGHE TAB', 9, 30, 'P-NoMic.dc.html', 'warn'),
+        card('21 thg 10, 2026', 'BẢN LẺ', 'Họp phụ huynh lớp 12A', '62 phút', 'ĐÃ XONG', 5, 12, 'Card.dc.html', 'done')
+      ],
+      sep: [
+        card('30 thg 9, 2026', 'NGHIÊN CỨU', 'Nghiên cứu thị trường bảo hiểm số', '74 phút', 'ĐÃ XONG', 11, 38, 'Card.dc.html', 'done'),
+        card('22 thg 9, 2026', 'SẢN PHẨM', 'Onboard khách hàng ACB', '26 phút', 'ĐÃ XONG', 3, 6, 'Card.dc.html', 'done'),
+        card('17 thg 9, 2026', 'BẢN LẺ', 'Họp giao ban tổ chuyên môn', '40 phút', 'KHÔNG NGUỒN', 4, 0, 'P-Blaze.dc.html', 'error'),
+        card('02 thg 9, 2026', 'BẢN LẺ', 'Họp CLB sách tháng 9', '35 phút', 'ĐÃ XONG', 7, 19, 'Card.dc.html', 'done')
+      ],
+      legend: [
+        { pill: 'ĐANG NGHE', bg: '#0E7C86', fg: '#FFFFFF', mean: 'popup đang chạy, tin gửi dần vào chat' },
+        { pill: 'ĐÃ XONG', bg: '#E1EFF1', fg: '#0A5F67', mean: 'toàn bộ chủ đề đã có nguồn' },
+        { pill: 'CHỈ NGHE TAB', bg: '#FFF3DB', fg: '#6E4A00', mean: 'mất micro, vẫn nghe được phía người khác' },
+        { pill: 'KHÔNG NGUỒN', bg: '#A62B22', fg: '#FFFFFF', mean: 'hết hạn mức hoặc không gọi được chat' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

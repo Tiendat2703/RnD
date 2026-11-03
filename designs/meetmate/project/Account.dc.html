@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Tài khoản — dữ liệu của bạn và cấu hình phiên</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; min-height: 100%; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <header style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; box-sizing: border-box; height: 64px; padding: 0 24px; background: #FFFFFF; border-bottom: 1px solid #DCE2E8">
+    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+    <nav style="display: flex; align-items: center; gap: 2px" aria-label="Điều hướng chính">
+      <a href="Meetings.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cuộc họp</a>
+      <a href="Docs.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Tài liệu</a>
+      <a href="Install.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Cài MeetMate</a>
+      <a href="Upgrade.dc.html" style="padding: 7px 12px; border-radius: 9px; color: #58636F; font-size: 13.5px; font-weight: 500; text-decoration: none">Nâng cấp</a>
+      <a href="Account.dc.html" aria-current="page" style="padding: 7px 12px; border-radius: 9px; background: #E1EFF1; color: #0A5F67; font-size: 13.5px; font-weight: 600; text-decoration: none">Tài khoản</a>
+    </nav>
+    <span style="margin-left: auto; font-size: 11.5px; color: #58636F">trần anh khoa · máy này</span>
+  </header>
+
+  <main style="box-sizing: border-box; padding: 22px 24px 32px; max-width: 1240px; display: flex; flex-direction: column; gap: 18px">
+
+    <div style="display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap">
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 32px">Tài khoản</h1>
+        <p style="margin: 0; font-size: 13px; line-height: 20px; color: #58636F; max-width: 68ch">Hai việc: nhìn vào nơi dữ liệu đang nằm, và chỉnh cách MeetMate hành xử trong một phiên họp.</p>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap">
+
+      <section style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+        <div style="padding: 13px 16px; border-bottom: 1px solid #DCE2E8">
+          <h2 style="margin: 0; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em">Dữ liệu của bạn</h2>
+          <p style="margin: 3px 0 0; font-size: 12px; line-height: 17px; color: #58636F">Bốn thứ MeetMate chạm vào, và nơi từng thứ nằm.</p>
+        </div>
+        <div style="display: flex; flex-direction: column">
+          <sc-for list="{{stores}}" as="s" hint-placeholder-count="4">
+            <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #DCE2E8">
+              <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1">
+                <span style="font-size: 13px; font-weight: 600">{{s.what}}</span>
+                <span style="font-size: 11.5px; line-height: 16px; color: #58636F">{{s.where}}</span>
+              </div>
+              <span style="flex: none; padding: 3px 8px; border-radius: 999px; background: {{s.tintBg}}; color: {{s.tintFg}}; font-size: 10px; font-weight: 700">{{s.tint}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 13px 16px">
+          <button type="button" style="height: 34px; padding: 0 13px; border: 1px solid #7E8B99; border-radius: 10px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Xuất dữ liệu (.zip)</button>
+          <button type="button" style="margin-left: auto; height: 34px; padding: 0 13px; border: 1px solid #A62B22; border-radius: 10px; background: #FFFFFF; color: #A62B22; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer">Xóa hết trên máy này</button>
+        </div>
+      </section>
+
+      <section style="flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+
+        <div style="display: flex; flex-direction: column; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+          <div style="padding: 13px 16px; border-bottom: 1px solid #DCE2E8">
+            <h2 style="margin: 0; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em">Cấu hình phiên</h2>
+            <p style="margin: 3px 0 0; font-size: 12px; line-height: 17px; color: #58636F">Áp dụng cho phiên tiếp theo bạn bật.</p>
+          </div>
+          <div style="display: flex; flex-direction: column">
+            <sc-for list="{{settings}}" as="c" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #DCE2E8">
+                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                  <label for="{{c.id}}" style="font-size: 13px; font-weight: 600">{{c.label}}</label>
+                  <span style="font-size: 11.5px; line-height: 16px; color: #58636F">{{c.hint}}</span>
+                </div>
+                <sc-if value="{{c.isSelect}}" hint-placeholder-val="{{ false }}">
+                  <select id="{{c.id}}" style="height: 34px; padding: 0 9px; box-sizing: border-box; border: 1px solid #7E8B99; border-radius: 9px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 12.5px">
+                    <option>{{c.value}}</option>
+                  </select>
+                </sc-if>
+                <sc-if value="{{c.isSwitch}}" hint-placeholder-val="{{ true }}">
+                  <input id="{{c.id}}" type="checkbox" role="switch" defaultChecked="{{c.on}}" style="width: 18px; height: 18px; accent-color: #0E7C86; cursor: pointer">
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 14px 16px; border: 1px solid #DCE2E8; border-radius: 16px; background: #F6F8FA">
+          <div style="display: flex; align-items: center; gap: 9px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5"></rect><path d="M8 10.5V7.8a4 4 0 018 0v2.7"></path></svg>
+            <span style="font-family: Overpass, sans-serif; font-size: 13.5px; font-weight: 700">Vì sao không có ô nhập khóa API</span>
+          </div>
+          <span style="font-size: 12px; line-height: 17px; color: #58636F">Khóa Blaze và khóa Exa chỉ sống trong bộ nhớ tiện ích, dán một lần ở popup. Một ô key trên trang web sẽ mở đúng câu hỏi &quot;key này gửi đi đâu&quot; — và ở đây không có nơi nào để gửi.</span>
+          <a href="P-Idle.dc.html" style="display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; text-decoration: none">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14417F" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><rect x="6" y="3.5" width="12" height="17" rx="3"></rect><path d="M10.5 17h3"></path></svg>
+            Nơi dán khóa: popup tiện ích
+          </a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+          <span style="font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; color: #58636F">Quyền đã cấp</span>
+          <sc-for list="{{perms}}" as="p" hint-placeholder-count="3">
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: #14181D">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: {{p.dot}}" aria-hidden="true"></span>{{p.name}}
+            </span>
+          </sc-for>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      stores: [
+        { icon: '', what: 'Khóa Blaze, khóa Exa', where: 'chrome.storage.local trong tiện ích, chỉ máy bạn. Không log, không đồng bộ.', tint: 'MÁY BẠN', tintBg: '#E1EFF1', tintFg: '#0A5F67' },
+        { icon: '', what: 'Âm thanh phiên họp', where: 'Stream chỉ tồn tại trong offscreen document của tiện ích, dừng khi bạn bấm Dừng.', tint: 'KHÔNG LƯU', tintBg: '#DCE2E8', tintFg: '#58636F' },
+        { icon: '', what: 'Bản ghi và bộ nguồn', where: 'Bộ nhớ tiện ích cho tới khi bạn xuất file; web console chưa có kho riêng ở bản 0.1.', tint: 'MÁY BẠN', tintBg: '#E1EFF1', tintFg: '#0A5F67' },
+        { icon: '', what: 'Yêu cầu tới Blaze và Exa', where: 'Nhà cung cấp thấy nội dung bạn gửi và ghi theo chính sách của họ.', tint: 'BÊN THỨ BA', tintBg: '#FFF3DB', tintFg: '#6E4A00' }
+      ],
+      settings: [
+        { id: 'lang', label: 'Ngôn ngữ phiên âm', hint: 'Blaze STT nhận diện tiếng Việt có dấu.', value: 'Tiếng Việt', isSelect: true, isSwitch: false },
+        { id: 'sources', label: 'Số nguồn tối đa mỗi chủ đề', hint: 'Ảnh hưởng trực tiếp tới độ dài tin trong chat.', value: '4 nguồn', isSelect: true, isSwitch: false },
+        { id: 'review', label: 'Xem trước trước khi gửi vào chat', hint: 'Tắt: MeetMate gõ ngay khi chủ đề chốt. Bật: hiện trong popup để bạn bấm Gửi.', on: false, isSelect: false, isSwitch: true },
+        { id: 'reason', label: 'Kèm dòng "Vì sao chọn"', hint: 'Dòng giải thích nằm trong giới hạn 450 ký tự của tin.', on: true, isSelect: false, isSwitch: true }
+      ],
+      perms: [
+        { name: 'micro', dot: '#0E7C86' },
+        { name: 'âm thanh tab', dot: '#0E7C86' },
+        { name: 'lưu trữ', dot: '#0E7C86' },
+        { name: 'đọc chat Meet', dot: '#0E7C86' },
+        { name: 'thông báo', dot: '#7E8B99' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

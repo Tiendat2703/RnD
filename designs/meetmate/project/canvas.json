@@ -1,0 +1,68 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-02T09:00:00Z" },
+  "title": "MeetMateAI — giao diện mục tiêu",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 360, "h": 520, "title": "Popup — Đang chạy" },
+    "P-Idle.dc.html": { "x": 440, "y": 0, "w": 360, "h": 520, "title": "Popup — Ready, một gesture" },
+    "P-NoMic.dc.html": { "x": 880, "y": 0, "w": 360, "h": 520, "title": "Popup — no-mic (cảnh báo)" },
+    "P-Blaze.dc.html": { "x": 1320, "y": 0, "w": 360, "h": 520, "title": "Popup — blaze-credits (lỗi chặn)" },
+    "P-Chat.dc.html": { "x": 1760, "y": 0, "w": 360, "h": 520, "title": "Popup — chat-unreachable" },
+    "P-NoKeys.dc.html": { "x": 2200, "y": 0, "w": 360, "h": 520, "title": "Popup — thiếu khóa" },
+    "P-NotMeet.dc.html": { "x": 2640, "y": 0, "w": 360, "h": 520, "title": "Popup — không phải tab Meet" },
+    "Pipeline.dc.html": { "x": 3080, "y": 0, "w": 1120, "h": 200, "title": "Bảng 6 stage × 5 trạng thái" },
+    "ChatRail.dc.html": { "x": 4280, "y": 0, "w": 360, "h": 720, "title": "Kết quả trong chat Meet" },
+    "MicPerm.dc.html": { "x": 0, "y": 1000, "w": 1280, "h": 640, "expand": "fill", "title": "mic-permission.html" },
+    "Shell.dc.html": { "x": 1360, "y": 1000, "w": 1280, "h": 880, "expand": "fill", "title": "Web console — khung + Cuộc họp" },
+    "Meetings.dc.html": { "x": 2720, "y": 1000, "w": 1280, "h": 900, "expand": "fill", "title": "Danh sách Cuộc họp" },
+    "Card.dc.html": { "x": 4080, "y": 1000, "w": 600, "h": 520, "title": "Thẻ kết quả research (chữ ký)" },
+    "Install.dc.html": { "x": 4760, "y": 1000, "w": 720, "h": 600, "title": "Dialog Cài MeetMate" },
+    "Docs.dc.html": { "x": 5560, "y": 1000, "w": 1280, "h": 720, "expand": "fill", "title": "Tài liệu — lớp mục tiêu" },
+    "Account.dc.html": { "x": 6920, "y": 1000, "w": 1280, "h": 800, "expand": "fill", "title": "Tài khoản + Cấu hình" },
+    "Upgrade.dc.html": { "x": 8280, "y": 1000, "w": 1280, "h": 1000, "expand": "fill", "title": "Trang upgrade — pricing là một route" }
+  },
+  "order": [
+    "Main.dc.html",
+    "P-Idle.dc.html",
+    "Card.dc.html",
+    "ChatRail.dc.html",
+    "P-NoMic.dc.html",
+    "P-Blaze.dc.html",
+    "P-Chat.dc.html",
+    "P-NoKeys.dc.html",
+    "P-NotMeet.dc.html",
+    "Pipeline.dc.html",
+    "Shell.dc.html",
+    "Meetings.dc.html",
+    "Install.dc.html",
+    "MicPerm.dc.html",
+    "Docs.dc.html",
+    "Account.dc.html",
+    "Upgrade.dc.html"
+  ],
+  "notes": {
+    "n-ext": {
+      "x": 0,
+      "y": -300,
+      "maxW": 4640,
+      "kind": "title1",
+      "text": "Tiện ích Chrome — sản phẩm thật"
+    },
+    "n-web": {
+      "x": 0,
+      "y": 770,
+      "maxW": 9560,
+      "kind": "title1",
+      "text": "Web console — bản mô phỏng giao diện mục tiêu, dữ liệu mẫu, không đấu nối luồng AI"
+    },
+    "n-src": {
+      "x": 4760,
+      "y": -140,
+      "w": 620,
+      "text": "Cơ chế tương tác (hàng đợi tin, trạng thái suy giảm, anatomy thẻ) kế thừa từ capture đối thủ ở DESIGN.md. Lớp thương hiệu — tên, dấu hiệu, màu, chữ — thì không."
+    }
+  },
+  "designSystems": []
+}

@@ -1,0 +1,2407 @@
+{
+  "aicoding.formatViewer.designMd": {
+    "schemaVersion": 1,
+    "parserVersion": 5,
+    "sourcePath": "E:\\RnD\\DESIGN.md",
+    "updatedAt": "2026-11-01T05:56:30.692Z",
+    "title": "ParakeetAI — captured design system (reference)",
+    "tokens": [
+      {
+        "group": "colors",
+        "count": 28,
+        "source": "frontmatter",
+        "entries": [
+          {
+            "name": "primary",
+            "value": "#16a34a"
+          },
+          {
+            "name": "on-primary",
+            "value": "#fafafa"
+          },
+          {
+            "name": "primary-dark-theme",
+            "value": "#166534"
+          },
+          {
+            "name": "ink",
+            "value": "#18181b"
+          },
+          {
+            "name": "muted-ink",
+            "value": "#71717a"
+          },
+          {
+            "name": "canvas",
+            "value": "#ffffff"
+          },
+          {
+            "name": "surface-card",
+            "value": "#ffffff"
+          },
+          {
+            "name": "surface-subtle",
+            "value": "#f4f4f5"
+          },
+          {
+            "name": "surface-session",
+            "value": "#f5f5f4"
+          },
+          {
+            "name": "surface-cv",
+            "value": "#e0eeff"
+          },
+          {
+            "name": "surface-documents",
+            "value": "#d6ece5"
+          },
+          {
+            "name": "hairline",
+            "value": "#e4e4e7"
+          },
+          {
+            "name": "hairline-cv",
+            "value": "#c4dcfd"
+          },
+          {
+            "name": "canvas-sidebar",
+            "value": "#fafafa"
+          },
+          {
+            "name": "danger",
+            "value": "#dc2626"
+          },
+          {
+            "name": "on-danger",
+            "value": "#fef2f2"
+          },
+          {
+            "name": "warning",
+            "value": "#f59f0a"
+          },
+          {
+            "name": "warning-ink",
+            "value": "#b45309"
+          },
+          {
+            "name": "success-pill-bg",
+            "value": "#e4fccb"
+          },
+          {
+            "name": "success-pill-ink",
+            "value": "#3a7d0e"
+          },
+          {
+            "name": "success-pill-stroke",
+            "value": "#85e833"
+          },
+          {
+            "name": "status-ended",
+            "value": "#d4d4d8"
+          },
+          {
+            "name": "focus-ring",
+            "value": "#18181b"
+          },
+          {
+            "name": "chart-1",
+            "value": "#2a9d90"
+          }
+        ]
+      },
+      {
+        "group": "typography",
+        "count": 45,
+        "source": "frontmatter",
+        "entries": [
+          {
+            "name": "display-lg.fontFamily",
+            "value": "'Chakra Petch', 'Bricolage Grotesque', ui-sans-serif, sans-serif"
+          },
+          {
+            "name": "display-lg.fontSize",
+            "value": "30px"
+          },
+          {
+            "name": "display-lg.fontWeight",
+            "value": "600"
+          },
+          {
+            "name": "display-lg.lineHeight",
+            "value": "36px"
+          },
+          {
+            "name": "display-lg.letterSpacing",
+            "value": "-0.025em"
+          },
+          {
+            "name": "heading-md.fontFamily",
+            "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+          },
+          {
+            "name": "heading-md.fontSize",
+            "value": "18px"
+          },
+          {
+            "name": "heading-md.fontWeight",
+            "value": "600"
+          },
+          {
+            "name": "heading-md.lineHeight",
+            "value": "28px"
+          },
+          {
+            "name": "heading-md.letterSpacing",
+            "value": "-0.025em"
+          },
+          {
+            "name": "heading-sm.fontFamily",
+            "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+          },
+          {
+            "name": "heading-sm.fontSize",
+            "value": "16px"
+          },
+          {
+            "name": "heading-sm.fontWeight",
+            "value": "600"
+          },
+          {
+            "name": "heading-sm.lineHeight",
+            "value": "24px"
+          },
+          {
+            "name": "heading-sm.letterSpacing",
+            "value": "0px"
+          },
+          {
+            "name": "body-md.fontFamily",
+            "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+          },
+          {
+            "name": "body-md.fontSize",
+            "value": "16px"
+          },
+          {
+            "name": "body-md.fontWeight",
+            "value": "400"
+          },
+          {
+            "name": "body-md.lineHeight",
+            "value": "24px"
+          },
+          {
+            "name": "body-md.letterSpacing",
+            "value": "0px"
+          },
+          {
+            "name": "body-sm.fontFamily",
+            "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+          },
+          {
+            "name": "body-sm.fontSize",
+            "value": "14px"
+          },
+          {
+            "name": "body-sm.fontWeight",
+            "value": "400"
+          },
+          {
+            "name": "body-sm.lineHeight",
+            "value": "20px"
+          }
+        ]
+      },
+      {
+        "group": "spacing",
+        "count": 8,
+        "source": "frontmatter",
+        "entries": [
+          {
+            "name": "xxs",
+            "value": "4px"
+          },
+          {
+            "name": "xs",
+            "value": "8px"
+          },
+          {
+            "name": "sm",
+            "value": "12px"
+          },
+          {
+            "name": "md",
+            "value": "16px"
+          },
+          {
+            "name": "lg",
+            "value": "24px"
+          },
+          {
+            "name": "xl",
+            "value": "32px"
+          },
+          {
+            "name": "2xl",
+            "value": "48px"
+          },
+          {
+            "name": "section",
+            "value": "64px"
+          }
+        ]
+      },
+      {
+        "group": "rounded",
+        "count": 8,
+        "source": "frontmatter",
+        "entries": [
+          {
+            "name": "none",
+            "value": "0px"
+          },
+          {
+            "name": "xs",
+            "value": "2px"
+          },
+          {
+            "name": "sm",
+            "value": "4px"
+          },
+          {
+            "name": "md",
+            "value": "12px"
+          },
+          {
+            "name": "lg",
+            "value": "16px"
+          },
+          {
+            "name": "xl",
+            "value": "24px"
+          },
+          {
+            "name": "2xl",
+            "value": "32px"
+          },
+          {
+            "name": "full",
+            "value": "9999px"
+          }
+        ]
+      },
+      {
+        "group": "Semantic tokens keyed to business objects",
+        "count": 5,
+        "source": "markdown",
+        "entries": [
+          {
+            "name": ". This system continues past the UI\nvocabulary into domain vocabulary:\n\n| Token | Light | Dark | Role |\n|---|---|---|---|\n|",
+            "value": "-session-background` / `-border` / `-pill` | `#f5f5f4` / `#e4e4e7` / `#e7e5e4` | `#18181b` / `#27272a` / `#27272a` | call-session card |"
+          },
+          {
+            "name": "/",
+            "value": "border` | `#e0eeff` / `#c4dcfd` | `#2f3953` / `#394f82` | CV surface |"
+          },
+          {
+            "name": "#123f38",
+            "value": "range | documents surface |"
+          },
+          {
+            "name": "/",
+            "value": "text` / `-stroke` | `#e4fccb` / `#3a7d0e` / `#85e833` | `#2b5413` / `#a6f363` / `#479b0b` | \"ready\" state pill |"
+          },
+          {
+            "name": "| ended-session chip |\n\nNote",
+            "value": "-ready-pill-*` carries **three** tokens (fill"
+          }
+        ]
+      },
+      {
+        "group": "Elevation & Depth",
+        "count": 4,
+        "source": "markdown",
+        "entries": [
+          {
+            "name": "|\n|",
+            "value": "-shadow-raised` | `0 1px 3px 0 #0000001a"
+          },
+          {
+            "name": "|\n|",
+            "value": "-shadow-popup` | `0 4px 6px -1px …"
+          },
+          {
+            "name": "|\n|",
+            "value": "-shadow-overlay` | `0 10px 15px -3px …"
+          },
+          {
+            "name": "and separation is carried by",
+            "value": "-border` instead. That is a deliberate"
+          }
+        ]
+      }
+    ],
+    "sections": [
+      {
+        "level": 2,
+        "title": "overview",
+        "rawTitle": "Overview",
+        "excerpt": "**What this is.** A design-system capture reverse-drawn from the shipped CSS of\n`parakeet-ai.com`, produced so its *mechanics* can be reused in an unrelated\nproduct. Token architecture, naming discipline, and motion strategy are\ntransferable. The brand layer is not: the name \"ParakeetAI\", the \"codeboss\"\nbrand, the logo, marketing copy, illustrations, and the `departureMono` font\nare owned assets and are deliberately **not** reproduced here.\n\n**Stack observed.** Tailwind CSS v4 (`@theme` with `--spacing: 0.25rem`\ndynamic scale) + shadcn/ui token vocabulary + a hand-authored semantic layer on\ntop. Base palette is the shadcn **zinc** ramp, not a custom grey ramp.\n\n**Source coverage.**\n\n| Source | Status | Confidence |\n|---|---|---|\n| `08kuqptwm_x9t.css` (654 KB, app theme) | authoritative | high |\n| `31o6s2-f2qd7r.css` (12 KB) | supporting | medium |\n| Accessibility tree of `/dashboard/callSessions` (275 nodes, via REA CDP) | supporting | high for structure |\n| Computed styles per element | **not captured** | — see Known Gaps |\n| Figma / design docs | unavailable | — |\n\nEvery hex below is a mechanical conversion of an `hsl(H S% L%)` triplet found in\nthe theme block. Nothing in `## Colors` is estimated.",
+        "wordCount": 170,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "colors",
+        "rawTitle": "Colors",
+        "excerpt": "The implementation stores colors as **bare HSL triplets** and wraps them:\n\n```css\n--primary: 142.1 76.2% 36.3%;        /* raw: themeable, alpha-composable */\n--color-primary: hsl(var(--primary)); /* usable */\n```\n\nThis is the single most load-bearing decision in the file. It buys three things\nworth copying: brand swap by overriding triplets only, `hsl(var(--x) / .5)`\nalpha without duplicate tokens, and light/dark as a data swap rather than a\nsecond token set.",
+        "wordCount": 70,
+        "completeness": "ready"
+      },
+      {
+        "level": 3,
+        "title": "three themes, one attribute",
+        "rawTitle": "Three themes, one attribute",
+        "excerpt": "| Token | `:root` light | `.dark` | `:root[data-brand=codeboss]` |\n|---|---|---|---|\n| `{colors.canvas}` / bg | `#ffffff` | `#09090b` | `#0b0b0b` |\n| `{colors.ink}` / fg | `#18181b` | `#e4e4e7` | `#e6e6e6` |\n| `{colors.primary}` | `#16a34a` | `#166534` | `#ff5f01` |\n| `{colors.hairline}` | `#e4e4e7` | `#27272a` | — |\n| `{colors.muted-ink}` | `#71717a` | `#a1a1aa` | — |\n| base radius | `.5rem` | inherited | `2px` |\n| display font | Inter Tight | inherited | Chakra Petch |\n\nThe third column is the interesting one: **a second product identity is mounted\non the same codebase via a root attribute**, and it overrides colour *and*\nradius *and* type. A brand is not a palette here — it is a token namespace.",
+        "wordCount": 89,
+        "completeness": "ready"
+      },
+      {
+        "level": 3,
+        "title": "semantic tokens keyed to business objects",
+        "rawTitle": "Semantic tokens keyed to business objects",
+        "excerpt": "Most captures stop at `surface`/`muted`. This system continues past the UI\nvocabulary into domain vocabulary:\n\n| Token | Light | Dark | Role |\n|---|---|---|---|\n| `--session-background` / `-border` / `-pill` | `#f5f5f4` / `#e4e4e7` / `#e7e5e4` | `#18181b` / `#27272a` / `#27272a` | call-session card |\n| `--cv-background` / `-border` | `#e0eeff` / `#c4dcfd` | `#2f3953` / `#394f82` | CV surface |\n| `--documents-background` | `#d6ece5` | `#123f38`-range | documents surface |\n| `--ready-pill-background` / `-text` / `-stroke` | `#e4fccb` / `#3a7d0e` / `#85e833` | `#2b5413` / `#a6f363` / `#479b0b` | \"ready\" state pill |\n| `--status-ended` | `#d4d4d8` | `#52525b` | ended-session chip |\n\nNote `--ready-pill-*` carries **three** tokens (fill, ink, stroke) rather than\none — the pill is filled, outlined, and legible all at once, and each of those\nis separately themeable. Adopt the triple where a status chip must read against\narbitrary backgrounds; use the pair elsewhere.\n\nData colours `{colors.chart-1}` … `{colors.chart-5}` are a warm/teal set\n(`#2a9d90`, `#e76e50`, `#274754`, `#e8c468`, `#f4a462`), and they are **not**\nderived from `{colors.primary}` — charts are their own palette on purpose.",
+        "wordCount": 141,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "typography",
+        "rawTitle": "Typography",
+        "excerpt": "Two families carry the product: `'Inter Tight'` for UI text and a display face\nthat changes per brand (`'Chakra Petch'` default, `'Bricolage Grotesque'` in\nthe codeboss namespace). `'JetBrains Mono'` for code, `'Caveat'` (handwriting)\nas a deliberate accent, `'Archivo'` on some marketing surfaces.\n\nType scale is Tailwind's default, with paired `--text-*--line-height` tokens:\n12/16, 14/20, 16/24, 18/28, 20/28, 24/32, 30/36, 36/40. `letterSpacing` uses\n`--tracking-tight: -0.025em` on headings and `--tracking-wider/-widest` on\nuppercase labels — the wide tracking on small caps is the main typographic\nsignature.\n\nAll five faces are OFL and available on Google Fonts, so they are reusable\nwithout licence friction. **`departureMono` is not** — it is a named custom\nface; substitute any mono you have rights to.",
+        "wordCount": 126,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "layout",
+        "rawTitle": "Layout",
+        "excerpt": "`--spacing: 0.25rem` makes the entire spacing scale a multiple of 4px, generated\non demand by Tailwind v4 rather than enumerated. Container widths are tokenised\n(`--container-3xs` 16rem → `--container-6xl` 72rem) and reused for max-widths.\n\nDashboard shell, from the accessibility tree: a persistent sidebar (own token\nset `{colors.canvas-sidebar}` + `--sidebar-*`), a `region \"Notifications\nalt+T\"` toast host with a declared keyboard shortcut, and a content column of\nfilter tabs → sort control → session list.",
+        "wordCount": 71,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "elevation & depth",
+        "rawTitle": "Elevation & Depth",
+        "excerpt": "Elevation is **semantic, four tiers**, and this is worth copying verbatim:\n\n| Token | Light | Dark |\n|---|---|---|\n| `--shadow-control` | `0 1px 2px 0 #0000000d` | `none` |\n| `--shadow-raised` | `0 1px 3px 0 #0000001a, 0 1px 2px -1px #0000001a` | `none` |\n| `--shadow-popup` | `0 4px 6px -1px …, 0 2px 4px -2px …` | `none` |\n| `--shadow-overlay` | `0 10px 15px -3px …, 0 4px 6px -4px …` | `none` |\n\nIn dark mode every shadow collapses to `none` and separation is carried by\n`--border` instead. That is a deliberate, coherent choice — dark surfaces do not\nread elevation from shadow — and it is easy to break accidentally.\n\n43 `backdrop-filter` uses: blur is a first-class depth tool, mostly on sticky\nheaders and overlays.",
+        "wordCount": 107,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "shapes",
+        "rawTitle": "Shapes",
+        "excerpt": "`{rounded.xs}` 2px → `{rounded.full}`. Component-scoped aliases exist —\n`--radius-button`, `--radius-control`, `--radius-dialog` — so a button's corner\nis a *role*, not a number.\n\n**Conflict (unresolved, by design).** Each radius token is defined three times,\nin cascade order:\n\n```\n--radius-xl   .75rem        ← Tailwind default\n              1.5rem        ← app theme\n              2px           ← data-brand=codeboss\n```\n\nThe last wins, so the codeboss brand renders near-square. This is not drift — it\nis the brand-namespace mechanism working. It does mean **no radius value can be\nread from a screenshot alone**: you must know which brand attribute is active.\nIf you adopt this pattern, keep the role aliases (`--radius-button`) and never\nlet a component consume `--radius-xl` directly, or brand swap will half-work.",
+        "wordCount": 110,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "components",
+        "rawTitle": "Components",
+        "excerpt": "Captured surface, from the accessibility tree plus token evidence:\n`{components.button-primary}`, `{components.button-secondary}`,\n`{components.text-input}` → `{components.text-input-focused}` (ring is\n`{colors.focus-ring}`, i.e. ink, not brand), `{components.card-session}`,\n`{components.card-cv}`, `{components.card-documents}`, `{components.pill-ready}`,\n`{components.pill-status-ended}`, `{components.pill-credit}`,\n`{components.tab-item}` → `{components.tab-item-selected}`,\n`{components.dialog}`, `{components.sidebar-nav}`, `{components.alert-error}`.\n\nList states seen in production: filter tabs `All / Interview / Regular / Mock`;\nview toggle `Card view / Table view`; sort `Newest`; search placeholder\n\"Search by role or company\"; per-row actions `Rejoin session`,\n`View transcript`, `Session actions`; a monetisation gate rendered as\n`{components.pill-credit}` + `Upgrade`.\n\nDate group headers rendered as `1 THG 11, 2026` — Vietnamese month abbreviation\ninside English UI. Formatting follows `Intl` locale at runtime, not a hardcoded\nstring table. Worth copying if you localise.",
+        "wordCount": 121,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "motion",
+        "rawTitle": "Motion",
+        "excerpt": "49 `@keyframes` and a tokenised animation layer — `--animate-*` names each\nnamed animation with its duration and easing in one value:\n\n```css\n--animate-listening-bar: listening-bar 1.1s ease-in-out infinite;\n--animate-intake-step-in: intake-step-in .3s cubic-bezier(.23,1,.32,1);\n--animate-review-scan: review-scan 2.4s linear infinite alternate;\n```\n\nEasing is semantic, not just `ease-out`: `--ease-out-strong`\n`cubic-bezier(.23,1,.32,1)`, `--ease-in-out-strong` `cubic-bezier(.77,0,.175,1)`,\n`--ease-drawer` `cubic-bezier(.32,.72,0,1)`. **15 `prefers-reduced-motion`\nblocks** — reduced motion is handled, and handled at the token level.\n\n`--animate-*` names are domain-specific (`listening-bar`, `intake-step-in`,\n`review-scan`, `bank-*`, `drill-*`). Motion is named after the feature it serves.",
+        "wordCount": 96,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "dos and donts",
+        "rawTitle": "Do's and Don'ts",
+        "excerpt": "**Do**\n- Keep the two-layer token split (raw triplet → `hsl(var(--x))` consumer).\n- Name tokens after business objects once a role repeats across three surfaces.\n- Use `--shadow-control/raised/popup/overlay`, and set all four to `none` in dark.\n- Tokenise easing by intent (`--ease-drawer`), not by curve literal.\n- Route brand swap through a root attribute and override *triplets only*.\n\n**Don't**\n- Don't hardcode hex in components — 827 hex literals already exist in this\n  stylesheet and they are the theme layer's, not yours.\n- Don't consume `--radius-xl` in a component; consume `--radius-button`.\n- Don't assume a screenshot's radius is the system's radius (see Shapes).\n- Don't derive chart colours from `{colors.primary}`; keep them independent.\n- Don't lift the brand layer. Logo, product names, copy, illustrations and\n  `departureMono` are out of scope for reuse.",
+        "wordCount": 145,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "responsive behavior",
+        "rawTitle": "Responsive Behavior",
+        "excerpt": "Breakpoints are Tailwind defaults (`--breakpoint-md: 48rem` observed). The\nsidebar collapses — a `Toggle sidebar` control is present in the accessibility\ntree — and the session list has an explicit card/table duality rather than a\nsingle responsive list. Fixed viewport was 1280×720 during capture; smaller\nbreakpoints were **not** exercised.",
+        "wordCount": 48,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "known gaps",
+        "rawTitle": "Known Gaps",
+        "excerpt": "- **No computed styles.** Per-element resolved values were not captured, so\n  every `typography` and `components` entry above is *scale + token* inference,\n  not observation. Mark `needs-design-decision` before treating a component's\n  padding or height as fact.\n- **Light theme is the default assumption.** Whether the product ships dark-first\n  was not established.\n- **`codeboss` block only partially parsed** — colour and radius overrides were\n  read; the full override set was not enumerated.\n- **No Figma source.** Design intent vs implementation accident cannot be\n  separated on any individual token.\n- **Marketing pages not captured** — this is the authenticated app surface.\n- **Hover/active/disabled states not extracted.** `--primary-fill` and\n  `group-hover:` variants exist in the CSS and were not resolved.",
+        "wordCount": 115,
+        "completeness": "ready"
+      },
+      {
+        "level": 2,
+        "title": "drift prevention, if you adopt this",
+        "rawTitle": "Drift prevention, if you adopt this",
+        "excerpt": "1. Lint rule: reject hex literals outside the theme layer.\n2. Lint rule: reject `rounded-*` utilities inside `components/`; require\n   `--radius-<role>`.\n3. A theme smoke test that asserts `--shadow-*: none` under the dark selector.\n4. If you use `data-brand`, add a spec that renders one screen per brand and\n   diffs computed radius/primary — that is the only guard against a\n   half-working brand swap.",
+        "wordCount": 63,
+        "completeness": "ready"
+      }
+    ],
+    "components": [
+      {
+        "name": "button-primary",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.primary}",
+          "textColor: {colors.on-primary}",
+          "typography: {typography.button-md}",
+          "rounded: {rounded.xl}",
+          "padding: 10px 16px",
+          "height: 40px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "button-secondary",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.surface-subtle}",
+          "textColor: {colors.ink}",
+          "typography: {typography.button-md}",
+          "rounded: {rounded.xl}",
+          "padding: 10px 16px",
+          "height: 40px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "text-input",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.canvas}",
+          "textColor: {colors.ink}",
+          "typography: {typography.body-md}",
+          "rounded: {rounded.lg}",
+          "padding: 10px 12px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "text-input-focused",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.canvas}",
+          "textColor: {colors.ink}",
+          "typography: {typography.body-md}",
+          "rounded: {rounded.lg}",
+          "padding: 10px 12px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "card-session",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.surface-session}",
+          "textColor: {colors.ink}",
+          "typography: {typography.body-sm}",
+          "rounded: {rounded.lg}",
+          "padding: 16px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "card-cv",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.surface-cv}",
+          "textColor: {colors.ink}",
+          "typography: {typography.body-sm}",
+          "rounded: {rounded.lg}",
+          "padding: 16px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "card-documents",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.surface-documents}",
+          "textColor: {colors.ink}",
+          "typography: {typography.body-sm}",
+          "rounded: {rounded.lg}",
+          "padding: 16px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "pill-ready",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.success-pill-bg}",
+          "textColor: {colors.success-pill-ink}",
+          "typography: {typography.caption}",
+          "rounded: {rounded.full}",
+          "padding: 2px 8px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "pill-status-ended",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.status-ended}",
+          "textColor: {colors.ink}",
+          "typography: {typography.caption}",
+          "rounded: {rounded.full}",
+          "padding: 2px 8px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "pill-credit",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.surface-subtle}",
+          "textColor: {colors.muted-ink}",
+          "typography: {typography.caption}",
+          "rounded: {rounded.full}",
+          "padding: 2px 8px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "tab-item",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.canvas}",
+          "textColor: {colors.muted-ink}",
+          "typography: {typography.button-md}",
+          "rounded: {rounded.md}",
+          "padding: 8px 12px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "tab-item-selected",
+        "variants": [],
+        "states": [
+          "selected"
+        ],
+        "rules": [
+          "backgroundColor: {colors.surface-subtle}",
+          "textColor: {colors.ink}",
+          "typography: {typography.button-md}",
+          "rounded: {rounded.md}",
+          "padding: 8px 12px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "dialog",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.canvas}",
+          "textColor: {colors.ink}",
+          "typography: {typography.body-md}",
+          "rounded: {rounded.2xl}",
+          "padding: 24px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "sidebar-nav",
+        "variants": [],
+        "states": [],
+        "rules": [
+          "backgroundColor: {colors.canvas-sidebar}",
+          "textColor: {colors.muted-ink}",
+          "typography: {typography.body-sm}",
+          "rounded: {rounded.none}",
+          "padding: 16px"
+        ],
+        "source": "frontmatter"
+      },
+      {
+        "name": "alert-error",
+        "variants": [],
+        "states": [
+          "error"
+        ],
+        "rules": [
+          "backgroundColor: {colors.on-danger}",
+          "textColor: {colors.danger}",
+          "typography: {typography.body-sm}",
+          "rounded: {rounded.md}",
+          "padding: 12px 16px"
+        ],
+        "source": "frontmatter"
+      }
+    ],
+    "states": [
+      {
+        "name": "selected",
+        "components": [
+          "tab-item-selected"
+        ],
+        "requirement": "",
+        "source": "frontmatter"
+      },
+      {
+        "name": "error",
+        "components": [
+          "alert-error"
+        ],
+        "requirement": "",
+        "source": "frontmatter"
+      }
+    ],
+    "rules": [
+      {
+        "kind": "Do",
+        "text": "Keep the two-layer token split (raw triplet → `hsl(var(--x))` consumer).",
+        "source": "markdown"
+      },
+      {
+        "kind": "Do",
+        "text": "Name tokens after business objects once a role repeats across three surfaces.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Do",
+        "text": "Use `--shadow-control/raised/popup/overlay`, and set all four to `none` in dark.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Do",
+        "text": "Tokenise easing by intent (`--ease-drawer`), not by curve literal.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Do",
+        "text": "Route brand swap through a root attribute and override *triplets only*.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Don't",
+        "text": "Don't hardcode hex in components — 827 hex literals already exist in this",
+        "source": "markdown"
+      },
+      {
+        "kind": "Don't",
+        "text": "Don't consume `--radius-xl` in a component; consume `--radius-button`.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Don't",
+        "text": "Don't assume a screenshot's radius is the system's radius (see Shapes).",
+        "source": "markdown"
+      },
+      {
+        "kind": "Don't",
+        "text": "Don't derive chart colours from `{colors.primary}`; keep them independent.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Don't",
+        "text": "Don't lift the brand layer. Logo, product names, copy, illustrations and",
+        "source": "markdown"
+      },
+      {
+        "kind": "Rule",
+        "text": "Lint rule: reject hex literals outside the theme layer.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Do",
+        "text": "Lint rule: reject `rounded-*` utilities inside `components/`; require",
+        "source": "markdown"
+      },
+      {
+        "kind": "Rule",
+        "text": "A theme smoke test that asserts `--shadow-*: none` under the dark selector.",
+        "source": "markdown"
+      },
+      {
+        "kind": "Rule",
+        "text": "If you use `data-brand`, add a spec that renders one screen per brand and",
+        "source": "markdown"
+      }
+    ],
+    "openDecisions": [
+      {
+        "text": "**No computed styles.** Per-element resolved values were not captured, so",
+        "source": "markdown"
+      },
+      {
+        "text": "**Light theme is the default assumption.** Whether the product ships dark-first",
+        "source": "markdown"
+      },
+      {
+        "text": "**`codeboss` block only partially parsed** — colour and radius overrides were",
+        "source": "markdown"
+      },
+      {
+        "text": "**No Figma source.** Design intent vs implementation accident cannot be",
+        "source": "markdown"
+      },
+      {
+        "text": "**Marketing pages not captured** — this is the authenticated app surface.",
+        "source": "markdown"
+      },
+      {
+        "text": "**Hover/active/disabled states not extracted.** `--primary-fill` and",
+        "source": "markdown"
+      }
+    ],
+    "designSystem": {
+      "schemaVersion": 1,
+      "schemaKeys": [
+        "version",
+        "name",
+        "description",
+        "colors",
+        "typography",
+        "rounded",
+        "spacing",
+        "components"
+      ],
+      "presentSchemaKeys": [
+        "version",
+        "name",
+        "description",
+        "colors",
+        "typography",
+        "rounded",
+        "spacing",
+        "components"
+      ],
+      "extensionKeys": [],
+      "unknownKeys": [],
+      "name": "ParakeetAI-reference-capture",
+      "description": "Design system captured from the production CSS of parakeet-ai.com (dashboard surfaces). Reference-only capture for building a different product — not a brand license. Base theme is light; dark and a second brand theme are documented in prose.",
+      "version": "alpha",
+      "colors": [
+        {
+          "name": "primary",
+          "value": "#16a34a",
+          "role": "primary",
+          "family": "other",
+          "luminance": 0.2686,
+          "contrastOnWhite": 3.3,
+          "contrastOnBlack": 6.37,
+          "isDisplayable": true
+        },
+        {
+          "name": "on-primary",
+          "value": "#fafafa",
+          "role": "primary",
+          "family": "other",
+          "luminance": 0.956,
+          "contrastOnWhite": 1.04,
+          "contrastOnBlack": 20.12,
+          "isDisplayable": true
+        },
+        {
+          "name": "primary-dark-theme",
+          "value": "#166534",
+          "role": "primary",
+          "family": "dark",
+          "luminance": 0.0973,
+          "contrastOnWhite": 7.13,
+          "contrastOnBlack": 2.95,
+          "isDisplayable": true
+        },
+        {
+          "name": "ink",
+          "value": "#18181b",
+          "role": "text",
+          "family": "dark",
+          "luminance": 0.0093,
+          "contrastOnWhite": 17.72,
+          "contrastOnBlack": 1.19,
+          "isDisplayable": true
+        },
+        {
+          "name": "muted-ink",
+          "value": "#71717a",
+          "role": "text",
+          "family": "dark",
+          "luminance": 0.1673,
+          "contrastOnWhite": 4.83,
+          "contrastOnBlack": 4.35,
+          "isDisplayable": true
+        },
+        {
+          "name": "canvas",
+          "value": "#ffffff",
+          "role": "surface",
+          "family": "light",
+          "luminance": 1,
+          "contrastOnWhite": 1,
+          "contrastOnBlack": 21,
+          "isDisplayable": true
+        },
+        {
+          "name": "surface-card",
+          "value": "#ffffff",
+          "role": "surface",
+          "family": "other",
+          "luminance": 1,
+          "contrastOnWhite": 1,
+          "contrastOnBlack": 21,
+          "isDisplayable": true
+        },
+        {
+          "name": "surface-subtle",
+          "value": "#f4f4f5",
+          "role": "surface",
+          "family": "other",
+          "luminance": 0.9053,
+          "contrastOnWhite": 1.1,
+          "contrastOnBlack": 19.11,
+          "isDisplayable": true
+        },
+        {
+          "name": "surface-session",
+          "value": "#f5f5f4",
+          "role": "surface",
+          "family": "other",
+          "luminance": 0.9125,
+          "contrastOnWhite": 1.09,
+          "contrastOnBlack": 19.25,
+          "isDisplayable": true
+        },
+        {
+          "name": "surface-cv",
+          "value": "#e0eeff",
+          "role": "surface",
+          "family": "other",
+          "luminance": 0.8422,
+          "contrastOnWhite": 1.18,
+          "contrastOnBlack": 17.84,
+          "isDisplayable": true
+        },
+        {
+          "name": "surface-documents",
+          "value": "#d6ece5",
+          "role": "surface",
+          "family": "other",
+          "luminance": 0.7994,
+          "contrastOnWhite": 1.24,
+          "contrastOnBlack": 16.99,
+          "isDisplayable": true
+        },
+        {
+          "name": "hairline",
+          "value": "#e4e4e7",
+          "role": "border",
+          "family": "other",
+          "luminance": 0.7775,
+          "contrastOnWhite": 1.27,
+          "contrastOnBlack": 16.55,
+          "isDisplayable": true
+        },
+        {
+          "name": "hairline-cv",
+          "value": "#c4dcfd",
+          "role": "border",
+          "family": "other",
+          "luminance": 0.7001,
+          "contrastOnWhite": 1.4,
+          "contrastOnBlack": 15,
+          "isDisplayable": true
+        },
+        {
+          "name": "canvas-sidebar",
+          "value": "#fafafa",
+          "role": "surface",
+          "family": "light",
+          "luminance": 0.956,
+          "contrastOnWhite": 1.04,
+          "contrastOnBlack": 20.12,
+          "isDisplayable": true
+        },
+        {
+          "name": "danger",
+          "value": "#dc2626",
+          "role": "semantic",
+          "family": "other",
+          "luminance": 0.1674,
+          "contrastOnWhite": 4.83,
+          "contrastOnBlack": 4.35,
+          "isDisplayable": true
+        },
+        {
+          "name": "on-danger",
+          "value": "#fef2f2",
+          "role": "text",
+          "family": "other",
+          "luminance": 0.9099,
+          "contrastOnWhite": 1.09,
+          "contrastOnBlack": 19.2,
+          "isDisplayable": true
+        },
+        {
+          "name": "warning",
+          "value": "#f59f0a",
+          "role": "semantic",
+          "family": "other",
+          "luminance": 0.4423,
+          "contrastOnWhite": 2.13,
+          "contrastOnBlack": 9.85,
+          "isDisplayable": true
+        },
+        {
+          "name": "warning-ink",
+          "value": "#b45309",
+          "role": "text",
+          "family": "dark",
+          "luminance": 0.1591,
+          "contrastOnWhite": 5.02,
+          "contrastOnBlack": 4.18,
+          "isDisplayable": true
+        },
+        {
+          "name": "success-pill-bg",
+          "value": "#e4fccb",
+          "role": "surface",
+          "family": "other",
+          "luminance": 0.9043,
+          "contrastOnWhite": 1.1,
+          "contrastOnBlack": 19.09,
+          "isDisplayable": true
+        },
+        {
+          "name": "success-pill-ink",
+          "value": "#3a7d0e",
+          "role": "text",
+          "family": "dark",
+          "luminance": 0.156,
+          "contrastOnWhite": 5.1,
+          "contrastOnBlack": 4.12,
+          "isDisplayable": true
+        },
+        {
+          "name": "success-pill-stroke",
+          "value": "#85e833",
+          "role": "border",
+          "family": "other",
+          "luminance": 0.6294,
+          "contrastOnWhite": 1.55,
+          "contrastOnBlack": 13.59,
+          "isDisplayable": true
+        },
+        {
+          "name": "status-ended",
+          "value": "#d4d4d8",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.6604,
+          "contrastOnWhite": 1.48,
+          "contrastOnBlack": 14.21,
+          "isDisplayable": true
+        },
+        {
+          "name": "focus-ring",
+          "value": "#18181b",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.0093,
+          "contrastOnWhite": 17.72,
+          "contrastOnBlack": 1.19,
+          "isDisplayable": true
+        },
+        {
+          "name": "chart-1",
+          "value": "#2a9d90",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.2662,
+          "contrastOnWhite": 3.32,
+          "contrastOnBlack": 6.32,
+          "isDisplayable": true
+        },
+        {
+          "name": "chart-2",
+          "value": "#e76e50",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.2872,
+          "contrastOnWhite": 3.11,
+          "contrastOnBlack": 6.74,
+          "isDisplayable": true
+        },
+        {
+          "name": "chart-3",
+          "value": "#274754",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.0558,
+          "contrastOnWhite": 9.93,
+          "contrastOnBlack": 2.12,
+          "isDisplayable": true
+        },
+        {
+          "name": "chart-4",
+          "value": "#e8c468",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.5764,
+          "contrastOnWhite": 1.68,
+          "contrastOnBlack": 12.53,
+          "isDisplayable": true
+        },
+        {
+          "name": "chart-5",
+          "value": "#f4a462",
+          "role": "accent",
+          "family": "other",
+          "luminance": 0.4667,
+          "contrastOnWhite": 2.03,
+          "contrastOnBlack": 10.33,
+          "isDisplayable": true
+        }
+      ],
+      "typography": [
+        {
+          "name": "display-lg",
+          "fontFamily": "'Chakra Petch', 'Bricolage Grotesque', ui-sans-serif, sans-serif",
+          "fontSize": "30px",
+          "fontWeight": "600",
+          "lineHeight": "36px",
+          "letterSpacing": "-0.025em",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Chakra Petch', 'Bricolage Grotesque', ui-sans-serif, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "30px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "600"
+            },
+            {
+              "property": "lineHeight",
+              "value": "36px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "-0.025em"
+            }
+          ]
+        },
+        {
+          "name": "heading-md",
+          "fontFamily": "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
+          "fontSize": "18px",
+          "fontWeight": "600",
+          "lineHeight": "28px",
+          "letterSpacing": "-0.025em",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "18px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "600"
+            },
+            {
+              "property": "lineHeight",
+              "value": "28px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "-0.025em"
+            }
+          ]
+        },
+        {
+          "name": "heading-sm",
+          "fontFamily": "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "24px",
+          "letterSpacing": "0px",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "16px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "600"
+            },
+            {
+              "property": "lineHeight",
+              "value": "24px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0px"
+            }
+          ]
+        },
+        {
+          "name": "body-md",
+          "fontFamily": "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "24px",
+          "letterSpacing": "0px",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "16px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "400"
+            },
+            {
+              "property": "lineHeight",
+              "value": "24px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0px"
+            }
+          ]
+        },
+        {
+          "name": "body-sm",
+          "fontFamily": "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px",
+          "letterSpacing": "0px",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "14px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "400"
+            },
+            {
+              "property": "lineHeight",
+              "value": "20px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0px"
+            }
+          ]
+        },
+        {
+          "name": "caption",
+          "fontFamily": "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "16px",
+          "letterSpacing": "0.05em",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "12px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "400"
+            },
+            {
+              "property": "lineHeight",
+              "value": "16px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0.05em"
+            }
+          ]
+        },
+        {
+          "name": "button-md",
+          "fontFamily": "'Inter Tight', ui-sans-serif, system-ui, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "500",
+          "lineHeight": "20px",
+          "letterSpacing": "0px",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Inter Tight', ui-sans-serif, system-ui, sans-serif"
+            },
+            {
+              "property": "fontSize",
+              "value": "14px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "500"
+            },
+            {
+              "property": "lineHeight",
+              "value": "20px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0px"
+            }
+          ]
+        },
+        {
+          "name": "code-md",
+          "fontFamily": "'JetBrains Mono', ui-monospace, Menlo, monospace",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px",
+          "letterSpacing": "0px",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'JetBrains Mono', ui-monospace, Menlo, monospace"
+            },
+            {
+              "property": "fontSize",
+              "value": "14px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "400"
+            },
+            {
+              "property": "lineHeight",
+              "value": "20px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0px"
+            }
+          ]
+        },
+        {
+          "name": "annotation-hand",
+          "fontFamily": "'Caveat', cursive",
+          "fontSize": "18px",
+          "fontWeight": "400",
+          "lineHeight": "24px",
+          "letterSpacing": "0px",
+          "properties": [
+            {
+              "property": "fontFamily",
+              "value": "'Caveat', cursive"
+            },
+            {
+              "property": "fontSize",
+              "value": "18px"
+            },
+            {
+              "property": "fontWeight",
+              "value": "400"
+            },
+            {
+              "property": "lineHeight",
+              "value": "24px"
+            },
+            {
+              "property": "letterSpacing",
+              "value": "0px"
+            }
+          ]
+        }
+      ],
+      "rounded": [
+        {
+          "name": "none",
+          "value": "0px",
+          "kind": "rounded",
+          "numericValue": 0,
+          "unit": "px"
+        },
+        {
+          "name": "xs",
+          "value": "2px",
+          "kind": "rounded",
+          "numericValue": 2,
+          "unit": "px"
+        },
+        {
+          "name": "sm",
+          "value": "4px",
+          "kind": "rounded",
+          "numericValue": 4,
+          "unit": "px"
+        },
+        {
+          "name": "md",
+          "value": "12px",
+          "kind": "rounded",
+          "numericValue": 12,
+          "unit": "px"
+        },
+        {
+          "name": "lg",
+          "value": "16px",
+          "kind": "rounded",
+          "numericValue": 16,
+          "unit": "px"
+        },
+        {
+          "name": "xl",
+          "value": "24px",
+          "kind": "rounded",
+          "numericValue": 24,
+          "unit": "px"
+        },
+        {
+          "name": "2xl",
+          "value": "32px",
+          "kind": "rounded",
+          "numericValue": 32,
+          "unit": "px"
+        },
+        {
+          "name": "full",
+          "value": "9999px",
+          "kind": "rounded",
+          "numericValue": 9999,
+          "unit": "px"
+        }
+      ],
+      "spacing": [
+        {
+          "name": "xxs",
+          "value": "4px",
+          "kind": "spacing",
+          "numericValue": 4,
+          "unit": "px"
+        },
+        {
+          "name": "xs",
+          "value": "8px",
+          "kind": "spacing",
+          "numericValue": 8,
+          "unit": "px"
+        },
+        {
+          "name": "sm",
+          "value": "12px",
+          "kind": "spacing",
+          "numericValue": 12,
+          "unit": "px"
+        },
+        {
+          "name": "md",
+          "value": "16px",
+          "kind": "spacing",
+          "numericValue": 16,
+          "unit": "px"
+        },
+        {
+          "name": "lg",
+          "value": "24px",
+          "kind": "spacing",
+          "numericValue": 24,
+          "unit": "px"
+        },
+        {
+          "name": "xl",
+          "value": "32px",
+          "kind": "spacing",
+          "numericValue": 32,
+          "unit": "px"
+        },
+        {
+          "name": "2xl",
+          "value": "48px",
+          "kind": "spacing",
+          "numericValue": 48,
+          "unit": "px"
+        },
+        {
+          "name": "section",
+          "value": "64px",
+          "kind": "spacing",
+          "numericValue": 64,
+          "unit": "px"
+        }
+      ],
+      "layout": [],
+      "options": [],
+      "components": [
+        {
+          "name": "button-primary",
+          "category": "action",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.primary}",
+              "reference": "colors.primary",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.on-primary}",
+              "reference": "colors.on-primary",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.button-md}",
+              "reference": "typography.button-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.xl}",
+              "reference": "rounded.xl",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "10px 16px",
+              "reference": "",
+              "resolvedGroup": ""
+            },
+            {
+              "property": "height",
+              "value": "40px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "button-secondary",
+          "category": "action",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.surface-subtle}",
+              "reference": "colors.surface-subtle",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.button-md}",
+              "reference": "typography.button-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.xl}",
+              "reference": "rounded.xl",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "10px 16px",
+              "reference": "",
+              "resolvedGroup": ""
+            },
+            {
+              "property": "height",
+              "value": "40px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "text-input",
+          "category": "form",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.canvas}",
+              "reference": "colors.canvas",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-md}",
+              "reference": "typography.body-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.lg}",
+              "reference": "rounded.lg",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "10px 12px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "text-input-focused",
+          "category": "form",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.canvas}",
+              "reference": "colors.canvas",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-md}",
+              "reference": "typography.body-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.lg}",
+              "reference": "rounded.lg",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "10px 12px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "card-session",
+          "category": "surface",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.surface-session}",
+              "reference": "colors.surface-session",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-sm}",
+              "reference": "typography.body-sm",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.lg}",
+              "reference": "rounded.lg",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "16px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "card-cv",
+          "category": "surface",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.surface-cv}",
+              "reference": "colors.surface-cv",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-sm}",
+              "reference": "typography.body-sm",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.lg}",
+              "reference": "rounded.lg",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "16px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "card-documents",
+          "category": "surface",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.surface-documents}",
+              "reference": "colors.surface-documents",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-sm}",
+              "reference": "typography.body-sm",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.lg}",
+              "reference": "rounded.lg",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "16px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "pill-ready",
+          "category": "component",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.success-pill-bg}",
+              "reference": "colors.success-pill-bg",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.success-pill-ink}",
+              "reference": "colors.success-pill-ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.caption}",
+              "reference": "typography.caption",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.full}",
+              "reference": "rounded.full",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "2px 8px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "pill-status-ended",
+          "category": "component",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.status-ended}",
+              "reference": "colors.status-ended",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.caption}",
+              "reference": "typography.caption",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.full}",
+              "reference": "rounded.full",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "2px 8px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "pill-credit",
+          "category": "component",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.surface-subtle}",
+              "reference": "colors.surface-subtle",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.muted-ink}",
+              "reference": "colors.muted-ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.caption}",
+              "reference": "typography.caption",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.full}",
+              "reference": "rounded.full",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "2px 8px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "tab-item",
+          "category": "navigation",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.canvas}",
+              "reference": "colors.canvas",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.muted-ink}",
+              "reference": "colors.muted-ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.button-md}",
+              "reference": "typography.button-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.md}",
+              "reference": "rounded.md",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "8px 12px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "tab-item-selected",
+          "category": "navigation",
+          "state": "selected",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.surface-subtle}",
+              "reference": "colors.surface-subtle",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.button-md}",
+              "reference": "typography.button-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.md}",
+              "reference": "rounded.md",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "8px 12px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "dialog",
+          "category": "component",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.canvas}",
+              "reference": "colors.canvas",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.ink}",
+              "reference": "colors.ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-md}",
+              "reference": "typography.body-md",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.2xl}",
+              "reference": "rounded.2xl",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "24px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "sidebar-nav",
+          "category": "navigation",
+          "state": "",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.canvas-sidebar}",
+              "reference": "colors.canvas-sidebar",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.muted-ink}",
+              "reference": "colors.muted-ink",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-sm}",
+              "reference": "typography.body-sm",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.none}",
+              "reference": "rounded.none",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "16px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        },
+        {
+          "name": "alert-error",
+          "category": "component",
+          "state": "error",
+          "properties": [
+            {
+              "property": "backgroundColor",
+              "value": "{colors.on-danger}",
+              "reference": "colors.on-danger",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "textColor",
+              "value": "{colors.danger}",
+              "reference": "colors.danger",
+              "resolvedGroup": "colors"
+            },
+            {
+              "property": "typography",
+              "value": "{typography.body-sm}",
+              "reference": "typography.body-sm",
+              "resolvedGroup": "typography"
+            },
+            {
+              "property": "rounded",
+              "value": "{rounded.md}",
+              "reference": "rounded.md",
+              "resolvedGroup": "rounded"
+            },
+            {
+              "property": "padding",
+              "value": "12px 16px",
+              "reference": "",
+              "resolvedGroup": ""
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "path": "colors.ink",
+          "group": "colors",
+          "count": 10
+        },
+        {
+          "path": "colors.canvas",
+          "group": "colors",
+          "count": 5
+        },
+        {
+          "path": "colors.primary",
+          "group": "colors",
+          "count": 5
+        },
+        {
+          "path": "rounded.lg",
+          "group": "rounded",
+          "count": 5
+        },
+        {
+          "path": "typography.body-sm",
+          "group": "typography",
+          "count": 5
+        },
+        {
+          "path": "colors.muted-ink",
+          "group": "colors",
+          "count": 4
+        },
+        {
+          "path": "rounded.full",
+          "group": "rounded",
+          "count": 4
+        },
+        {
+          "path": "typography.button-md",
+          "group": "typography",
+          "count": 4
+        },
+        {
+          "path": "colors.surface-subtle",
+          "group": "colors",
+          "count": 3
+        },
+        {
+          "path": "rounded.md",
+          "group": "rounded",
+          "count": 3
+        },
+        {
+          "path": "tokens.radius-button",
+          "group": "tokens",
+          "count": 3
+        },
+        {
+          "path": "typography.body-md",
+          "group": "typography",
+          "count": 3
+        },
+        {
+          "path": "typography.caption",
+          "group": "typography",
+          "count": 3
+        },
+        {
+          "path": "colors.canvas-sidebar",
+          "group": "colors",
+          "count": 2
+        },
+        {
+          "path": "colors.status-ended",
+          "group": "colors",
+          "count": 2
+        },
+        {
+          "path": "components.pill-credit",
+          "group": "components",
+          "count": 2
+        },
+        {
+          "path": "rounded.xl",
+          "group": "rounded",
+          "count": 2
+        },
+        {
+          "path": "tokens.ease-drawer",
+          "group": "tokens",
+          "count": 2
+        },
+        {
+          "path": "tokens.radius-xl",
+          "group": "tokens",
+          "count": 2
+        },
+        {
+          "path": "tokens.x",
+          "group": "tokens",
+          "count": 2
+        },
+        {
+          "path": "colors.chart-1",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.chart-5",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.danger",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.focus-ring",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.hairline",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.on-danger",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.on-primary",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.success-pill-bg",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.success-pill-ink",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.surface-cv",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.surface-documents",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "colors.surface-session",
+          "group": "colors",
+          "count": 1
+        },
+        {
+          "path": "components.alert-error",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.button-primary",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.button-secondary",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.card-cv",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.card-documents",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.card-session",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.dialog",
+          "group": "components",
+          "count": 1
+        },
+        {
+          "path": "components.pill-ready",
+          "group": "components",
+          "count": 1
+        }
+      ],
+      "contrastPairs": [
+        {
+          "background": "canvas",
+          "foreground": "ink",
+          "backgroundValue": "#ffffff",
+          "foregroundValue": "#18181b",
+          "ratio": 17.72,
+          "grade": "AAA"
+        },
+        {
+          "background": "surface-card",
+          "foreground": "ink",
+          "backgroundValue": "#ffffff",
+          "foregroundValue": "#18181b",
+          "ratio": 17.72,
+          "grade": "AAA"
+        },
+        {
+          "background": "canvas-sidebar",
+          "foreground": "ink",
+          "backgroundValue": "#fafafa",
+          "foregroundValue": "#18181b",
+          "ratio": 16.97,
+          "grade": "AAA"
+        },
+        {
+          "background": "surface-session",
+          "foreground": "ink",
+          "backgroundValue": "#f5f5f4",
+          "foregroundValue": "#18181b",
+          "ratio": 16.24,
+          "grade": "AAA"
+        },
+        {
+          "background": "surface-subtle",
+          "foreground": "ink",
+          "backgroundValue": "#f4f4f5",
+          "foregroundValue": "#18181b",
+          "ratio": 16.12,
+          "grade": "AAA"
+        },
+        {
+          "background": "success-pill-bg",
+          "foreground": "ink",
+          "backgroundValue": "#e4fccb",
+          "foregroundValue": "#18181b",
+          "ratio": 16.1,
+          "grade": "AAA"
+        },
+        {
+          "background": "surface-cv",
+          "foreground": "ink",
+          "backgroundValue": "#e0eeff",
+          "foregroundValue": "#18181b",
+          "ratio": 15.05,
+          "grade": "AAA"
+        },
+        {
+          "background": "surface-documents",
+          "foreground": "ink",
+          "backgroundValue": "#d6ece5",
+          "foregroundValue": "#18181b",
+          "ratio": 14.33,
+          "grade": "AAA"
+        },
+        {
+          "background": "canvas",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#ffffff",
+          "foregroundValue": "#166534",
+          "ratio": 7.13,
+          "grade": "AAA"
+        },
+        {
+          "background": "surface-card",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#ffffff",
+          "foregroundValue": "#166534",
+          "ratio": 7.13,
+          "grade": "AAA"
+        },
+        {
+          "background": "canvas-sidebar",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#fafafa",
+          "foregroundValue": "#166534",
+          "ratio": 6.83,
+          "grade": "AA"
+        },
+        {
+          "background": "surface-session",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#f5f5f4",
+          "foregroundValue": "#166534",
+          "ratio": 6.54,
+          "grade": "AA"
+        },
+        {
+          "background": "surface-subtle",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#f4f4f5",
+          "foregroundValue": "#166534",
+          "ratio": 6.49,
+          "grade": "AA"
+        },
+        {
+          "background": "success-pill-bg",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#e4fccb",
+          "foregroundValue": "#166534",
+          "ratio": 6.48,
+          "grade": "AA"
+        },
+        {
+          "background": "surface-cv",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#e0eeff",
+          "foregroundValue": "#166534",
+          "ratio": 6.06,
+          "grade": "AA"
+        },
+        {
+          "background": "surface-documents",
+          "foreground": "primary-dark-theme",
+          "backgroundValue": "#d6ece5",
+          "foregroundValue": "#166534",
+          "ratio": 5.77,
+          "grade": "AA"
+        }
+      ],
+      "componentPropertyCounts": [
+        {
+          "property": "backgroundColor",
+          "count": 15
+        },
+        {
+          "property": "padding",
+          "count": 15
+        },
+        {
+          "property": "rounded",
+          "count": 15
+        },
+        {
+          "property": "textColor",
+          "count": 15
+        },
+        {
+          "property": "typography",
+          "count": 15
+        },
+        {
+          "property": "height",
+          "count": 2
+        }
+      ]
+    },
+    "warnings": [],
+    "error": null
+  }
+}

@@ -1,0 +1,14 @@
+[
+  { "id": "l-01", "text": "Mình cần chốt giá gói cho khách SME trước cuối tuần này.", "atMs": 14000, "source": "tab" },
+  { "id": "l-02", "text": "Thị trường Việt Nam mình đang thấy phổ biến từ 300.000 đến 800.000 đồng mỗi tháng.", "atMs": 21000, "source": "tab" },
+  { "id": "l-03", "text": "Khoảng đó có vẻ hợp lý với năng lực chi trả của nhóm dưới 20 nhân viên.", "atMs": 30000, "source": "mic" },
+  { "id": "l-04", "text": "Nhưng mình chưa có số liệu công khai nào để đối chiếu.", "atMs": 38000, "source": "tab" },
+  { "id": "l-05", "text": "Hay là tìm xem mấy sản phẩm cùng phân khúc đang niêm yết bao nhiêu.", "atMs": 45000, "source": "tab" },
+  { "id": "l-06", "text": "Ừ, ưu tiên nguồn có bảng giá rõ ràng và cập nhật trong năm nay.", "atMs": 53000, "source": "mic" },
+  { "id": "l-07", "text": "Có điều khách mình mua theo năm, nên giá theo tháng sẽ khó so.", "atMs": 61000, "source": "tab" },
+  { "id": "l-08", "text": "Mình tính thử mô hình freemium xem sao, cho dùng miễn phí ba tính năng.", "atMs": 120000, "source": "tab" },
+  { "id": "l-09", "text": "Freemium thì tỷ lệ chuyển đổi trung bình ngành mình cũng nên tra cứu.", "atMs": 128000, "source": "mic" },
+  { "id": "l-10", "text": "À tối nay đá chung kết nhé, mấy đứa xem không?", "atMs": 180000, "source": "tab" },
+  { "id": "l-11", "text": "Xem chứ, đặt phòng chiếu luôn.", "atMs": 186000, "source": "tab" },
+  { "id": "l-12", "text": "Quay lại chuyện kênh phân phối, mình bán qua đại lý hay bán trực tiếp?", "atMs": 240000, "source": "tab" }
+]

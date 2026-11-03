@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Web console — khung điều hướng và danh sách Cuộc họp</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #14417F; } a:hover { color: #0E2E5C; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="box-sizing: border-box; display: flex; min-height: 100%; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <aside style="flex: none; width: 264px; box-sizing: border-box; padding: 16px 12px; display: flex; flex-direction: column; gap: 18px; background: #F6F8FA; border-right: 1px solid #DCE2E8">
+    <div style="display: flex; align-items: baseline; gap: 8px; padding: 4px 8px">
+      <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
+      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; color: #58636F">0.1.0</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 3px">
+      <span style="padding: 0 8px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; color: #58636F">TRỢ LÝ CUỘC HỌP</span>
+      <a href="Shell.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 12px; background: #FFFFFF; border: 1px solid #DCE2E8; text-decoration: none; color: #14181D; font-size: 14px; font-weight: 600">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M4 5.5h16v11h-9l-7 4z"></path><path d="M8 9.5h8"></path><path d="M8 12.5h5"></path></svg>
+        Cuộc họp
+        <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #58636F">18</span>
+      </a>
+      <a href="Docs.dc.html" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 12px; text-decoration: none; color: #14181D; font-size: 14px; font-weight: 500">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M3.5 6.5h6l2 2.5h9v10h-17z"></path></svg>
+        Tài liệu
+        <span style="margin-left: auto; padding: 2px 7px; border-radius: 5px; background: #EEF1F4; color: #58636F; font-size: 9.5px; font-weight: 600; letter-spacing: 0.03em">mục tiêu</span>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 3px; padding-top: 14px; border-top: 1px solid #DCE2E8">
+      <a href="Install.dc.html" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; box-sizing: border-box; border-radius: 12px; text-decoration: none; color: #14181D; font-size: 13.5px; font-weight: 500">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0E7C86" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M12 4v11"></path><path d="M7.5 10.5L12 15l4.5-4.5"></path><path d="M5 19h14"></path></svg>
+        Cài MeetMate
+      </a>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 3px; padding-top: 14px; border-top: 1px solid #DCE2E8">
+      <a href="Account.dc.html" style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; box-sizing: border-box; border-radius: 12px; text-decoration: none; color: #14181D; font-size: 14px">
+        <span style="flex: none; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700">TA</span>
+        <span style="display: flex; flex-direction: column; line-height: 16px">
+          <span style="font-weight: 600">Tài khoản</span>
+          <span style="font-size: 11px; color: #58636F">trần anh khoa</span>
+        </span>
+      </a>
+    </div>
+  </aside>
+
+  <main style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+
+    <header style="flex: none; display: flex; align-items: center; gap: 16px; height: 64px; box-sizing: border-box; padding: 0 24px; background: #FFFFFF; border-bottom: 1px solid #DCE2E8">
+      <div style="display: flex; align-items: baseline; gap: 12px; min-width: 0">
+        <h1 style="margin: 0; font-family: Overpass, sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.02em">Cuộc họp</h1>
+        <span style="font-size: 12px; color: #58636F; overflow-wrap: anywhere">Mọi cuộc họp MeetMate đã nghe và số nguồn đã gửi vào chat Meet.</span>
+      </div>
+      <span style="margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; border: 1px dashed #7E8B99; color: #58636F; font-size: 11px; font-weight: 600; white-space: nowrap">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="display: block"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5.5M12 7.8h.01"></path></svg>
+        Bản mô phỏng · dữ liệu mẫu · không đấu nối luồng AI
+      </span>
+    </header>
+
+    <div style="flex: 1; min-height: 0; box-sizing: border-box; padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 18px; max-width: 1400px">
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+        <label for="q" style="flex: 1; min-width: 220px; display: flex; align-items: center; gap: 9px; height: 40px; box-sizing: border-box; padding: 0 12px; border: 1px solid #7E8B99; border-radius: 12px; background: #FFFFFF">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4.5 4.5"></path></svg>
+          <span id="qlabel" style="display: none">Tìm cuộc họp</span>
+          <input id="q" type="search" placeholder="Tìm theo tên cuộc họp hoặc chủ đề…" aria-labelledby="qlabel" style="flex: 1; min-width: 0; border: 0; background: none; font-family: inherit; font-size: 13.5px; color: #14181D">
+        </label>
+        <sc-for list="{{kinds}}" as="k" hint-placeholder-count="4">
+          <button type="button" aria-pressed="{{k.on}}" style="height: 34px; padding: 0 13px; box-sizing: border-box; border-radius: 999px; border: 1px solid {{k.bd}}; background: {{k.bg}}; color: {{k.fg}}; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">{{k.label}}</button>
+        </sc-for>
+        <button type="button" style="margin-left: auto; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; box-sizing: border-box; border: 0; border-radius: 12px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="display: block"><path d="M12 5v14M5 12h14"></path></svg>
+          Cuộc họp mới
+        </button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF">
+            <span style="font-size: 11px; color: #58636F">{{s.k}}</span>
+            <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 22px; font-weight: 500; line-height: 26px">{{s.v}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px">
+        <sc-for list="{{meetings}}" as="m" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px; border: 1px solid #DCE2E8; border-radius: 16px; background: #FFFFFF">
+            <div style="display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 12px; border-radius: 12px; background: {{m.tile}}; min-height: 104px">
+              <div style="display: flex; align-items: center; gap: 6px">
+                <span style="font-size: 10.5px; letter-spacing: 0.05em; color: #58636F">{{m.date}}</span>
+                <span style="margin-left: auto; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 8px" role="img" aria-label="Thao tác">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#58636F" aria-hidden="true" style="display: block"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+                </span>
+              </div>
+              <span style="font-family: Overpass, sans-serif; font-size: 14.5px; font-weight: 700; line-height: 19px; letter-spacing: -0.01em">{{m.title}}</span>
+              <span style="margin-top: auto; font-size: 11.5px; color: #58636F">{{m.kind}} · {{m.dur}}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 0 4px 2px">
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 999px; background: {{m.pillBg}}; color: {{m.pillFg}}; font-size: 10.5px; font-weight: 700">
+                <span style="width: 5px; height: 5px; border-radius: 50%; background: {{m.pillFg}}" aria-hidden="true"></span>{{m.status}}
+              </span>
+              <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">{{m.topics}} chủ đề · {{m.sources}} nguồn</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top: auto; display: flex; align-items: center; gap: 12px; padding-top: 14px; border-top: 1px solid #DCE2E8">
+        <span style="font-size: 12px; color: #58636F">Hiển thị 4 trong 18 cuộc họp · từ 02/09 đến 31/10</span>
+        <button type="button" style="margin-left: auto; height: 34px; padding: 0 13px; border: 1px solid #7E8B99; border-radius: 10px; background: #FFFFFF; color: #14181D; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Tải thêm</button>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"density":{"editor":"enum","options":["s","m"],"default":"m"},"$preview":{"width":1280,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      kinds: [
+        { label: 'Tất cả', on: true, bg: '#14181D', fg: '#FFFFFF', bd: '#14181D' },
+        { label: 'Sản phẩm', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' },
+        { label: 'Nghiên cứu', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' },
+        { label: 'Bản lẻ', on: false, bg: '#FFFFFF', fg: '#14181D', bd: '#7E8B99' }
+      ],
+      stats: [
+        { k: 'Cuộc họp đã nghe', v: '18' },
+        { k: 'Tổng thời lượng', v: '11:24' },
+        { k: 'Chủ đề phát hiện', v: '47' },
+        { k: 'Nguồn đã gửi vào chat', v: '163' }
+      ],
+      meetings: [
+        { date: '31 thg 10, 2026', title: 'Chốt giá gói SME', kind: 'Sản phẩm', dur: '45 phút', status: 'ĐÃ XONG', topics: 6, sources: 21, tile: '#F6F8FA', pillBg: '#E1EFF1', pillFg: '#0A5F67' },
+        { date: '28 thg 10, 2026', title: 'Review kênh phân phối B2B', kind: 'Sản phẩm', dur: '32 phút', status: 'ĐÃ XONG', topics: 4, sources: 14, tile: '#F6F8FA', pillBg: '#E1EFF1', pillFg: '#0A5F67' },
+        { date: '24 thg 10, 2026', title: 'Họp lớp bồi dưỡng dữ liệu', kind: 'Đào tạo', dur: '58 phút', status: 'ĐÃ XONG', topics: 9, sources: 30, tile: '#F6F8FA', pillBg: '#DCE2E8', pillFg: '#58636F' },
+        { date: 'Hôm nay', title: 'Đồng bộ tiến độ sprint 12', kind: 'Sản phẩm', dur: '12 phút', status: 'ĐANG NGHE', topics: 2, sources: 7, tile: '#EEF6F7', pillBg: '#0E7C86', pillFg: '#FFFFFF' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
