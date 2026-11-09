@@ -1,6 +1,7 @@
 import { FULL_DOC_MAX_CHARS } from './config';
 import { ingestPdf } from './docs/ingest';
 import { deleteDoc, listDocs, saveDoc, type StoredDoc } from './docs/store';
+import { pickMeetingTab } from './meet-url';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Card, type Msg, type Settings, type StartReply } from './messages';
 import { EMPTY_VIEW, type View } from './view';
 
@@ -147,8 +148,9 @@ async function start(): Promise<void> {
     ($('settings-box') as HTMLDetailsElement).open = true;
     return say('error', 'Thiếu khóa Blaze. Nhập khóa trong phần Cài đặt.');
   }
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id || !/^https:\/\/meet\.google\.com\/[a-z]+-[a-z]+-[a-z]+/.test(tab.url ?? '')) {
+  const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tab = pickMeetingTab(active, await chrome.tabs.query({ url: 'https://meet.google.com/*' }));
+  if (!tab?.id) {
     return say('error', 'Hãy mở tab Google Meet đang có cuộc họp, rồi bấm Bắt đầu nghe.');
   }
   const mic = await navigator.permissions.query({ name: 'microphone' as PermissionName }).catch(() => null);
