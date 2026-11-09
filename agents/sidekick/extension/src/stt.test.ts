@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BlazeStt, blazeSttUrl, type SttSocket } from './stt';
+import { BlazeStt, blazeSttUrl, isFatalSttError, type SttSocket } from './stt';
 
 function fakeSocket() {
   const sent: (string | ArrayBufferLike)[] = [];
@@ -19,11 +19,14 @@ function setup() {
   const fake = fakeSocket();
   const finals: string[] = [];
   const errors: string[] = [];
+  const fatal: boolean[] = [];
+  const partials: string[] = [];
   let url = '';
   const stt = new BlazeStt({
     apiKey: 'k',
     onFinal: text => finals.push(text),
-    onError: message => errors.push(message),
+    onPartial: text => partials.push(text),
+    onError: (message, isFatal) => { errors.push(message); fatal.push(isFatal); },
     socketFactory: u => { url = u; return fake.socket; },
   });
   const ready = async () => {
@@ -33,7 +36,7 @@ function setup() {
     fake.emit({ type: 'ready' });
     await connected;
   };
-  return { stt, fake, finals, errors, url: () => url, ready };
+  return { stt, fake, finals, errors, fatal, partials, url: () => url, ready };
 }
 
 describe('blazeSttUrl', () => {
@@ -158,5 +161,41 @@ describe('BlazeStt', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('passes trimmed partials to onPartial without treating them as finals', async () => {
+    const { fake, finals, partials, ready } = setup();
+    await ready();
+    fake.emit({ type: 'partial', text: ' Xin ' });
+    fake.emit({ type: 'partial', text: '' });
+    expect(partials).toEqual(['Xin']);
+    expect(finals).toEqual([]);
+  });
+
+  it('marks billing errors fatal and plain server errors and drops retryable', async () => {
+    const { fake, fatal, ready } = setup();
+    await ready();
+    fake.emit({ type: 'error', text: 'bad audio' });
+    const b = setup();
+    await b.ready();
+    b.fake.emit({ type: 'insufficient-credits' });
+    const c = setup();
+    await c.ready();
+    c.fake.socket.onclose?.();
+    expect([...fatal, ...b.fatal, ...c.fatal]).toEqual([false, true, false]);
+  });
+
+  it('rejects connect with a fatal error when the handshake is refused, and a retryable one on drop', async () => {
+    const a = setup();
+    const refused = a.stt.connect();
+    a.fake.open();
+    a.fake.emit({ type: 'error', text: 'invalid token' });
+    const reason = await refused.catch(e => e);
+    expect(isFatalSttError(reason)).toBe(true);
+    const b = setup();
+    const dropped = b.stt.connect();
+    b.fake.open();
+    b.fake.socket.onclose?.();
+    expect(isFatalSttError(await dropped.catch(e => e))).toBe(false);
   });
 });

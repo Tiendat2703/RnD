@@ -22,3 +22,7 @@ playwright-report/
 /.agents/skills/
 dist-agent/
 .ambi/
+
+# MeetMate extension build and cached TTS audio
+dist-extension/
+extension/.cache/

@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "MeetMate",
+  "version": "0.2.0",
+  "description": "Nghe cuộc họp Google Meet, đối chiếu lời nói với tài liệu của bạn và trả lời câu hỏi về tài liệu.",
+  "minimum_chrome_version": "116",
+  "permissions": ["tabCapture", "offscreen", "storage", "sidePanel", "scripting"],
+  "host_permissions": ["https://meet.google.com/*", "https://api.blaze.vn/*", "https://api.exa.ai/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "MeetMate", "default_icon": { "16": "icon-16.png", "32": "icon-32.png", "48": "icon-48.png", "128": "icon-128.png" } },
+  "icons": { "16": "icon-16.png", "32": "icon-32.png", "48": "icon-48.png", "128": "icon-128.png" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "content_scripts": [{ "matches": ["https://meet.google.com/*"], "js": ["content.js"], "run_at": "document_idle" }]
+}

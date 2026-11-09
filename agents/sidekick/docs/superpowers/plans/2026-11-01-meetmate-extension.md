@@ -151,7 +151,7 @@ export type Msg =
 
   Trạng thái được lưu ở `chrome.storage.session` với key `status`. Popup đọc key này và theo dõi `chrome.storage.onChanged`.
 
-- [ ] **Step 1: Viết `manifest.json`.** Gồm `manifest_version: 3`, `name: "MeetMate"`, `version: "0.1.0"`, `permissions: ["tabCapture", "offscreen", "storage"]`, `host_permissions: ["https://meet.google.com/*", "https://dev-api.blaze.vn/*", "https://api.exa.ai/*"]` (cộng tên miền LLM từ Task 1 nếu khác), `background.service_worker: "background.js"`, `action.default_popup: "popup.html"`, và `content_scripts` chạy `content.js` trên `https://meet.google.com/*`.
+- [ ] **Step 1: Viết `manifest.json`.** Gồm `manifest_version: 3`, `name: "MeetMate"`, `version: "0.1.0"`, `permissions: ["tabCapture", "offscreen", "storage"]`, `host_permissions: ["https://meet.google.com/*", "https://api.blaze.vn/*", "https://api.exa.ai/*"]` (cộng tên miền LLM từ Task 1 nếu khác), `background.service_worker: "background.js"`, `action.default_popup: "popup.html"`, và `content_scripts` chạy `content.js` trên `https://meet.google.com/*`.
 - [ ] **Step 2: Viết `scripts/build-extension.mjs`.** Dùng esbuild bundle các entry `background`, `offscreen`, `popup`, `content`, `mic-permission` và `pcm-worklet` trong `extension/src` (content nằm ở `extension/src/content/content.ts`) ra `dist-extension/<tên>.js`, với `format: 'iife'`, `platform: 'browser'`, `target: 'chrome116'`. Sau đó copy `extension/static/*` sang `dist-extension/`. Để tạm `content.ts` và `pcm-worklet.ts` rỗng nếu chưa tới task của chúng.
 - [ ] **Step 3: Viết popup.**
   - Popup có hai ô nhập kiểu password (khóa Blaze, khóa Exa), được lưu vào `chrome.storage.local`, cùng nút **Bắt đầu**/**Dừng** và một dòng trạng thái.

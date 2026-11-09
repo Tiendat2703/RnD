@@ -13,6 +13,12 @@ export type SttSocket = {
 
 type SttEvent = { type?: string; text?: string };
 
+/** A failure retrying cannot fix: bad key or billing. */
+export class SttFatalError extends Error {
+  readonly fatal = true;
+}
+export const isFatalSttError = (error: unknown): boolean => (error as { fatal?: boolean } | null)?.fatal === true;
+
 const OPEN = 1;
 const CONNECT_TIMEOUT_MS = 10_000;
 // Chrome dispatches no message once a socket is CLOSING, so finals still in flight need this grace.
@@ -37,7 +43,9 @@ export class BlazeStt {
   constructor(private readonly opts: {
     apiKey: string;
     onFinal: (text: string) => void;
-    onError: (message: string) => void;
+    onPartial?: (text: string) => void;
+    /** fatal: retrying will not help (billing or authentication). */
+    onError: (message: string, fatal: boolean) => void;
     socketFactory?: (url: string) => SttSocket;
   }) {}
 
@@ -48,14 +56,14 @@ export class BlazeStt {
     this.socket = socket;
     return new Promise((resolve, reject) => {
       let settled = false;
-      const fail = (message: string) => {
+      const fail = (message: string, fatal = false) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
         // The rejection carries the cause; the close that follows must not report it again.
         this.errored = true;
         socket.close();
-        reject(new Error(message));
+        reject(fatal ? new SttFatalError(message) : new Error(message));
       };
       const timer = setTimeout(() => fail('Blaze STT không phản hồi'), CONNECT_TIMEOUT_MS);
 
@@ -71,7 +79,8 @@ export class BlazeStt {
         const fault = event.type === 'error' || BILLING_TYPES.has(event.type ?? '');
         if (!this.ready) {
           if (event.type === 'successful-authentication') return;
-          if (event.type !== 'ready') return fail(fault ? `Blaze STT: ${event.text || event.type}` : `Blaze STT trả về '${event.type}' trước 'ready'`);
+          // Before ready, an error is the handshake rejecting the key; that and billing never heal.
+          if (event.type !== 'ready') return fail(fault ? `Blaze STT: ${event.text || event.type}` : `Blaze STT trả về '${event.type}' trước 'ready'`, fault);
           this.ready = true;
           settled = true;
           clearTimeout(timer);
@@ -79,9 +88,12 @@ export class BlazeStt {
         } else if (event.type === 'final') {
           const text = event.text?.trim();
           if (text) this.opts.onFinal(text);
+        } else if (event.type === 'partial') {
+          const text = event.text?.trim();
+          if (text) this.opts.onPartial?.(text);
         } else if (fault) {
           this.errored = true;
-          this.opts.onError(`Blaze STT: ${event.text || event.type}`);
+          this.opts.onError(`Blaze STT: ${event.text || event.type}`, BILLING_TYPES.has(event.type ?? ''));
           socket.close();
         }
       };
@@ -89,7 +101,7 @@ export class BlazeStt {
         this.ready = false;
         if (!settled) return fail('Mất kết nối Blaze STT');
         // The server's own error message already explains the close; do not overwrite it.
-        if (!this.closing && !this.errored) this.opts.onError('Mất kết nối Blaze STT');
+        if (!this.closing && !this.errored) this.opts.onError('Mất kết nối Blaze STT', false);
       };
     });
   }

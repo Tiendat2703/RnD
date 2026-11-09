@@ -18,7 +18,10 @@
     "verify:livekit": "node scripts/verify-livekit.mjs",
     "verify:livekit:work": "node scripts/verify-livekit.mjs --work",
     "verify:livekit:audio": "node --env-file-if-exists=.env.local scripts/verify-livekit.mjs --audio",
-    "verify:livekit:noise": "node scripts/verify-livekit.mjs --noise"
+    "verify:livekit:noise": "node scripts/verify-livekit.mjs --noise",
+    "extension:build": "node scripts/build-extension.mjs",
+    "extension:simulate": "tsx scripts/simulate-meeting.ts",
+    "extension:e2e": "npm run extension:build && playwright test -c extension/e2e/playwright.config.ts"
   },
   "dependencies": {
     "@livekit/agents": "^1.9.1",
@@ -33,6 +36,8 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/chrome": "0.3.5",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.13",
@@ -40,6 +45,7 @@
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.2",
     "esbuild": "^0.28.2",
+    "pdfjs-dist": "6.4.299",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
