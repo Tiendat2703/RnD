@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>MeetMate popup — theme tối (prefers-color-scheme: dark)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #7FB0F5; } a:hover { color: #AACDFB; }
+input:focus-visible, button:focus-visible { outline: 2px solid #3FA3AE; outline-offset: 2px; }
+</style>
+</helmet>
+<div style="width: 760px; height: 560px; box-sizing: border-box; display: flex; gap: 40px; background: #12171D; color: #E6EAF0; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="display: flex; flex-direction: column; gap: 10px; width: 360px">
+    <span style="font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; color: #A0B1C0">A · ĐANG NGHE — CÙNG VAI TRÒ, TRỎ LẠI SỐ, KHÔNG ĐẢO MÀU</span>
+    <div style="height: 520px; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #161C22; border: 1px solid #232B34; border-radius: 16px">
+      <header style="display: flex; align-items: center; justify-content: space-between">
+        <span style="display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 9999px; background: #3FA3AE; color: #0A2629; font: 800 13px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: -0.025em">MeetMate</span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 3px 9px; border-radius: 9999px; background: #3FA3AE; color: #0A2629; font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">
+          <span style="width: 6px; height: 6px; border-radius: 9999px; background: #0A2629; display: block" aria-hidden="true"></span>
+          Đang nghe
+        </span>
+      </header>
+      <section style="display: grid; padding: 12px; border: 1px solid #232B34; border-radius: 16px; background: #1B222A">
+        <span style="font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; color: #A0B1C0">Phiên từ web console</span>
+        <p style="margin: 2px 0 0; font: 600 16px/24px &quot;Overpass&quot;, sans-serif; color: #E6EAF0">Họp nhóm Sản phẩm — chốt giá gói SME</p>
+      </section>
+      <div role="list" aria-label="Các bước xử lý" style="display: flex; align-items: center; gap: 6px">
+        <sc-for list="{{stagesLive}}" as="s" hint-placeholder-count="6">
+          <span role="listitem" title="{{s.title}}" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 26px; min-width: 26px; box-sizing: border-box; padding: 0 8px; border-radius: 9999px; background: {{s.bg}}; color: {{s.fg}}; border: 1px solid {{s.bd}}; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">{{s.text}}</span>
+        </sc-for>
+      </div>
+      <div role="status" aria-live="polite"></div>
+      <div style="flex: 1 1 auto"></div>
+      <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; box-sizing: border-box; padding: 10px 18px; border: 0; border-radius: 24px; background: #3FA3AE; color: #0A2629; font: 600 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A2629" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block"><rect x="6.5" y="6.5" width="11" height="11" rx="2"></rect></svg>
+        Dừng nghe
+      </button>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; width: 360px">
+    <span style="font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; color: #A0B1C0">B · DẢI LỖI ĐẢO CỰC TÍNH — NỀN SÁNG CHỮ TỐI, TRÁI NGƯỢC VỚI THEME SÁNG</span>
+    <div style="height: 520px; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #161C22; border: 1px solid #232B34; border-radius: 16px">
+      <header style="display: flex; align-items: center; justify-content: space-between">
+        <span style="display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 9999px; background: #3FA3AE; color: #0A2629; font: 800 13px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: -0.025em">MeetMate</span>
+        <span style="display: inline-flex; align-items: center; height: 24px; padding: 3px 9px; border-radius: 9999px; background: #1B222A; color: #A0B1C0; border: 1px solid #232B34; font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">Chưa nghe</span>
+      </header>
+      <div role="list" aria-label="Các bước xử lý" style="display: flex; align-items: center; gap: 6px">
+        <sc-for list="{{stagesIdle}}" as="s" hint-placeholder-count="6">
+          <span role="listitem" title="{{s.title}}" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 26px; min-width: 26px; box-sizing: border-box; padding: 0 8px; border-radius: 9999px; background: {{s.bg}}; color: {{s.fg}}; border: 1px solid {{s.bd}}; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">{{s.text}}</span>
+        </sc-for>
+      </div>
+      <div style="display: grid; gap: 12px">
+        <div style="display: grid; gap: 4px">
+          <label for="blaze">Khóa Blaze</label>
+          <input id="blaze" type="password" value="blaze-sk-demo-0123456789" autocomplete="off" spellcheck="false" style="width: 100%; height: 40px; box-sizing: border-box; padding: 9px 12px; border: 1px solid #61707E; border-radius: 16px; background: #161C22; color: #E6EAF0; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+        </div>
+        <div style="display: grid; gap: 4px">
+          <label for="exa">Khóa Exa</label>
+          <input id="exa" type="password" value="" placeholder="dán khóa Exa vào đây" autocomplete="off" spellcheck="false" style="width: 100%; height: 40px; box-sizing: border-box; padding: 9px 12px; border: 1px solid #61707E; border-radius: 16px; background: #161C22; color: #E6EAF0; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+        </div>
+      </div>
+      <div role="status" aria-live="polite" style="display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; border-radius: 12px; background: #F2A0A0; color: #4A0F0A; font: 400 12px/16px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A0F0A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block; margin-top: 1px"><path d="M8.5 3.5h7l5 5v7l-5 5h-7l-5-5v-7z"></path><path d="M12 8v5M12 15.8v.1"></path></svg>
+        <span>Thiếu khóa Blaze hoặc Exa</span>
+      </div>
+      <div style="flex: 1 1 auto"></div>
+      <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; box-sizing: border-box; padding: 10px 18px; border: 0; border-radius: 24px; background: #3FA3AE; color: #0A2629; font: 600 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A2629" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block"><path d="M8 5.5v13l10-6.5z"></path></svg>
+        Bắt đầu nghe
+      </button>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":760,"height":560}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const order = ['Đang lắng nghe', 'Đang phiên âm', 'Đang tách chủ đề', 'Đang tìm nguồn', 'Đang viết lý do', 'Đang gửi vào chat'];
+    const mk = (i, active) => order.map((title, n) => {
+      if (active && n < i) return { title, text: String(n + 1), bg: '#20393C', fg: '#E6EAF0', bd: 'transparent' };
+      if (active && n === i) return { title, text: (n + 1) + ' ' + title, bg: '#3FA3AE', fg: '#0A2629', bd: 'transparent' };
+      return { title, text: String(n + 1), bg: '#161C22', fg: '#A0B1C0', bd: '#232B34' };
+    });
+    return { stagesLive: mk(3, true), stagesIdle: mk(-1, false) };
+  }
+}
+</script>
+</body>
+</html>

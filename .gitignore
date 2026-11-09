@@ -44,3 +44,8 @@ next-env.d.ts
 /.smoke-run.log
 designs/*/.artifact-server.json
 designs/*/.artifact-server.log
+
+# scratch
+/docx.txt
+/docx2.txt
+/diff.txt

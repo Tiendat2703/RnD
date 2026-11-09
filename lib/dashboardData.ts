@@ -30,12 +30,13 @@ export {
 /* ------------------------------------------------------------------ */
 
 // Free không giới hạn theo phút mà theo ba đơn vị: phiên họp có AI, lượt kiểm
-// chứng, và artifact. Card hết hạn mức phải nói rõ hết cái nào — "hết lượt kiểm
+// chứng, và lượt xuất báo cáo PDF (khóa `artifacts` giữ tên cũ; bản 2 của tài liệu chỉ
+// còn PDF và biểu đồ PNG là đầu ra MVP). Card hết hạn mức phải nói rõ hết cái nào — "hết lượt kiểm
 // chứng giữa cuộc họp" chính là điểm chạm nâng cấp thứ nhất trong tài liệu.
 export const FREE_PLAN = {
   meetings: 3,
   meetingCapMin: 45,
-  verifications: 10,
+  verifications: 15,
   artifacts: 1,
 } as const;
 
@@ -43,7 +44,20 @@ export const FREE_PLAN = {
 /* Cuộc họp                                                            */
 /* ------------------------------------------------------------------ */
 
+/** Id cuộc họp mẫu có thẻ đối chiếu (mocks/meeting-claims.json). */
+export const SAMPLE_CLAIMS_MEETING_ID = "m-claims";
+
 export const initialMeetings: MeetingRecord[] = [
+  {
+    id: SAMPLE_CLAIMS_MEETING_ID,
+    title: claimsFixture.title,
+    kind: "san-pham",
+    startedAt: "2026-11-03T14:00:00",
+    durationSec: 2700,
+    topicCount: claimsFixture.cards.length,
+    sourceCount: 0,
+    status: "ended",
+  },
   {
     id: "m-01",
     title: "Bảng giá gói SME",
@@ -135,35 +149,19 @@ export interface DocItem {
   title: string;
   excerpt: string;
   addedAt: string;
+  /** thông tin lập chỉ mục — chỉ có ở tài liệu kho mẫu */
+  format?: string;
+  pages?: number;
+  chunks?: number;
+  scope?: "Nhóm" | "Cá nhân";
+  owner?: string;
 }
 
 // Chuỗi truy xuất là Meeting Context → User Knowledge Base → External Research,
 // nên tài liệu ở đây là lớp giữa: thứ MeetMate đối chiếu trước khi ra ngoài tìm.
 // Chưa đấu nối với luồng AI — thư mục extension chưa có dòng code nào — nên mọi
 // surface dùng danh sách này phải tự nói rõ điều đó ngay trong nhãn.
-export const initialDocs: DocItem[] = [
-  {
-    id: "doc-01",
-    title: "Khảo sát nhu cầu 42 nhóm startup Đà Nẵng",
-    excerpt:
-      "Tần suất họp trung bình 6 phiên/tuần; 71% trả lời phải tra cứu lại thông tin sau họp. Câu hỏi mở nhiều nhất: nguồn của con số đưa ra trong họp.",
-    addedAt: "2026-10-31T09:00:00",
-  },
-  {
-    id: "doc-02",
-    title: "Bảng giá dự kiến các gói MeetMateAI",
-    excerpt:
-      "Bốn bậc Free / Pro / Team / Edu, giới hạn theo số phiên họp có AI, lượt kiểm chứng và số artifact. Giá Pro thấp hơn Fireflies Pro khoảng 25%.",
-    addedAt: "2026-10-28T13:40:00",
-  },
-  {
-    id: "doc-03",
-    title: "Bộ câu hỏi kiểm thử claim Việt–Anh",
-    excerpt:
-      "180 nhận định có chủ đích: số liệu thị trường, thông tin đối thủ, tuyên bố về khách hàng. Mỗi dòng ghi rõ trạng thái bằng chứng mong đợi.",
-    addedAt: "2026-10-26T20:10:00",
-  },
-];
+export const initialDocs: DocItem[] = kbFixture.docs as DocItem[];
 
 /* ------------------------------------------------------------------ */
 /* Bản ghi cuộc họp                                                    */
@@ -173,6 +171,8 @@ export const initialDocs: DocItem[] = [
 // micro của người dùng). Ghi "ai đó nói gì" sẽ bịa ra một thứ dữ liệu hệ thống
 // không hề thu thập.
 import transcriptFixture from "../mocks/meeting-transcript.json";
+import claimsFixture from "../mocks/meeting-claims.json";
+import kbFixture from "../mocks/kb.json";
 
 export const sampleLines: MeetingLine[] = transcriptFixture as MeetingLine[];
 
@@ -374,6 +374,8 @@ export interface Plan {
   limits: string[];
   audience: string;
   current: boolean;
+  /** tên gói thấp hơn mà gói này gồm toàn bộ (hiện thành "Gồm mọi thứ trong …") */
+  inherits?: string;
 }
 
 export const PLANS: readonly Plan[] = [
@@ -385,7 +387,7 @@ export const PLANS: readonly Plan[] = [
     priceQuarterly: null,
     unit: "",
     min: null,
-    limits: ["3 phiên họp", "tối đa 45 phút/phiên", "10 lượt kiểm chứng", "1 artifact"],
+    limits: ["3 phiên họp", "tối đa 45 phút/phiên", "15 lượt kiểm chứng trên tài liệu của bạn", "1 lượt xuất báo cáo PDF"],
     audience: "Cá nhân dùng thử, sinh viên",
     current: true,
   },
@@ -397,9 +399,10 @@ export const PLANS: readonly Plan[] = [
     priceQuarterly: null,
     unit: "",
     min: null,
-    limits: ["15 phiên họp", "60 lượt kiểm chứng", "10 artifact", "Knowledge base cá nhân"],
+    limits: ["15 phiên họp", "tối đa 60 phút/phiên", "75 lượt kiểm chứng", "10 lượt xuất báo cáo PDF kèm biểu đồ PNG", "Knowledge base cá nhân"],
     audience: "Freelancer, tư vấn viên, trưởng nhóm",
     current: false,
+    inherits: "Free",
   },
   {
     id: "team",
@@ -410,13 +413,14 @@ export const PLANS: readonly Plan[] = [
     unit: "người/tháng",
     min: "tối thiểu 3 người",
     limits: [
-      "Hạn mức như Pro, nhân theo số người",
+      "Hạn mức như Pro (mỗi phiên tối đa 60 phút), nhân theo số người",
       "Dùng chung trong nhóm",
-      "Knowledge base chung",
-      "Lịch sử phiên họp của nhóm",
+      "Knowledge base chung; phân quyền và quản trị hoàn thiện ở giai đoạn Validation",
+      "Danh sách phiên của nhóm: mã phiên, ngày, thời lượng, số nhận định",
     ],
     audience: "Startup, agency, nhóm product/marketing",
     current: false,
+    inherits: "Pro",
   },
   {
     id: "edu",
@@ -426,13 +430,14 @@ export const PLANS: readonly Plan[] = [
     priceQuarterly: 4_500_000,
     unit: "quý",
     min: "tối đa 15 người",
-    limits: ["Theo thỏa thuận", "Hỗ trợ triển khai", "Báo cáo hiệu quả sử dụng"],
+    limits: ["Hạn mức phiên, phút, lượt kiểm chứng và PDF chốt trong thỏa thuận trước khi bán", "Hỗ trợ triển khai", "Báo cáo hiệu quả sử dụng"],
     audience: "Khoa, trung tâm nghiên cứu, vườn ươm, doanh nghiệp pilot",
     current: false,
+    inherits: "Team",
   },
 ];
 
-/** Đơn vị tính phí — tài liệu nói rõ: phiên họp, lượt kiểm chứng, artifact; không phải phút. */
+/** Đơn vị tính phí — tài liệu nói rõ: phiên họp, lượt kiểm chứng, lượt xuất báo cáo PDF; không phải phút. */
 export const PLAN_MATRIX = {
   columns: [
     { id: "free", label: "Free", note: "Gói hiện tại" },
@@ -441,21 +446,76 @@ export const PLAN_MATRIX = {
     { id: "edu", label: "Edu / Pilot", note: "Theo tổ chức" },
   ],
   rows: [
-    { object: "Phiên họp có AI hỗ trợ", free: "3 / tháng", pro: "15 / tháng", team: "15 × số người", edu: "Theo thỏa thuận" },
-    { object: "Độ dài mỗi phiên", free: "45 phút", pro: "Không ghi trong bảng", team: "Không ghi trong bảng", edu: "Không ghi trong bảng" },
-    { object: "Lượt kiểm chứng / nghiên cứu", free: "10", pro: "60", team: "60 × số người", edu: "Theo thỏa thuận" },
-    { object: "Artifact", free: "1", pro: "10", team: "10 × số người", edu: "Theo thỏa thuận" },
+    { object: "Phiên họp có AI hỗ trợ", free: "3 / tháng", pro: "15 / tháng", team: "15 × số người", edu: "Chốt trong thỏa thuận" },
+    { object: "Độ dài mỗi phiên", free: "45 phút", pro: "60 phút", team: "60 phút", edu: "Chốt trong thỏa thuận" },
+    { object: "Lượt kiểm chứng", free: "15", pro: "75", team: "75 × số người", edu: "Chốt trong thỏa thuận" },
+    { object: "Lượt xuất báo cáo PDF", free: "1 (PDF)", pro: "10 (PDF kèm PNG)", team: "10 × số người", edu: "Chốt trong thỏa thuận" },
     { object: "Knowledge base", free: "—", pro: "Cá nhân", team: "Chung cho nhóm", edu: "Chung cho đơn vị" },
     { object: "Lịch sử phiên họp của nhóm", free: "—", pro: "—", team: "Có", edu: "Có" },
     { object: "Hỗ trợ triển khai + báo cáo hiệu quả", free: "—", pro: "—", team: "—", edu: "Có" },
   ],
 } as const;
 
-/** Ba điểm chạm nâng cấp, nguyên văn mục IV.3.2 — đặt ở trang giá vì đó là chỗ quyết định. */
+/** Bảng so sánh chia nhóm để đọc từng phần; hàng lấy từ PLAN_MATRIX theo tên. */
+export const PLAN_MATRIX_GROUPS: { id: string; label: string; rows: string[] }[] = [
+  {
+    id: "dung",
+    label: "Phiên họp và kiểm chứng",
+    rows: ["Phiên họp có AI hỗ trợ", "Độ dài mỗi phiên", "Lượt kiểm chứng", "Lượt xuất báo cáo PDF"],
+  },
+  {
+    id: "nhom",
+    label: "Tài liệu và nhóm",
+    rows: ["Knowledge base", "Lịch sử phiên họp của nhóm", "Hỗ trợ triển khai + báo cáo hiệu quả"],
+  },
+];
+
+/** Giải thích đơn vị đếm, hiện khi rê chuột vào tên hàng trong bảng so sánh. */
+export const PLAN_TERMS: Record<string, string> = {
+  "Phiên họp có AI hỗ trợ": "Mỗi cuộc họp có MeetMate chạy là một phiên.",
+  "Lượt kiểm chứng":
+    "Một lần MeetMate đối chiếu một nhận định hoặc trả lời một câu hỏi trong họp bằng tài liệu nội bộ bạn đã tải lên.",
+  "Lượt xuất báo cáo PDF":
+    "Một lần xuất báo cáo cuộc họp (PDF), ở gói Pro kèm biểu đồ PNG. Đây là số lượt xuất, không phải số cuộc họp được lưu.",
+  "Knowledge base": "Tài liệu nhóm tải lên để MeetMate đối chiếu trong cuộc họp.",
+};
+
+/** Câu hỏi thường gặp. Mỗi câu trả lời chỉ nói điều bản mô tả RTS2026 nói; chỗ tài liệu chưa chốt thì ghi là chưa chốt. */
+export const UPGRADE_FAQ: { q: string; a: string }[] = [
+  {
+    q: "Một phiên họp có AI hỗ trợ được tính thế nào?",
+    a: "Một cuộc họp do host xử lý một lần là một phiên, không nhân theo số người tham dự. Free tối đa 45 phút mỗi phiên; Pro và Team tối đa 60 phút mỗi phiên.",
+  },
+  {
+    q: "Một lượt kiểm chứng là gì?",
+    a: "Một lần MeetMate đối chiếu một nhận định hoặc trả lời một câu hỏi trong họp bằng tài liệu nội bộ bạn đã tải lên, rồi hiện kết quả ở một thẻ có trạng thái bằng chứng và trích dẫn. Trong MVP, MeetMate chưa tìm nguồn trên web.",
+  },
+  {
+    q: "Lượt xuất báo cáo PDF là gì?",
+    a: "Một lần xuất báo cáo cuộc họp gồm nhận định, trạng thái bằng chứng, trích dẫn và quyết định; gói Pro kèm biểu đồ PNG. Slide và bảng tính là định hướng sau MVP.",
+  },
+  {
+    q: "Khi nào bắt đầu thu phí?",
+    a: "Chức năng thanh toán đã được phát triển nhưng chỉ cung cấp để trải nghiệm, chưa có giao dịch trả phí nào. Thu phí chính thức bắt đầu ở giai đoạn Paid beta, sau pilot tháng 1/2027. Giá, hạn mức và điều kiện phải hiện trước khi bạn xác nhận mua.",
+  },
+  {
+    q: "Hạn mức có cộng dồn sang tháng sau không?",
+    a: "Bản mô tả chưa quy định. Nhóm sẽ chốt sau khi có số liệu từ đợt thử nghiệm.",
+  },
+  {
+    q: "Dữ liệu cuộc họp được lưu bao lâu?",
+    a: "Theo thiết kế: nội dung phiên (transcript, nhận định, trạng thái bằng chứng, quyết định, giả định) được xóa tối đa 24 giờ sau phiên, kể cả dữ liệu tạm cục bộ. Hãy tải báo cáo về trước thời hạn đó; bản tải về do bạn quản lý. Cơ chế xóa này cần được kiểm thử trước pilot và bản mẫu chưa triển khai.",
+  },
+  {
+    q: "Gói Edu / Pilot B2B dành cho ai?",
+    a: "Khoa, trung tâm nghiên cứu, vườn ươm và doanh nghiệp pilot: từ 4.500.000đ mỗi quý cho tối đa 15 người. Hạn mức phiên, phút, lượt kiểm chứng và PDF được chốt trong thỏa thuận trước khi bán, kèm hỗ trợ triển khai và báo cáo hiệu quả sử dụng.",
+  },
+];
+
+/** Hai điểm chạm nâng cấp, theo mục IV.3.2 bản 2 — đặt ở trang giá vì đó là chỗ quyết định. */
 export const UPGRADE_TOUCHPOINTS = [
-  "Hết lượt kiểm chứng giữa một cuộc họp quan trọng.",
-  "Muốn xuất artifact thành slide hoặc bảng tính hoàn chỉnh để gửi cho đối tác.",
-  "Muốn chia sẻ knowledge base cho cả nhóm — điểm chạm mạnh nhất.",
+  "Hết lượt kiểm chứng giữa một cuộc họp quan trọng: hệ thống báo số lượt còn lại và gợi ý nâng cấp ngay trong phiên.",
+  "Nhu cầu chia sẻ knowledge base cho cả nhóm — dự kiến, sẽ được kiểm chứng ở giai đoạn Validation trước khi thu phí.",
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -492,13 +552,13 @@ export const PRIVACY_MODES = [
   {
     id: "hybrid",
     title: "Hybrid",
-    note: "Chạy STT trên máy và xoá tên, số, tổ chức trước khi gửi truy vấn tìm nguồn.",
+    note: "Che tên, số, tổ chức trước khi gửi transcript tới mô hình ngôn ngữ. Audio vẫn gửi lên Blaze Voice trên cloud, nên đây không phải dữ liệu ở lại máy.",
     on: false,
   },
   {
     id: "private",
     title: "Riêng tư",
-    note: "Giữ toàn bộ xử lý trong Chrome. Giới hạn ở transcript local và kiểm chứng bằng luật trên tài liệu của chính bạn — không có Research và Verify, vì tìm nguồn trên web bắt buộc gửi truy vấn ra ngoài.",
+    note: "Xử lý hoàn toàn trong Chrome là định hướng sau MVP, chưa phải năng lực đã xác nhận; cần đánh giá chất lượng tiếng Việt, cấu hình máy và giới hạn chức năng. Prototype hiện có Cloud và Hybrid.",
     on: false,
   },
 ] as const;
@@ -507,7 +567,7 @@ export const DATA_ROWS = [
   {
     id: "retention",
     title: "Giữ bản ghi cuộc họp",
-    note: "Bản ghi và kết quả research của mỗi phiên nằm trong vùng làm việc này cho tới khi bạn xoá.",
+    note: "Theo thiết kế, nội dung phiên được xóa tối đa 24 giờ sau phiên; hãy tải báo cáo trước đó. Bản mẫu này chưa tự xóa.",
     on: true,
   },
   {

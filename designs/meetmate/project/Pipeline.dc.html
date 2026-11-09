@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>Dải sáu giai đoạn — spec năm trạng thái</title>
+<title>Hàng sáu bước pipeline — thành phần stage, sáng và tối</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -11,59 +11,84 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
 <style>
 body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
-a { color: #14417F; } a:hover { color: #0E2E5C; }
 </style>
 </helmet>
-<div style="width: 1120px; height: 200px; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; background: #FFFFFF; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+<div style="position: relative; width: 1120px; height: 440px; box-sizing: border-box; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
 
-  <div style="display: flex; align-items: baseline; gap: 10px">
-    <span style="font-family: Overpass, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.06em; color: #0A5F67">DẢI GIAI ĐOẠN</span>
-    <span style="font-size: 11px; color: #58636F">sáu bước của pipeline · một màu petrol, phân biệt bằng độ sáng · tên đầy đủ chỉ hiện khi đang chạy</span>
-    <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; color: #58636F">PipelineStage × 5</span>
+  <div style="position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: baseline; gap: 12px">
+    <span style="font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: -0.01em">Hàng sáu bước — một dòng ngang, nhãn chỉ ở bước đang chạy</span>
+    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #58636F">.stages / .stage — 26px · min-width 26 · pad 0 8 (đang chạy 0 10) · gap 6 · bo 9999</span>
   </div>
 
-  <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
-    <div style="display: flex; align-items: center; gap: 12px; height: 24px">
-      <span style="flex: none; width: 210px; font-size: 11.5px; color: #14181D"><b style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: {{r.labelFg}}">{{r.state}}</b> &nbsp;{{r.vi}}</span>
-      <div style="flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px">
-        <sc-for list="{{r.segs}}" as="s" hint-placeholder-count="6">
-          <div style="height: 6px; border-radius: 3px; background: {{s.bg}}; border: 1px solid {{s.bd}}; box-sizing: border-box"></div>
-        </sc-for>
-      </div>
-      <span style="flex: none; width: 300px; display: flex; align-items: center; gap: 6px">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{r.glyphFg}}" stroke-width="2.1" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block">
-          <path d="{{r.glyph}}"></path>
-        </svg>
-        <span style="font-size: 11.5px; line-height: 15px; color: {{r.captionFg}}">{{r.caption}}</span>
-      </span>
+  <sc-for list="{{blocks}}" as="b" hint-placeholder-count="2">
+    <div style="position: absolute; top: 56px; left: {{b.x}}; width: 540px; box-sizing: border-box; padding: 16px; border-radius: 16px; border: 1px solid {{b.bd}}; background: {{b.bg}}">
+      <div style="font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: 0.05em; color: {{b.headFg}}">{{b.name}}</div>
+      <sc-for list="{{b.rows}}" as="r" hint-placeholder-count="4">
+        <div style="margin-top: 14px">
+          <div style="font-size: 11px; line-height: 15px; color: {{b.capFg}}">{{r.caption}}</div>
+          <div style="margin-top: 5px; display: flex; align-items: center; gap: 6px; width: max-content" role="list" aria-label="Các bước xử lý">
+            <sc-for list="{{r.stages}}" as="s" hint-placeholder-count="6">
+              <span role="listitem" title="{{s.title}}" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: {{s.pad}}; border-radius: 9999px; border: 1px solid {{s.bd}}; background: {{s.bg}}; color: {{s.fg}}; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 1; letter-spacing: 0.05em; white-space: nowrap">{{s.text}}</span>
+            </sc-for>
+          </div>
+          <sc-if value="{{r.hasBox}}" hint-placeholder-val="{{false}}">
+            <div style="margin-top: 6px; width: 336px; height: 26px; box-sizing: border-box; border: 1px dashed {{b.bd}}; border-radius: 9999px"></div>
+          </sc-if>
+        </div>
+      </sc-for>
     </div>
   </sc-for>
 
+  <div style="position: absolute; left: 16px; top: 372px; right: 16px; display: flex; gap: 10px">
+    <sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+      <div style="flex: 1 1 0; min-width: 0; display: flex; gap: 8px; padding: 8px 10px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF">
+        <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #0E7C86; flex: none">{{n.i}}</span>
+        <span style="font-size: 12px; line-height: 17px; color: #58636F">{{n.text}}</span>
+      </div>
+    </sc-for>
+  </div>
+
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#0E7C86"},"$preview":{"width":1120,"height":200}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1120,"height":440}}'>
 class Component extends DCLogic {
   renderVals() {
-    const accent = this.props.accent ?? '#0E7C86';
-    const none = 'transparent';
+    const labels = ['Đang lắng nghe', 'Đang phiên âm', 'Đang tách chủ đề', 'Đang tìm nguồn', 'Đang viết lý do', 'Đang gửi vào chat'];
+    const row = (active, theme) => labels.map((label, i) => {
+      const state = i === active ? 'active' : (active >= 0 && i < active) ? 'done' : 'pending';
+      const t = theme[state];
+      return {
+        text: state === 'active' ? (i + 1) + ' ' + label : String(i + 1),
+        title: label,
+        pad: state === 'active' ? '0 10px' : '0 8px',
+        bg: t.bg, fg: t.fg, bd: t.bd
+      };
+    });
+    const light = {
+      pending: { bg: '#FFFFFF', fg: '#58636F', bd: '#DCE2E8' },
+      done: { bg: '#E1EFF1', fg: '#14181D', bd: 'transparent' },
+      active: { bg: '#0E7C86', fg: '#FFFFFF', bd: 'transparent' }
+    };
+    const dark = {
+      pending: { bg: '#161C22', fg: '#A0B1C0', bd: '#232B34' },
+      done: { bg: '#20393C', fg: '#E6EAF0', bd: 'transparent' },
+      active: { bg: '#3FA3AE', fg: '#0A2629', bd: 'transparent' }
+    };
+    const mk = (theme) => ([
+      { caption: 'Không chạy — active null: cả sáu bước đều chưa tới', stages: row(-1, theme), hasBox: false },
+      { caption: 'Bước 2 đang chạy', stages: row(1, theme), hasBox: false },
+      { caption: 'Bước 5 — nhãn dài nhất trong sáu nhãn', stages: row(4, theme), hasBox: false },
+      { caption: 'Bước 6 — vạch đứt = cột 336px của popup và panel', stages: row(5, theme), hasBox: true }
+    ]);
     return {
-      accent,
-      rows: [
-        { state: 'pending', vi: 'chưa tới', labelFg: '#58636F', captionFg: '#58636F',
-          segs: [{ bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }],
-          caption: 'không chữ — chỉ là đường chờ', glyph: 'M12 7v10M7 12h10', glyphFg: '#7E8B99' },
-        { state: 'active', vi: 'đang chạy', labelFg: accent, captionFg: '#14181D',
-          segs: [{ bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: accent, bd: accent }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }],
-          caption: 'Đang tìm nguồn cho chủ đề này', glyph: 'M12 3v11M7 10.5a5 5 0 0 0 10 0', glyphFg: accent },
-        { state: 'done', vi: 'đã xong', labelFg: '#0A5F67', captionFg: '#58636F',
-          segs: [{ bg: '#E1EFF1', bd: '#E1EFF1' }, { bg: '#E1EFF1', bd: '#E1EFF1' }, { bg: '#E1EFF1', bd: '#E1EFF1' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }],
-          caption: '3 chủ đề đã phát hiện · 11 tin đã gửi', glyph: 'M20 6.5L9.5 17 4 11.5', glyphFg: '#0A5F67' },
-        { state: 'warn', vi: 'suy giảm, vẫn chạy', labelFg: '#6E4A00', captionFg: '#6E4A00',
-          segs: [{ bg: '#FFF3DB', bd: '#F0D9A8' }, { bg: '#FFF3DB', bd: '#F0D9A8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }],
-          caption: 'Không dùng được micro — chỉ nghe âm thanh từ người khác', glyph: 'M12 3.8L21.2 20H2.8zM12 9.5v4.5M12 17h.01', glyphFg: '#6E4A00' },
-        { state: 'error', vi: 'chặn dòng', labelFg: '#FFFFFF', captionFg: '#A62B22',
-          segs: [{ bg: accent, bd: accent }, { bg: accent, bd: accent }, { bg: '#A62B22', bd: '#A62B22' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }, { bg: '#FFFFFF', bd: '#DCE2E8' }],
-          caption: 'Blaze STT: Insufficient credits — 0 tin vào chat', glyph: 'M9.5 9.5l5 5M14.5 9.5l-5 5', glyphFg: '#A62B22' }
+      blocks: [
+        { x: '16px', name: 'Theme sáng — popup theo hệ thống', bg: '#FFFFFF', bd: '#DCE2E8', headFg: '#58636F', capFg: '#58636F', rows: mk(light) },
+        { x: '564px', name: 'Theme tối — popup ban đêm và panel trong Meet (luôn tối)', bg: '#161C22', bd: '#232B34', headFg: '#A0B1C0', capFg: '#A0B1C0', rows: mk(dark) }
+      ],
+      notes: [
+        { i: '01', text: 'Petrol chỉ tô bước đang chạy. Đã qua = nền tint, chưa tới = vòng viền. Hàng này là lý do duy nhất màu thương hiệu xuất hiện ở đây.' },
+        { i: '02', text: 'Bỏ nhãn ở bước không chạy là có ý: trong cột 360px, sáu nhãn đầy đủ không đọc được mà phải cuộn dọc.' },
+        { i: '03', text: 'Nhãn đầy đủ vẫn tới được: title (hover) cho bước không chạy, aria-current="step" cho bước đang chạy. .panel__stages để overflow-x: auto cho nhãn dài hơn.' }
       ]
     };
   }

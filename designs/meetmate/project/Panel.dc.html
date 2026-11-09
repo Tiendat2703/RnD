@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Panel MeetMate nổi trong trang Meet — đang gửi vào chat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
+<style>
+body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
+a { color: #7FB0F5; } a:hover { color: #AACDFB; }
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; box-sizing: border-box; overflow: hidden; background: #12171D; color: #E6EAF0; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+
+  <div style="position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px" aria-hidden="true">
+    <sc-for list="{{tiles}}" as="tile" hint-placeholder-count="12">
+      <div style="position: relative; border-radius: 12px; border: 1px solid #232B34; background: #1B222A; display: grid; place-items: center">
+        <span style="width: 44px; height: 44px; border-radius: 9999px; background: #232B34"></span>
+        <span style="position: absolute; left: 10px; bottom: 8px; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; color: #61707E">{{tile.n}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; right: 16px; top: 16px; max-width: 340px; padding: 8px 12px; box-sizing: border-box; border: 1px solid #232B34; border-radius: 12px; background: #12171D; font-size: 11px; line-height: 16px; color: #A0B1C0">
+    Lưới ô phía sau là nền minh hoạ: panel luôn tối vì nó nổi trên vùng video tối. Artboard này không tái hiện giao diện Google Meet.
+  </div>
+
+  <div style="position: absolute; top: 16px; left: 16px; width: 360px; max-height: calc(100% - 32px); box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #232B34; border-radius: 16px; background: rgba(22, 28, 34, 0.94); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px)" role="complementary" aria-label="MeetMate">
+
+    <div style="flex: none; display: flex; align-items: center; gap: 8px; padding: 12px">
+      <span style="display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 9999px; background: #3FA3AE; color: #0A2629; font-family: Overpass, sans-serif; font-size: 13px; font-weight: 800; line-height: 1; letter-spacing: -0.025em">MeetMate</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 3px 9px; border-radius: 9999px; background: #3FA3AE; color: #0A2629; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: 0.05em; white-space: nowrap"><span style="width: 6px; height: 6px; border-radius: 9999px; background: currentColor; flex: none" aria-hidden="true"></span>Đang nghe</span>
+      <span style="flex: 1 1 auto"></span>
+      <button type="button" title="Thu gọn" aria-label="Thu gọn" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #A0B1C0; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="display: block; flex: none"><path d="M6 12h12"></path></svg>
+      </button>
+      <button type="button" title="Ẩn panel" aria-label="Ẩn panel" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #A0B1C0; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="display: block; flex: none"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+      </button>
+    </div>
+
+    <div style="flex: none; padding: 0 12px 12px; overflow-x: auto">
+      <div style="display: flex; align-items: center; gap: 6px; width: max-content" role="list" aria-label="Các bước xử lý">
+        <sc-for list="{{stages}}" as="s" hint-placeholder-count="6">
+          <span role="listitem" title="{{s.title}}" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: {{s.pad}}; border-radius: 9999px; border: 1px solid {{s.bd}}; background: {{s.bg}}; color: {{s.fg}}; font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 1; letter-spacing: 0.05em; white-space: nowrap">{{s.text}}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 0 12px 12px; overflow: hidden; align-items: stretch">
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: 0.05em; color: #A0B1C0">Vừa nghe</div>
+        <sc-for list="{{lines}}" as="l" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 40px 1fr; gap: 8px">
+            <time style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 12px; font-weight: 400; line-height: 20px; color: #A0B1C0">{{l.t}}</time>
+            <span style="font-size: 14px; line-height: 20px; color: #E6EAF0; overflow-wrap: anywhere">{{l.s}}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{topics}}" as="tp" hint-placeholder-count="2">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div>
+            <div style="margin: 0; font-family: Overpass, sans-serif; font-size: 16px; font-weight: 600; line-height: 24px; color: #E6EAF0; overflow-wrap: anywhere">{{tp.name}}</div>
+            <div style="font-size: 12px; line-height: 16px; color: #A0B1C0">{{tp.query}}</div>
+          </div>
+          <sc-for list="{{tp.posts}}" as="p" hint-placeholder-count="3">
+            <div style="padding: 12px 16px; border: 1px solid #232B34; border-left: 2px solid {{p.edge}}; border-radius: 0 16px 16px 0; background: {{p.bg}}; margin-top: {{p.mt}}">
+              <div style="font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: 0.05em; color: #9BDCE3">{{p.eyebrow}}</div>
+              <div style="margin: 2px 0 0; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: -0.01em; color: {{p.fg}}; overflow-wrap: anywhere">{{p.title}}</div>
+              <sc-if value="{{p.hasUrl}}" hint-placeholder-val="{{true}}">
+                <a href="{{p.url}}" style="display: block; margin-top: 4px; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 12px; font-weight: 400; line-height: 17px; color: {{p.urlFg}}; text-decoration: underline; text-decoration-color: {{p.urlLine}}; text-underline-offset: 2px; overflow-wrap: anywhere">{{p.url}}</a>
+              </sc-if>
+              <div style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: {{p.fg}}">{{p.why}}</div>
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #232B34; font-size: 12px; line-height: 16px; color: #A0B1C0">{{p.foot}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+
+    </div>
+
+    <div style="flex: none; padding: 12px; border-top: 1px solid #232B34">
+      <button type="button" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; padding: 10px 18px; box-sizing: border-box; border: 0; border-radius: 24px; background: #3FA3AE; color: #0A2629; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif; font-size: 14px; font-weight: 600; line-height: 20px; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block; flex: none"><rect x="6.5" y="6.5" width="11" height="11" rx="2"></rect></svg>
+        Dừng nghe
+      </button>
+    </div>
+
+  </div>
+
+  <div style="position: absolute; left: 400px; top: 250px; width: 356px; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{notes}}" as="n" hint-placeholder-count="4">
+      <div style="display: flex; gap: 8px; padding: 8px 10px; box-sizing: border-box; border: 1px solid #232B34; border-radius: 12px; background: #12171D">
+        <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #3FA3AE; flex: none">{{n.i}}</span>
+        <span style="font-size: 12px; line-height: 17px; color: #A0B1C0">{{n.text}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const labels = ['Đang lắng nghe', 'Đang phiên âm', 'Đang tách chủ đề', 'Đang tìm nguồn', 'Đang viết lý do', 'Đang gửi vào chat'];
+    const stages = labels.map((label, i) => {
+      const state = i === 5 ? 'active' : i < 5 ? 'done' : 'pending';
+      return {
+        text: state === 'active' ? (i + 1) + ' ' + label : String(i + 1),
+        title: label,
+        pad: state === 'active' ? '0 10px' : '0 8px',
+        bd: state === 'pending' ? '#232B34' : 'transparent',
+        bg: state === 'active' ? '#3FA3AE' : state === 'done' ? '#20393C' : '#161C22',
+        fg: state === 'active' ? '#0A2629' : state === 'done' ? '#E6EAF0' : '#A0B1C0'
+      };
+    });
+    const post = (eyebrow, title, url, why, foot, sent, first) => ({
+      eyebrow, title, url, why, foot,
+      hasUrl: url !== '',
+      bg: sent ? '#161C22' : '#1B222A',
+      edge: sent ? '#3FA3AE' : '#232B34',
+      fg: sent ? '#E6EAF0' : '#A0B1C0',
+      urlFg: sent ? '#7FB0F5' : '#A0B1C0',
+      urlLine: sent ? '#478BEB' : '#232B34',
+      mt: first ? '0' : '8px'
+    });
+    const freemium = {
+      name: 'Tỷ lệ chuyển đổi freemium (dữ liệu giả)',
+      query: 'freemium to paid conversion rate benchmark',
+      posts: [
+        post('MeetMate: Chủ đề', 'Tỷ lệ chuyển đổi freemium (dữ liệu giả)', '',
+          'Dữ liệu giả: tỷ lệ chuyển đổi freemium thường nằm trong khoảng 2–5%.',
+          'tóm tắt · 126 ký tự · đã vào chat', true, true),
+        post('MeetMate: [1/1]', 'Benchmark mẫu C', 'https://example.com/benchmark-c',
+          'Vì sao chọn: Dữ liệu giả để thử giao diện.',
+          'nguồn 1/1 · 106 ký tự · chưa gửi vào chat', false, false)
+      ]
+    };
+    const pricing = {
+      name: 'Bảng giá gói SME Việt Nam (dữ liệu giả)',
+      query: 'bảng giá phần mềm cho SME Việt Nam 2026',
+      posts: [
+        post('MeetMate: Chủ đề', 'Bảng giá gói SME Việt Nam (dữ liệu giả)', '',
+          'Dữ liệu giả: gói SaaS dưới 20 nhân viên thường 300.000–800.000 đồng mỗi tháng.',
+          'tóm tắt · 136 ký tự · đã vào chat', true, true),
+        post('MeetMate: [1/2]', 'Bảng giá mẫu A', 'https://example.com/bang-gia-a',
+          'Vì sao chọn: Dữ liệu giả để thử giao diện.',
+          'nguồn 1/2 · 104 ký tự · đã vào chat', true, false),
+        post('MeetMate: [2/2]', 'Bảng giá mẫu B', 'https://example.com/bang-gia-b',
+          'Vì sao chọn: Dữ liệu giả để thử giao diện.',
+          'nguồn 2/2 · 104 ký tự · đã vào chat', true, false)
+      ]
+    };
+    return {
+      tiles: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(n => ({ n })),
+      stages,
+      lines: [
+        { t: '00:15', s: 'Hay là tìm xem mấy sản phẩm cùng phân khúc đang niêm yết bao nhiêu.' },
+        { t: '00:18', s: 'Ừ, ưu tiên nguồn có bảng giá rõ ràng và cập nhật trong năm nay.' },
+        { t: '00:21', s: 'Còn tỷ lệ chuyển đổi từ gói miễn phí sang trả phí thì sao?' },
+        { t: '00:24', s: 'Mình nghĩ khoảng 2 đến 5 phần trăm là mức hay gặp.' }
+      ],
+      topics: [freemium, pricing],
+      notes: [
+        { i: '01', text: 'Hàng sáu bước: nhãn chỉ nằm ở bước đang chạy — trong cột 360px đó là thứ duy nhất còn đọc được. Đã qua = nền nhạt, đang chạy = đặc.' },
+        { i: '02', text: 'Vừa nghe: bốn dòng cuối, mỗi dòng mang mốc mm:ss của chính nó, không suy ra từ dòng khác.' },
+        { i: '03', text: 'Tin đã vào chat = viền trái 2px petrol. Tin chưa gửi = viền hairline + nền --subtle + chữ muted. Số ký tự trong foot là số thật mà toChatPosts đếm.' },
+        { i: '04', text: 'Thân panel cuộn thật, nên ở đây nội dung để tràn và bị cắt bởi max-height — đúng như khi đang chạy.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

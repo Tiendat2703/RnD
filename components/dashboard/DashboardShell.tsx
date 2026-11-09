@@ -12,9 +12,14 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "../../lib/utils";
+import { onExtensionEvent, sendToExtension } from "../../lib/extensionBridge";
+import type { SavedSession, SavedTopic } from "../../lib/bridgeProtocol";
+import type { KnowledgeCard } from "../../lib/evidence";
+import claimsFixture from "../../mocks/meeting-claims.json";
 import {
   FREE_PLAN,
   defaultPrefs,
+  SAMPLE_CLAIMS_MEETING_ID,
   initialMeetings,
   sampleLines,
   type MeetingKind,
@@ -24,6 +29,9 @@ import {
 } from "../../lib/dashboardData";
 import {
   DashboardContext,
+  type EndCounts,
+  type ExtensionSession,
+  type LiveMode,
   type LiveState,
   type PendingMeeting,
   type PlanId,
@@ -123,6 +131,7 @@ export function DashboardShell({
   const [wizard, setWizard] = useState<WizardState>({ open: false });
   const [installFor, setInstallFor] = useState<PendingMeeting | null>(null);
   const [live, setLive] = useState<LiveState | null>(null);
+  const [extSession, setExtSession] = useState<ExtensionSession | null>(null);
   const [liveLines, setLiveLines] = useState<MeetingLine[]>([]);
   // mọi phiên đã chạy đều có bản ghi, nên "Xem chi tiết"/"Xem bản ghi" trên thẻ
   // không dẫn vào chỗ trống; phiên live đang giữa họp nên mới tích dần. Lọc theo
@@ -135,7 +144,13 @@ export function DashboardShell({
         .filter((m) => m.status !== "live")
         .map((m, i) => [m.id, i % 2 === 0 ? sampleLines : sampleLines.slice(7)])
     ),
+    // cuộc họp mẫu có thẻ đối chiếu: bản ghi riêng của nó, không dùng bản ghi chung
+    [SAMPLE_CLAIMS_MEETING_ID]: claimsFixture.lines.map((l) => ({ ...l, source: "mixed" as const })),
   }));
+  const [sessionTopics, setSessionTopics] = useState<Record<string, SavedTopic[]>>({});
+  const [sessionCards, setSessionCards] = useState<Record<string, KnowledgeCard[]>>({
+    [SAMPLE_CLAIMS_MEETING_ID]: claimsFixture.cards as unknown as KnowledgeCard[],
+  });
   const [prefsOpen, setPrefsOpenState] = useState(false);
   const [prefsFrom, setPrefsFrom] = useState<PrefsFrom>("live");
   // tùy chọn mở từ hai surface có khung khác nhau, nên ai mở phải đi kèm cờ
@@ -191,10 +206,15 @@ export function DashboardShell({
   }, []);
 
   const deleteMeeting = useCallback((id: string) => {
+    sendToExtension({ type: "sessions.delete", id });
     setMeetings((prev) => prev.filter((m) => m.id !== id));
   }, []);
 
-  const clearMeetings = useCallback(() => setMeetings([]), []);
+  const clearMeetings = useCallback(() => {
+    // phiên extension đã lưu cũng phải xóa, nếu không lần đồng bộ sau sẽ hiện lại
+    for (const id of Object.keys(sessionTopics)) sendToExtension({ type: "sessions.delete", id });
+    setMeetings([]);
+  }, [sessionTopics]);
 
   const addMeeting = useCallback((m: MeetingRecord) => {
     setMeetings((prev) => [m, ...prev]);
@@ -223,7 +243,7 @@ export function DashboardShell({
     setQuota((q) => {
       const left = Math.max(0, q.artifactsLeft - 1);
       if (q.artifactsLeft > 0 && left === 0) {
-        pushToast("Đã dùng hết artifact của gói Free.", "error");
+        pushToast("Đã dùng hết lượt xuất báo cáo PDF của gói Free.", "error");
       }
       return { ...q, artifactsLeft: left };
     });
@@ -252,23 +272,39 @@ export function DashboardShell({
 
   const clearLiveLines = useCallback(() => setLiveLines([]), []);
 
-  const startLive = useCallback((draft: PendingMeeting, meetingId: string) => {
-    setInstallFor(null);
-    setLiveLines([]);
-    setLive({
-      meetingId,
-      title: draft.title,
-      kind: draft.kind,
-      elapsedAtLeave: 0,
-      startedRunAt: Date.now(),
-      topicCount: 0,
-      sourceCount: 0,
-    });
-  }, []);
+  const startLive = useCallback(
+    (draft: PendingMeeting, meetingId: string, mode: LiveMode = "demo") => {
+      const now = Date.now();
+      setInstallFor(null);
+      setLiveLines([]);
+      setExtSession(mode === "extension" ? { id: meetingId, startedAt: now } : null);
+      // phiên extension được theo dõi ngay trong Meet; web không dựng "phòng họp"
+      // toàn trang cho nó. Muốn xem trên web thì "Mở lại phiên" từ danh sách.
+      if (mode === "extension") {
+        setLive(null);
+        return;
+      }
+      setLive({
+        meetingId,
+        title: draft.title,
+        kind: draft.kind,
+        elapsedAtLeave: 0,
+        startedRunAt: now,
+        topicCount: 0,
+        sourceCount: 0,
+        mode,
+        sessionStartedAt: now,
+      });
+    },
+    []
+  );
 
   const rejoinLive = useCallback(
     (m: MeetingRecord) => {
-      setLiveLines(transcripts[m.id] ?? []);
+      // phiên extension vẫn đang ghi: bản ghi nằm sẵn trong `liveLines`, đồng hồ
+      // chạy theo thời gian thật từ lúc extension bắt đầu nghe
+      const ext = extSession && extSession.id === m.id ? extSession : null;
+      if (!ext) setLiveLines(transcripts[m.id] ?? []);
       setLive({
         meetingId: m.id,
         title: m.title,
@@ -277,12 +313,14 @@ export function DashboardShell({
         startedRunAt: Date.now(),
         topicCount: m.topicCount,
         sourceCount: m.sourceCount,
+        mode: ext ? "extension" : "demo",
+        sessionStartedAt: ext?.startedAt ?? Date.now(),
       });
       // rời phiên không tính thêm: extension vẫn chạy trong Chrome của người
       // dùng, không có khái niệm "giữ phòng ấm" để mà trả phí
       if (banked[m.id] !== undefined) pushToast("Đã quay lại phiên đang ghi.");
     },
-    [transcripts, banked, pushToast]
+    [transcripts, banked, extSession, pushToast]
   );
 
   const leaveLive = useCallback(
@@ -294,24 +332,84 @@ export function DashboardShell({
     [live, pushToast]
   );
 
+  // `live` có thể đã null (người dùng rời phiên) mà extension vẫn ghi và rồi tự
+  // kết thúc vì tab Meet đóng; khi đó phiên được nhận ra qua `extSession`.
   const endLive = useCallback(
-    (elapsedSec: number) => {
-      if (live) {
-        updateMeeting(live.meetingId, {
+    (elapsedSec: number, counts?: EndCounts) => {
+      const id = live?.meetingId ?? extSession?.id;
+      if (id) {
+        updateMeeting(id, {
           status: "ended",
           durationSec: elapsedSec,
-          topicCount: live.topicCount,
-          sourceCount: live.sourceCount,
+          topicCount: counts?.topicCount ?? live?.topicCount ?? 0,
+          sourceCount: counts?.sourceCount ?? live?.sourceCount ?? 0,
         });
         if (liveLines.length > 0) {
-          setTranscripts((t) => ({ ...t, [live.meetingId]: liveLines }));
+          setTranscripts((t) => ({ ...t, [id]: liveLines }));
         }
+      }
+      if (extSession && extSession.id === id) {
+        sendToExtension({ type: "session.stop" });
+        setExtSession(null);
       }
       setLive(null);
       pushToast("Đã kết thúc phiên. Bản ghi và nguồn nằm trong chi tiết cuộc họp.");
     },
-    [live, liveLines, updateMeeting, pushToast]
+    [live, extSession, liveLines, updateMeeting, pushToast]
   );
+
+  // Extension là nơi lưu phiên: mỗi lần mở web (và mỗi khi một phiên kết thúc) hỏi lại
+  // danh sách, nên cuộc họp diễn ra lúc web đóng, hoặc sau khi tải lại trang, vẫn còn.
+  const syncSessions = useCallback((list: SavedSession[]) => {
+    if (list.length === 0) return;
+    setMeetings((prev) => {
+      let next = prev;
+      for (const s of list) {
+        const rec: MeetingRecord = {
+          id: s.id,
+          title: s.title,
+          kind: s.kind,
+          startedAt: new Date(s.startedAt).toISOString().slice(0, 19),
+          durationSec: Math.max(0, Math.round(((s.endedAt ?? Date.now()) - s.startedAt) / 1000)),
+          topicCount: s.topics.length,
+          sourceCount: s.topics.reduce((n, t) => n + Math.max(0, t.posted - 1), 0),
+          status: s.endedAt === null ? "live" : "ended",
+        };
+        const i = next.findIndex((m) => m.id === s.id);
+        next = i >= 0 ? next.map((m, j) => (j === i ? { ...m, ...rec } : m)) : [rec, ...next];
+      }
+      return next;
+    });
+    setTranscripts((t) => ({
+      ...t,
+      ...Object.fromEntries(list.filter((s) => s.endedAt !== null).map((s) => [s.id, s.lines])),
+    }));
+    setSessionTopics((p) => ({ ...p, ...Object.fromEntries(list.map((s) => [s.id, s.topics])) }));
+    setSessionCards((p) => ({
+      ...p,
+      ...Object.fromEntries(list.filter((s) => s.cards?.length).map((s) => [s.id, s.cards!])),
+    }));
+    const running = list.find((s) => s.endedAt === null);
+    if (running) {
+      // web được mở/tải lại giữa lúc extension đang nghe: nhận lại phiên đang chạy
+      setExtSession((cur) => cur ?? { id: running.id, startedAt: running.startedAt });
+      setLiveLines((prev) => (prev.length > 0 ? prev : running.lines));
+    }
+  }, []);
+
+  useEffect(() => {
+    const ask = () => sendToExtension({ type: "sessions.list" });
+    ask();
+    const retry = window.setTimeout(ask, 1500);
+    const off = onExtensionEvent((ev) => {
+      if (ev.type === "sessions") syncSessions(ev.sessions);
+      else if (ev.type === "ended") ask();
+    });
+    return () => {
+      window.clearTimeout(retry);
+      off();
+    };
+  }, [syncSessions]);
 
   // close the mobile drawer on navigation
   useEffect(() => {
@@ -366,6 +464,7 @@ export function DashboardShell({
         requestInstall,
         cancelInstall,
         live,
+        extSession,
         startLive,
         rejoinLive,
         leaveLive,
@@ -374,6 +473,8 @@ export function DashboardShell({
         pushLiveLine,
         clearLiveLines,
         transcripts,
+        sessionTopics,
+        sessionCards,
         prefsOpen,
         prefsFrom,
         setPrefsOpen,

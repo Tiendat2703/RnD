@@ -6,7 +6,7 @@
  * This surface carries the MeetMate identity only; MEETMATE-DESIGN.md is the
  * contract these tokens implement. DESIGN.md stays as the capture it is.
  *
- * Everything is scoped under `.dash` so the meeting-room demo at `/` is untouched.
+ * Everything is scoped under `.dash` so nothing here leaks into other routes.
  */
 
 /* ------------------------------------------------------------------ */
@@ -536,9 +536,14 @@ button.nav-item {
 /* Left-aligned rather than centred: the topbar title is the page's only heading
    and has to sit on the same edge as the content below it. */
 .content__inner {
-  max-width: 1400px;
   padding: var(--sp-lg) var(--sp-lg) var(--sp-2xl);
 }
+/* Các trang lưới/bảng (Cuộc họp, Tài liệu, Nâng cấp) giãn theo cửa sổ: cap 1400px
+   để lại một dải trống bên phải trên màn hình rộng, và lưới tự thêm cột còn hai
+   cột của Nâng cấp chia theo tỉ lệ. Chỉ các trang biểu mẫu (Cấu hình, Tài khoản)
+   giữ cap, vì một dòng nhãn + ô nhập dài quá thì khó đọc. */
+.content__inner { max-width: none; }
+.content__inner:has(.settings-section) { max-width: 1400px; }
 
 /* Panel tab rows keep the pill treatment and put any per-page aside — the plan
    chip on Profile — on the same line, right-aligned. */
@@ -2215,7 +2220,8 @@ button.nav-item {
 
 .dp {
   width: min(920px, 100%);
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   border-left: 1px solid var(--hairline);
@@ -2233,7 +2239,7 @@ button.nav-item {
 }
 .dp__title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: var(--tracking-tight); }
 .dp__sub { margin-top: 2px; color: var(--muted-ink); font-size: 13px; }
-.dp__body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: var(--sp-md); padding: 0 var(--sp-lg) var(--sp-lg); }
+.dp__body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: var(--sp-md); padding: 0 var(--sp-lg) var(--sp-lg); }
 .dp__rail { display: flex; flex-direction: column; gap: 2px; padding-right: var(--sp-sm); border-right: 1px solid var(--hairline); }
 .dp__railbtn {
   display: flex;
@@ -2296,7 +2302,7 @@ button.nav-item {
   margin-bottom: var(--sp-md);
   padding: 10px var(--sp-md);
   border-radius: var(--radius-card);
-  background: repeating-linear-gradient(135deg, var(--ink) 0 16px, hsl(var(--ink-raw) / 0.9) 16px 32px);
+  background: var(--ink);
   color: var(--canvas);
   font-size: 13px;
   font-weight: 600;
@@ -2331,44 +2337,6 @@ button.nav-item {
 }
 .deal-inline svg { width: 14px; height: 14px; }
 .deal-inline strong { font-family: var(--font-mono); letter-spacing: var(--tracking-wide); }
-
-/* The pricing card carried a green-to-cream gradient in the capture. MeetMate
-   separates tiers with surface and hairline, never with paint (§Elevation), so
-   the gradient becomes the subtle surface tier and `--plain` becomes the canvas
-   tier inside it. */
-.pcard {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-sm);
-  margin-top: var(--sp-md);
-  padding: var(--sp-lg);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-card);
-  background: var(--surface-subtle);
-}
-.pcard--plain { background: var(--canvas); }
-.pcard__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-md); }
-.pcard__tag { margin-top: 2px; color: var(--muted-ink); font-size: 13px; line-height: 20px; max-width: 44ch; }
-/* "Recommended" is a marketing label, not a claim about capture, so it takes the
-   ink tier. Petrol is reserved (§Colors) for the wordmark, the primary action and
-   MeetMate's own output; a badge cannot join that list. */
-.pcard__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex: 0 0 auto;
-  padding: 5px 11px;
-  border-radius: var(--radius-pill);
-  background: var(--ink);
-  color: var(--canvas);
-  font-size: 12px;
-  font-weight: 600;
-}
-.pcard__badge svg { width: 13px; height: 13px; }
-.pcard__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-sm); flex-wrap: wrap; }
-.pcard__bar--end { justify-content: flex-end; }
-.pcard__fine { margin-top: var(--sp-xs); color: var(--muted-ink); font-size: 12px; text-align: center; }
-.pcard__fine s { opacity: 0.7; }
 
 /* one radio-row primitive serves cycles, packs and à-la-carte tools: title and
    qualifier on the left, the struck list price and the deal price on the right */
@@ -2449,24 +2417,6 @@ button.nav-item {
 .prow__price strong { font-size: 22px; font-weight: 600; letter-spacing: var(--tracking-tight); }
 .prow__price > span { color: var(--muted-ink); font-size: 12px; }
 .prow__price .prow__sub { flex: 1 0 100%; justify-content: flex-end; }
-
-.rules { list-style: none; margin: 0; padding: var(--sp-sm) 0 0; border-top: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 6px; }
-.rules li { display: flex; align-items: center; gap: var(--sp-xs); color: var(--muted-ink); font-size: 13px; }
-.rules svg { width: 14px; height: 14px; color: var(--primary); flex: 0 0 auto; }
-/* what the tab does *not* buy stays visible, struck by icon not by colour alone */
-.rules__off { opacity: 0.6; }
-.rules__off svg { color: var(--muted-ink); }
-
-/* the credit downsell that closes every pricing tab — quiet, centred, one line */
-.downsell {
-  margin: 0;
-  padding-top: var(--sp-sm);
-  border-top: 1px solid var(--hairline);
-  color: var(--muted-ink);
-  font-size: 13px;
-  text-align: center;
-}
-.downsell s { color: var(--muted-ink); }
 
 /* Rating stars are a control, so their resting state gets the control edge
    ({--mm-boundary}, 3.48:1) rather than the hairline (1.31:1 — invisible against
@@ -2944,38 +2894,6 @@ button.nav-item {
   font-family: var(--font-display);
   font-weight: 700;
 }
-
-/* ------------------------------------------------------------------ */
-/* 34. Upgrade page — the pricing surface as a route                    */
-/* ------------------------------------------------------------------ */
-
-/* The pricing frame was 640px of a single column: the CTA sat below the fold and
-   the rest of the content width stayed empty while you scrolled past it. As a page
-   the surface spends that width on the second column — balance, comparison,
-   equations, billing — and both columns read off the same data, so the reasons
-   cannot disagree with the card. Below 1080px the aside falls under the card,
-   which is what a four-column table does on a phone anyway. */
-.upg {
-  display: flex;
-  flex-direction: column;
-}
-.upg__grid {
-  display: grid;
-  /* the buy column carries the decision, so it gets the wider share; the aside
-     needs enough for five table columns and nothing more */
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: var(--sp-xl);
-  align-items: start;
-}
-.upg__buy,
-.upg__aside { min-width: 0; }
-.upg__aside { display: flex; flex-direction: column; gap: var(--sp-md); }
-
-/* A price row is one line while it has room and two lines when it has not — and
-   "room" is a property of this column, not of the window: the column is ~410px at
-   a 1081px viewport and ~358px on a phone, so a media query would pick one of the
-   two and break the other. Containment goes on the column, the break reads it. */
-.upg__buy { container-type: inline-size; }
 @container (max-width: 460px) {
   .prow { flex-wrap: wrap; }
   /* the price keeps its own line and its right alignment; the radio and the title
@@ -2983,89 +2901,6 @@ button.nav-item {
   .prow__price { flex: 1 0 100%; justify-content: flex-end; }
 }
 
-/* panels, not list objects: canvas fill with a hairline edge (§Components, the
-   two card tiers). The card column keeps its own subtle tier, so the two columns
-   are visibly different roles rather than two identical boxes. */
-.upg__panel {
-  padding: var(--sp-md);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-card);
-  background: var(--canvas);
-  box-shadow: var(--shadow-control);
-}
-/* {typography.eyebrow}: 11px Overpass 700 at 0.05em, sentence case. */
-.upg__label {
-  margin: 0 0 var(--sp-sm);
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: var(--tracking-wide);
-  color: var(--muted-ink);
-}
-
-/* the balance panel is the profile plan strip moved to where the decision is made;
-   it reuses the meter classes so there is one drawing of a credit balance, not two */
-.balcard { display: flex; flex-direction: column; gap: 2px; }
-.balcard .plan-strip__meter { margin-bottom: 18px; }
-/* the plan name and its one-line note are two lines, not one run-on sentence:
-   <strong> and <span> sit inline in a plain div unless the box says otherwise */
-.balcard__now { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.balcard__now strong { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: var(--tracking-tight); }
-.balcard__now span { color: var(--muted-ink); font-size: 13px; line-height: 18px; }
-.balcard__foot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  color: var(--muted-ink);
-  font-size: 12px;
-}
-.balcard__foot svg { width: 14px; height: 14px; flex: 0 0 auto; }
-.balcard__link { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-
-/* the comparison: objects down the side, plans across. The table scrolls inside
-   its own box rather than forcing a page-wide horizontal scroll (Responsive
-   Behaviour), and the active tab's column is marked by an ink rule as well as a
-   fill, so the highlight survives a colour-blind or greyscale reading. */
-.upg__scroll { overflow-x: auto; }
-/* the table fills its column down to 400px and only then scrolls inside the box;
-   nowrap on the plan name, but the note under it is allowed to break — "Buy once,
-   spend anytime" on one line is what pushed a fifth column past the panel edge */
-.matrix { width: 100%; min-width: 400px; border-collapse: collapse; font-size: 12px; }
-.matrix th,
-.matrix td {
-  padding: 7px 8px;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid var(--hairline);
-}
-.matrix tr:last-child th,
-.matrix tr:last-child td { border-bottom: 0; }
-.matrix thead th {
-  font-family: var(--font-display);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink);
-  white-space: nowrap;
-}
-.matrix thead th em {
-  display: block;
-  white-space: normal;
-  font-family: var(--font-body);
-  font-style: normal;
-  font-weight: 400;
-  font-size: 10px;
-  color: var(--muted-ink);
-}
-.matrix tbody th { font-weight: 500; color: var(--ink); }
-.matrix td { color: var(--muted-ink); font-variant-numeric: tabular-nums; }
-.matrix .is-here { background: var(--surface-subtle); }
-.matrix thead .is-here { box-shadow: inset 0 -2px 0 var(--ink); }
-.matrix__none { opacity: 0.55; }
-
-.eqns { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.eqns li { display: flex; align-items: flex-start; gap: var(--sp-xs); color: var(--muted-ink); font-size: 13px; line-height: 18px; }
-.eqns svg { width: 14px; height: 14px; flex: 0 0 auto; margin-top: 2px; color: var(--primary); }
 
 /* ------------------------------------------------------------------ */
 /* 35. The rail credit card, uncrammed                                 */
@@ -3489,40 +3324,6 @@ button.nav-item {
 }
 .wiz__models span { font-size: 12px; line-height: 16px; color: var(--muted-ink); }
 
-/* ------------------------------------------------------------------ */
-/* 43. Trang giá VND                                                  */
-/* ------------------------------------------------------------------ */
-
-/* Giá là một hàng, không phải một khối: số to, đơn vị nhỏ, cái bị gạch cho thấy
-   cơ sở so sánh, và một dòng dưới nói rõ con số đó nhân theo cái gì. */
-.price {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px var(--sp-xs);
-  margin: var(--sp-md) 0 var(--sp-xs);
-}
-.price strong {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 38px;
-  letter-spacing: var(--tracking-tight);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.price > span { font-size: 14px; color: var(--muted-ink); }
-.price > s { font-size: 14px; color: var(--muted-ink); text-decoration-thickness: 1px; }
-.price em {
-  flex: 1 0 100%;
-  font-style: normal;
-  font-size: 12.5px;
-  line-height: 17px;
-  color: var(--mm-provenance-ink);
-}
-.pcard__min { margin: 0 0 var(--sp-sm); font-size: 12.5px; color: var(--muted-ink); }
-.pcard__badge--now { background: var(--mm-provenance-tint); color: var(--mm-provenance-ink); }
-
 /* Team tính theo người, nên số người là một control thật — nó đổi cả giá ở trên
    và chú thích nhân theo ở cột phải. Trần 3–15 lấy từ chính bảng IV.3.1. */
 .ppl {
@@ -3557,48 +3358,6 @@ button.nav-item {
 }
 .ppl__n em { font-style: normal; font-weight: 400; font-size: 12px; color: var(--muted-ink); }
 
-/* tiêu đề cột bảng so sánh là nút: chọn gói ở cột phải cũng đổi thẻ ở cột trái */
-.matrix__pick {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  width: 100%;
-  padding: 2px 0;
-  border: 0;
-  background: transparent;
-  font: inherit;
-  color: var(--muted-ink);
-  text-align: left;
-  cursor: pointer;
-}
-.matrix__pick:hover { color: var(--ink); }
-.matrix__plan .matrix__pick[aria-pressed="true"] { color: var(--ink); font-weight: 700; }
-
-.upg__note {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin: var(--sp-xs) 0 0;
-  font-size: 12px;
-  line-height: 17px;
-  color: var(--muted-ink);
-}
-.upg__note svg { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 2px; color: var(--mm-boundary); }
-.upg__foot {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--sp-xs);
-  margin-top: var(--sp-md);
-  padding: var(--sp-sm) var(--sp-md);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-card);
-  background: var(--surface-subtle);
-  font-size: 12.5px;
-  line-height: 18px;
-  color: var(--muted-ink);
-}
-.upg__foot svg { flex: 0 0 auto; width: 15px; height: 15px; margin-top: 1px; }
-
 /* ------------------------------------------------------------------ */
 /* 44. Trang hồ sơ / cài đặt — các hàng chữ dẫn                        */
 /* ------------------------------------------------------------------ */
@@ -3617,13 +3376,314 @@ button.nav-item {
   line-height: 18px;
   color: var(--muted-ink);
 }
-
-@media (max-width: 1080px) {
-  .upg__grid { grid-template-columns: minmax(0, 1fr); }
-}
 @media (max-width: 760px) {
   .ovl__band { margin-inline: var(--sp-md); }
   .quota-grid--strip { grid-template-columns: minmax(0, 1fr); gap: var(--sp-sm); }
-  .price strong { font-size: 27px; line-height: 33px; }
 }
 
+/* ================================================================== */
+/* Knowledge Card, bối cảnh phiên, báo cáo, kho tài liệu (giao diện mục tiêu)  */
+/* ================================================================== */
+
+/* Bốn trạng thái bằng chứng: biểu tượng + độ đặc của nền + kiểu viền, KHÔNG thêm màu.
+   Petrol không được làm huy hiệu "thành công"; vàng/đỏ dành cho phiên chạy kém/bị chặn. */
+.ev-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+}
+.ev-chip svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ev-chip--supported { background: var(--surface-subtle); border-color: var(--hairline); color: var(--ink); }
+.ev-chip--partial { background: var(--canvas); border-color: var(--ink); color: var(--ink); }
+.ev-chip--contradicted { background: var(--ink); color: var(--canvas); }
+.ev-chip--error { background: var(--surface-subtle); border: 1px dotted var(--ink); color: var(--ink); }
+.ev-chip--insufficient { background: transparent; border: 1px dashed var(--mm-boundary); color: var(--muted-ink); }
+
+.ev-sample {
+  display: inline-block;
+  margin-left: var(--sp-xs);
+  padding: 2px 9px;
+  border: 1px dashed var(--mm-boundary);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 15px;
+  letter-spacing: var(--tracking-wide);
+  color: var(--muted-ink);
+  vertical-align: middle;
+}
+
+.ev-list { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.ev-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  box-sizing: border-box;
+  padding: var(--sp-sm) var(--sp-md);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--mm-provenance);
+  border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  background: var(--mm-chat-bg);
+  color: var(--ink);
+}
+.ev-card__head { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-xs); }
+.ev-card__eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  color: var(--mm-provenance-ink);
+}
+.ev-card__time { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted-ink); }
+.ev-card__quote { margin: 0; font-size: 13px; line-height: 19px; color: var(--muted-ink); }
+.ev-card__summary { margin: 0; font-size: 14px; line-height: 20px; color: var(--ink); }
+.ev-cite {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-xs) var(--sp-sm);
+  border-radius: var(--radius-menu);
+  background: var(--surface-subtle);
+}
+.ev-cite__doc { font-family: var(--font-display); font-size: 12px; font-weight: 700; line-height: 16px; }
+.ev-cite__loc { font-family: var(--font-mono); font-size: 11px; line-height: 15px; color: var(--muted-ink); }
+.ev-cite__excerpt { font-size: 13px; line-height: 19px; }
+.ev-card__foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  padding-top: var(--sp-xs);
+  border-top: 1px solid var(--hairline);
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--muted-ink);
+}
+.ev-fb {
+  padding: 3px 10px;
+  border: 1px solid var(--mm-boundary);
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ev-fb:hover { background: var(--surface-subtle); }
+.ev-fb[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--canvas); }
+
+/* ---- bối cảnh phiên ---- */
+.sm { display: flex; flex-direction: column; gap: var(--sp-md); }
+.sm-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-xs); }
+.sm-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-xs);
+  padding: var(--sp-sm);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  background: var(--surface-subtle);
+}
+.sm-stat__n { font-family: var(--font-mono); font-size: 22px; font-weight: 500; line-height: 26px; }
+.sm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-sm); }
+.sm-block { padding: var(--sp-sm) var(--sp-md); border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--canvas); }
+.sm-block__head { display: flex; align-items: baseline; justify-content: space-between; }
+.sm-block__title { margin: 0; font-family: var(--font-display); font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: var(--tracking-tight); }
+.sm-block__count { font-family: var(--font-mono); font-size: 12px; color: var(--muted-ink); }
+.sm-block__note { margin: 2px 0 var(--sp-sm); font-size: 12px; line-height: 16px; color: var(--muted-ink); }
+.sm-empty { margin: 0; font-size: 13px; color: var(--muted-ink); }
+.sm-list { display: flex; flex-direction: column; gap: var(--sp-xs); margin: 0; padding: 0; list-style: none; }
+.sm-list li { display: flex; align-items: baseline; gap: var(--sp-xs); padding-top: var(--sp-xs); border-top: 1px solid var(--hairline); font-size: 13px; line-height: 19px; }
+.sm-list li:first-child { padding-top: 0; border-top: 0; }
+/* nhận định còn mở: chip và giờ cùng một hàng, câu gốc xuống hàng dưới thay vì bị bóp hẹp */
+.sm-list--open li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; row-gap: 4px; }
+.sm-list--open .sm-list__time { justify-self: end; }
+.sm-list--open .sm-list__text { grid-column: 1 / -1; grid-row: 2; }
+.sm-list__text { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+.sm-list__time { font-family: var(--font-mono); font-size: 11px; color: var(--muted-ink); }
+@media (max-width: 760px) {
+  .sm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- báo cáo cuộc họp (xem trước) ---- */
+.rp { margin-top: var(--sp-md); padding: var(--sp-md); border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--canvas); display: flex; flex-direction: column; gap: var(--sp-sm); }
+.rp__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-sm); }
+.rp__eyebrow { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: var(--tracking-wide); color: var(--muted-ink); }
+.rp__title { margin: 2px 0 0; font-family: var(--font-display); font-size: 19px; font-weight: 600; line-height: 26px; letter-spacing: var(--tracking-tight); }
+.rp__sub { margin: 2px 0 0; font-size: 13px; line-height: 19px; color: var(--muted-ink); }
+.rp__group { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-xs); padding-top: var(--sp-sm); border-top: 1px solid var(--hairline); }
+.rp__label { font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: var(--tracking-wide); color: var(--muted-ink); }
+.rp__list { display: flex; flex-direction: column; gap: var(--sp-xs); margin: 0; padding-left: 18px; font-size: 13px; line-height: 19px; }
+.rp__time { font-family: var(--font-mono); font-size: 11px; color: var(--muted-ink); }
+.rp__cite { display: block; font-family: var(--font-mono); font-size: 11px; line-height: 16px; color: var(--muted-ink); }
+
+/* ---- kho tài liệu (giao diện mục tiêu) ---- */
+.kb-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-xs);
+  margin: 0 0 var(--sp-md);
+  padding: var(--sp-xs) var(--sp-sm);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-menu);
+  background: var(--surface-subtle);
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--muted-ink);
+}
+.kb-note svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.kb-search { margin-bottom: var(--sp-lg); padding: var(--sp-md); border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--canvas); display: flex; flex-direction: column; gap: var(--sp-sm); }
+.kb-search__label { display: block; margin-bottom: var(--sp-xxs); font-family: var(--font-display); font-size: 11px; font-weight: 700; letter-spacing: var(--tracking-wide); color: var(--muted-ink); }
+.kb-search__row { display: flex; gap: var(--sp-xs); }
+.kb-search__row .input { flex: 1 1 0; min-width: 0; }
+.kb-search__empty { margin: 0; font-size: 13px; color: var(--muted-ink); }
+.kb-hits { display: flex; flex-direction: column; gap: var(--sp-xs); margin: 0; padding: 0; list-style: none; }
+.kb-hit { padding: var(--sp-xs) var(--sp-sm); border-radius: var(--radius-menu); background: var(--surface-subtle); }
+.kb-hit__head { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-xs); }
+.kb-hit__doc { font-family: var(--font-display); font-size: 12px; font-weight: 700; }
+.kb-hit__loc { font-family: var(--font-mono); font-size: 11px; color: var(--muted-ink); }
+.kb-hit__score { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted-ink); }
+.kb-hit__text { margin: 2px 0 0; font-size: 13px; line-height: 19px; }
+.doc-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.doc-meta li { padding: 2px 9px; border: 1px solid var(--hairline); border-radius: var(--radius-pill); background: var(--canvas); font-family: var(--font-mono); font-size: 11px; line-height: 15px; color: var(--muted-ink); }
+.doc-foot { display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 16px; color: var(--muted-ink); }
+.doc-indexed { white-space: nowrap; }
+
+/* ================================================================== */
+/* Trang Gói dịch vụ — xem DESIGN-SUBSCRIPTION.md                       */
+/* ================================================================== */
+
+.sub { max-width: 1180px; margin-inline: auto; display: flex; flex-direction: column; gap: var(--sp-lg); }
+.sub .offerbar { margin-bottom: 0; }
+
+.sub__card { padding: var(--sp-md) var(--sp-lg); border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--canvas); }
+.sub__label { margin: 0; font-family: var(--font-display); font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: var(--tracking-wide); color: var(--muted-ink); }
+.sub__muted { margin: 2px 0 0; font-size: 13px; line-height: 19px; color: var(--muted-ink); }
+
+/* hạn mức: ba đơn vị, ba thanh. Thanh là "một sự thật về tiền của bạn" nên là ink + hairline, không petrol. */
+.sub__usage { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--sp-md); }
+.sub__meters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-lg); margin-top: var(--sp-sm); }
+.sub-meter__row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-xs); font-size: 13px; line-height: 19px; }
+.sub-meter__row strong { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
+.sub-meter__row em { font-style: normal; color: var(--muted-ink); font-size: 12px; }
+.sub-meter__bar { display: block; height: 4px; margin-top: var(--sp-xs); overflow: hidden; border-radius: var(--radius-pill); background: var(--hairline); }
+.sub-meter__bar i { display: block; height: 100%; border-radius: inherit; background: var(--ink); }
+.sub__card--now { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); }
+.sub__now { font-family: var(--font-display); font-size: 16px; font-weight: 600; line-height: 24px; }
+
+.sub__toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-sm); }
+
+/* hàng thẻ gói: vùng trên trắng (giá + nút), vùng dưới xám (tính năng) */
+.tiers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-md); margin: 0; padding: 0; list-style: none; align-items: stretch; }
+.tier { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--canvas); }
+.tier--now { border-color: var(--mm-boundary); }
+.tier__top { display: flex; flex-direction: column; gap: var(--sp-xs); padding: var(--sp-md); }
+.tier__name { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-xs); }
+.tier__name h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 600; line-height: 24px; }
+.tier__tag { padding: 2px 9px; border: 1px solid var(--hairline); border-radius: var(--radius-pill); background: var(--surface-subtle); font-family: var(--font-display); font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: var(--tracking-wide); color: var(--muted-ink); white-space: nowrap; }
+.tier__aud { margin: 0; min-height: 38px; font-size: 13px; line-height: 19px; color: var(--muted-ink); }
+.tier__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin: var(--sp-xs) 0 0; }
+.tier__price strong { font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 34px; letter-spacing: var(--tracking-tight); }
+.tier__price s { font-size: 14px; color: var(--muted-ink); }
+.tier__price span { font-size: 13px; color: var(--muted-ink); }
+.tier__sub { margin: 0 0 var(--sp-xs); min-height: 32px; font-size: 12px; line-height: 16px; color: var(--muted-ink); }
+.tier__features { display: flex; flex: 1 1 auto; flex-direction: column; gap: var(--sp-xs); margin: 0; padding: var(--sp-md); list-style: none; border-top: 1px solid var(--hairline); background: var(--surface-subtle); }
+.tier__features li { display: flex; gap: var(--sp-xs); font-size: 13px; line-height: 19px; }
+.tier__features svg { flex: none; width: 16px; height: 16px; margin-top: 2px; }
+.tier__min, .tier__off, .tier__inherit { color: var(--muted-ink); }
+.tier .ppl { margin-bottom: var(--sp-xs); }
+
+/* bảng so sánh */
+.sub__h { margin: 0; font-family: var(--font-display); font-size: 19px; font-weight: 600; line-height: 26px; letter-spacing: var(--tracking-tight); }
+.sub__compare { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-sm); }
+.sub__scroll { width: 100%; overflow-x: auto; border: 1px solid var(--hairline); border-radius: var(--radius-card); background: var(--canvas); }
+.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cmp th, .cmp td { padding: 12px var(--sp-md); border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+.cmp thead th { font-family: var(--font-display); font-size: 13px; font-weight: 700; }
+.cmp thead th em { display: block; font-style: normal; font-size: 11px; font-weight: 400; color: var(--muted-ink); }
+.cmp tbody th { min-width: 210px; font-weight: 500; }
+.cmp tbody tr:last-child th, .cmp tbody tr:last-child td { border-bottom: 0; }
+/* cột của gói đang dùng: nền + vạch ink 2px dưới tiêu đề (cùng một sự thật hiện hai lần) */
+.cmp .is-here { background: var(--surface-subtle); }
+.cmp thead .is-here { box-shadow: inset 0 -2px 0 var(--ink); }
+.cmp__term { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.cmp__term:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+.cmp__none { color: var(--muted-ink); }
+.sub__note { display: flex; align-items: flex-start; gap: var(--sp-xs); margin: 0; font-size: 12px; line-height: 16px; color: var(--muted-ink); }
+.sub__note svg { flex: none; width: 14px; height: 14px; margin-top: 1px; }
+
+/* FAQ: cột hẹp căn giữa, mỗi câu là một <details> */
+.faq { width: 100%; max-width: 800px; margin-inline: auto; }
+.faq .sub__h { margin-bottom: var(--sp-sm); }
+.faq__list { border-top: 1px solid var(--hairline); }
+.faq__item { border-bottom: 1px solid var(--hairline); }
+.faq__item summary { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-md); min-height: 52px; padding: var(--sp-xs) 0; font-size: 14px; font-weight: 500; line-height: 20px; cursor: pointer; list-style: none; }
+.faq__item summary::-webkit-details-marker { display: none; }
+.faq__item summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+.faq__item summary svg { flex: none; width: 16px; height: 16px; color: var(--muted-ink); transition: transform 180ms var(--ease-out-strong); }
+.faq__item[open] summary svg { transform: rotate(180deg); }
+.faq__item p { max-width: 64ch; margin: 0 0 var(--sp-md); font-size: 14px; line-height: 21px; color: var(--muted-ink); }
+
+.sub__foot { display: flex; align-items: flex-start; gap: var(--sp-xs); margin: 0; font-size: 13px; line-height: 19px; color: var(--muted-ink); }
+.sub__foot svg { flex: none; width: 15px; height: 15px; margin-top: 2px; }
+
+@media (max-width: 1100px) {
+  .tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sub__usage { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .tiers { grid-template-columns: minmax(0, 1fr); }
+  .sub__meters { grid-template-columns: minmax(0, 1fr); gap: var(--sp-sm); }
+  .sub__card--now { flex-direction: column; align-items: flex-start; }
+}
+
+/* thẻ gói ở thanh trái: nút Nâng cấp là nút phụ có biểu tượng, không phải một khối đen */
+.credit-card__ico { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: var(--radius-pill); background: var(--ink); color: var(--canvas); }
+.credit-card__ico svg { width: 12px; height: 12px; }
+.credit-card__cta { gap: var(--sp-xs); }
+
+.sub a.btn, .tier a.btn { text-decoration: none; }
+
+/* thẻ gói ở thanh trái chỉ còn nút Nâng cấp, không khung */
+.credit-card--bare { padding: 0; border: 0; background: transparent; box-shadow: none; }
+
+/* các thẻ gói chia chung hai hàng (trên / tính năng) nên nút luôn thẳng một đường */
+@supports (grid-template-rows: subgrid) {
+  .tiers { grid-template-rows: none; grid-auto-rows: auto; }
+  .tier { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 0; }
+}
+.tier__top .btn--block { margin-top: auto; }
+.tier__top { flex: 1 1 auto; }
+
+/* biểu đồ PNG: nền đặc / viền / nét đứt, không thêm màu */
+.stchart { list-style: none; margin: var(--sp-sm) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-xs); }
+.stchart__row { display: grid; grid-template-columns: 130px minmax(0, 1fr) 28px; align-items: center; gap: var(--sp-sm); font-size: 13px; }
+.stchart__row i { display: block; height: 18px; min-width: 2px; border: 1px solid var(--ink); border-radius: 4px; }
+.stchart__row--contradicted i { background: var(--ink); }
+.stchart__row--supported i { background: var(--hairline); border-color: var(--hairline); }
+.stchart__row--insufficient i { border-style: dashed; }
+.stchart__row strong { font-family: var(--font-mono); text-align: right; }
+
+/* hộp thả file .docx trong hộp thoại Thêm tài liệu */
+.dropzone { display: flex; flex-direction: column; align-items: center; gap: var(--sp-xs); padding: var(--sp-lg) var(--sp-md); border: 1px dashed var(--mm-boundary); border-radius: var(--radius-card); background: var(--surface-subtle); text-align: center; }
+.dropzone--on { border-style: solid; border-color: var(--ink); }
+.dropzone p { margin: 0; font-size: 14px; font-weight: 500; }
+.dropzone small { color: var(--muted-ink); font-size: 12px; }
+.dropzone__done { display: flex; flex-direction: column; align-items: center; gap: var(--sp-xs); font-size: 13px; color: var(--muted-ink); }
+.dropzone__done strong { color: var(--ink); font-size: 14px; word-break: break-all; }
+.dropzone__alt { margin-top: var(--sp-md); font-size: 13px; color: var(--muted-ink); }
+.dropzone__alt summary { cursor: pointer; }
+.dropzone__alt .textarea { margin-top: var(--sp-xs); }
+.field__error { margin: var(--sp-xs) 0 0; font-size: 13px; color: var(--ink); }

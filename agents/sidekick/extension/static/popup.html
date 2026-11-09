@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=360" />
+<title>MeetMate</title>
+<style>
+  /* Popup là một khung thiết bị 360×520 chứ không phải một trang: 360 bằng cột chat của
+     Meet nên popup và nơi nó viết vào chung một độ rộng dòng. Không làm nó co giãn. */
+  html, body { margin: 0; }
+  body { width: 360px; height: 520px; overflow: hidden; background: var(--canvas); }
+  .popup { height: 100%; display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+  .head { display: flex; align-items: center; justify-content: space-between; }
+  .keys { display: grid; gap: 12px; }
+  .mock { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .mock input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--ink); }
+  .mock b { display: block; font-weight: 600; }
+  .spacer { flex: 1 1 auto; }
+  .session-title { margin-top: 2px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="mm">
+<main class="popup">
+  <header class="head">
+    <span class="wordmark">MeetMate</span>
+    <span id="pill" class="pill">Chưa nghe</span>
+  </header>
+
+  <section id="session" class="card" hidden>
+    <div class="eyebrow">Phiên từ web console</div>
+    <p id="session-title" class="heading session-title"></p>
+  </section>
+
+  <div id="stages"></div>
+
+  <div id="keys" class="keys">
+    <div class="field">
+      <label for="blaze">Khóa Blaze</label>
+      <input id="blaze" class="input" type="password" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="field">
+      <label for="exa">Khóa Exa</label>
+      <input id="exa" class="input" type="password" autocomplete="off" spellcheck="false" />
+    </div>
+  </div>
+
+  <label class="mock card">
+    <input id="mock" type="checkbox" />
+    <span>
+      <b>Chế độ thử</b>
+      <span class="caption">Dữ liệu giả, không cần khóa. Không ghi âm và không gõ gì vào chat Meet.</span>
+    </span>
+  </label>
+
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <div class="spacer"></div>
+  <button id="toggle" class="btn" type="button" data-running="false"></button>
+</main>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -35,7 +35,7 @@ a { color: #14417F; } a:hover { color: #0E2E5C; }
           <span style="font-size: 10.5px; color: #58636F">{{m.sender}} · {{m.time}}</span>
           <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 9.5px; color: #58636F">{{m.chars}} ký tự</span>
         </div>
-        <div style="border-left: 3px solid #0E7C86; padding: 8px 10px; border-radius: 0 8px 8px 0; background: #F6F8FA">
+        <div style="border-left: 2px solid #0E7C86; padding: 8px 10px; border-radius: 0 8px 8px 0; background: #F6F8FA">
           <div style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; font-weight: 500; color: #0A5F67; margin-bottom: 4px">{{m.head}}</div>
           <sc-if value="{{m.isTopic}}" hint-placeholder-val="{{false}}">
             <div style="font-size: 12.5px; line-height: 17px; color: #14181D">{{m.body}}</div>
@@ -43,7 +43,7 @@ a { color: #14417F; } a:hover { color: #0E2E5C; }
           <sc-if value="{{m.isSource}}" hint-placeholder-val="{{true}}">
             <div style="font-size: 12.5px; font-weight: 600; line-height: 17px; color: #14181D">{{m.title}}</div>
             <a href="https://example.com" style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; line-height: 16px; color: #14417F; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all; display: block">{{m.url}}</a>
-            <div style="font-size: 12px; line-height: 17px; color: #14181D"><span style="font-weight: 600; color: #0A5F67">Vì sao chọn:</span> {{m.body}}</div>
+            <div style="font-size: 12px; line-height: 17px; color: #14181D">{{m.body}}</div>
           </sc-if>
         </div>
       </div>
@@ -52,6 +52,7 @@ a { color: #14417F; } a:hover { color: #0E2E5C; }
     <div style="display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border: 1px dashed #7E8B99; border-radius: 8px; background: #EEF1F4">
       <span style="font-size: 11px; font-weight: 600; color: #58636F">Khoảng trống giữa 03:31 và 03:34 là có chủ ý</span>
       <span style="font-size: 11px; line-height: 15px; color: #58636F">Tin <span style="font-family: &quot;Overpass Mono&quot;, monospace">[3/4]</span> của chủ đề A bị hủy trước khi gửi. Meet không có dòng hệ thống, nên vụ hủy <b>không</b> hiện ở đây — chỉ hiện trong popup và thẻ kết quả.</span>
+      <span style="font-size: 11px; line-height: 15px; color: #58636F">Extension chỉ gõ chữ thuần vào ô chat: viền trái, nền nhạt và bộ đếm ký tự là chú giải của artboard, không phải thứ Meet hiển thị. Số ký tự đếm trên đúng chuỗi sẽ gõ, trần 450.</span>
     </div>
 
   </div>
@@ -68,19 +69,19 @@ class Component extends DCLogic {
   renderVals() {
     const sender = this.props.sender ?? 'Bạn (MeetMate gõ)';
     const topic = (time, chars, head, body) => ({ sender, time, chars, head, body, isTopic: true, isSource: false });
-    const source = (time, chars, head, title, url, body) => ({ sender, time, chars, head, title, url, body, isTopic: false, isSource: true });
+    const source = (time, chars, head, title, url, reason) => ({ sender, time, chars, head, title, url, body: 'Vì sao chọn: ' + reason, isSource: true, isTopic: false });
     return {
       sender,
       messages: [
-        topic('03:31', 268, 'MeetMate: Chủ đề: Bảng giá gói SME Việt Nam',
+        topic('03:31', 184, 'MeetMate: Chủ đề: Bảng giá gói SME Việt Nam',
           'Thị trường SaaS Việt Nam dưới 20 nhân viên phổ biến ở khoảng 300.000–800.000 đồng mỗi tháng; các gói niêm yết công khai thường quy theo năm.'),
-        source('03:32', 181, 'MeetMate: [1/4] Bảng giá gói SME Việt Nam',
+        source('03:32', 137, 'MeetMate: [1/4] Bảng giá — Base.vn',
           'Bảng giá — Base.vn', 'https://example.com/base/bang-gia',
           'Niêm yết công khai theo người dùng/tháng và có bậc SME.'),
-        source('03:33', 196, 'MeetMate: [2/4] Bảng giá gói SME Việt Nam',
+        source('03:33', 146, 'MeetMate: [2/4] Bảng giá — Misa amis',
           'Bảng giá — Misa amis', 'https://example.com/misa/bang-gia',
           'Gói khởi tạo cho doanh nghiệp nhỏ, ghi rõ số user và thời hạn.'),
-        topic('03:34', 214, 'MeetMate: Chủ đề: Tỷ lệ chuyển đổi freemium',
+        topic('03:34', 146, 'MeetMate: Chủ đề: Tỷ lệ chuyển đổi freemium',
           'Mặt bằng chuyển đổi freemium sang trả phí thường ở khoảng 2–5%, phụ thuộc vào độ sâu của bậc miễn phí.')
       ]
     };

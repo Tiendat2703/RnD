@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>Thẻ kết quả research — bốn tin và một tin bị hủy</title>
+<title>Giải phẫu bài đăng MeetMate — đã gửi, chưa gửi, hai theme</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -14,87 +14,105 @@ body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
 a { color: #14417F; } a:hover { color: #0E2E5C; }
 </style>
 </helmet>
-<div style="width: 600px; height: 520px; box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+<div style="position: relative; width: 1200px; height: 580px; box-sizing: border-box; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
 
-  <div style="display: flex; align-items: center; gap: 10px">
-    <span style="font-family: Overpass, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: #58636F">Kết quả research</span>
-    <span style="margin-left: auto; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10.5px; color: #58636F">03:31 · 5 tin · 1 hủy</span>
+  <div style="position: absolute; top: 16px; left: 16px; right: 16px; display: flex; align-items: baseline; gap: 12px">
+    <span style="font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: -0.01em">Bài đăng MeetMate — cùng một khối chữ vẽ nên thẻ ở đây và tin gõ vào chat Meet</span>
+    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #58636F">.post · pad 12 16 · 1px --hairline + 2px --prov trái · bo 0 16 16 0</span>
   </div>
 
-  <sc-for list="{{posts}}" as="p" hint-placeholder-count="4">
-    <div style="display: flex; flex-direction: column; gap: {{p.gap}}; box-sizing: border-box; padding: {{p.pad}}; border-radius: 12px; border: 1px solid {{p.border}}; background: {{p.bg}}; position: relative">
-      <div style="display: flex; align-items: center; gap: 7px">
-        <span style="padding: 2px 7px; border-radius: 5px; background: {{p.eyebrowBg}}; color: {{p.eyebrowFg}}; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; font-weight: 500; letter-spacing: 0.02em; flex: none">{{p.eyebrow}}</span>
-        <sc-if value="{{p.isTopic}}" hint-placeholder-val="{{false}}">
-          <span style="font-size: 10.5px; color: #58636F; overflow-wrap: anywhere">{{p.query}}</span>
-        </sc-if>
-        <sc-if value="{{p.isCancelled}}" hint-placeholder-val="{{false}}">
-          <span style="margin-left: auto; padding: 2px 7px; border-radius: 5px; background: #DCE2E8; color: #58636F; font-size: 10px; font-weight: 600; flex: none">đã hủy</span>
-        </sc-if>
-      </div>
-
-      <sc-if value="{{p.isTopic}}" hint-placeholder-val="{{false}}">
-        <div style="font-family: Overpass, sans-serif; font-size: 16px; font-weight: 700; line-height: 21px; letter-spacing: -0.01em; color: #14181D">{{p.title}}</div>
-        <div style="font-size: 12.5px; line-height: 17px; color: #14181D">{{p.reason}}</div>
-      </sc-if>
-
-      <sc-if value="{{p.isSource}}" hint-placeholder-val="{{false}}">
-        <div style="font-size: {{p.titleSize}}; font-weight: 500; line-height: 17px; color: {{p.bodyFg}}">{{p.title}}</div>
-        <a href="https://example.com" style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; line-height: 15px; color: {{p.urlFg}}; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; word-break: break-all">{{p.url}}</a>
-        <div style="font-size: {{p.titleSize}}; line-height: 17px; color: {{p.bodyFg}}"><span style="font-weight: 600; color: {{p.reasonFg}}">Vì sao chọn:</span> {{p.reason}}</div>
-      </sc-if>
+  <sc-for list="{{blocks}}" as="b" hint-placeholder-count="2">
+    <div style="position: absolute; top: 56px; left: {{b.x}}; width: 360px; box-sizing: border-box; padding: 12px; border: 1px solid {{b.bd}}; border-radius: 16px; background: {{b.bg}}">
+      <div style="font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: 0.05em; color: {{b.headFg}}; margin-bottom: 10px">{{b.name}}</div>
+      <sc-for list="{{b.posts}}" as="p" hint-placeholder-count="3">
+        <div style="padding: 12px 16px; border: 1px solid {{p.bd}}; border-left: 2px solid {{p.edge}}; border-radius: 0 16px 16px 0; background: {{p.bg}}; margin-top: {{p.mt}}">
+          <div style="font-family: Overpass, sans-serif; font-size: 11px; font-weight: 700; line-height: 15px; letter-spacing: 0.05em; color: {{p.eyebrowFg}}">{{p.eyebrow}}</div>
+          <div style="margin: 2px 0 0; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: -0.01em; color: {{p.fg}}; overflow-wrap: anywhere">{{p.title}}</div>
+          <sc-if value="{{p.hasUrl}}" hint-placeholder-val="{{true}}">
+            <a href="{{p.url}}" style="display: block; margin-top: 4px; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 12px; font-weight: 400; line-height: 17px; color: {{p.urlFg}}; text-decoration: underline; text-decoration-color: {{p.urlLine}}; text-underline-offset: 2px; overflow-wrap: anywhere">{{p.url}}</a>
+          </sc-if>
+          <div style="margin: 6px 0 0; font-size: 14px; line-height: 20px; color: {{p.fg}}">{{p.why}}</div>
+          <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid {{p.bd}}; font-size: 12px; line-height: 16px; color: {{p.footFg}}">{{p.foot}}</div>
+        </div>
+      </sc-for>
     </div>
   </sc-for>
 
-  <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #DCE2E8; display: flex; align-items: center; gap: 7px">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M20 6.5L9.5 17 4 11.5"></path></svg>
-    <span style="font-size: 10.5px; line-height: 14px; color: #58636F">Mọi đường dẫn đều nằm trong kết quả tìm nguồn · mỗi tin ≤ 450 ký tự, gửi cách nhau 600 ms</span>
+  <div style="position: absolute; top: 56px; left: 784px; width: 400px; display: flex; flex-direction: column; gap: 8px">
+    <div style="padding: 10px 12px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF; display: flex; flex-direction: column; gap: 6px">
+      <sc-for list="{{spec}}" as="s" hint-placeholder-count="7">
+        <div style="display: grid; grid-template-columns: 108px 1fr; gap: 8px; align-items: baseline">
+          <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #0A5F67; overflow-wrap: anywhere">{{s.k}}</span>
+          <span style="font-size: 12px; line-height: 17px; color: #58636F">{{s.v}}</span>
+        </div>
+      </sc-for>
+    </div>
+    <sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+      <div style="display: flex; gap: 8px; padding: 8px 10px; box-sizing: border-box; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF">
+        <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #0E7C86; flex: none">{{n.i}}</span>
+        <span style="font-size: 12px; line-height: 17px; color: #58636F">{{n.text}}</span>
+      </div>
+    </sc-for>
   </div>
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#0E7C86"},"$preview":{"width":600,"height":520}}'>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1200,"height":580}}'>
 class Component extends DCLogic {
   renderVals() {
-    const accent = this.props.accent ?? '#0E7C86';
-    const dark = '#0A5F67';
-    const topic = {
-      isTopic: true, isSource: false, isCancelled: false,
-      gap: '7px', pad: '11px 12px', border: '#DCE2E8', bg: '#FFFFFF',
-      eyebrowBg: accent, eyebrowFg: '#FFFFFF', eyebrow: 'MeetMate: Chủ đề',
-      title: 'Bảng giá gói SME Việt Nam',
-      query: 'truy vấn: bảng giá phần mềm cho SME Việt Nam 2026',
-      reason: 'Thị trường SaaS Việt Nam dưới 20 nhân viên phổ biến ở khoảng 300.000–800.000 đồng mỗi tháng; các gói niêm yết công khai thường quy theo năm.'
+    const light = {
+      bd: '#DCE2E8', bg: '#FFFFFF', canvas: '#FFFFFF', subtle: '#F6F8FA',
+      eyebrow: '#0A5F67', ink: '#14181D', muted: '#58636F', prov: '#0E7C86',
+      url: '#14417F', urlLine: '#1B5FBF'
     };
-    const src = (i, n, title, url, reason, cancelled) => ({
-      isTopic: false, isSource: true, isCancelled: !!cancelled,
-      gap: '5px', pad: cancelled ? '8px 12px' : '10px 12px',
-      border: cancelled ? '#DCE2E8' : '#DCE2E8',
-      bg: cancelled ? '#EEF1F4' : '#FFFFFF',
-      eyebrowBg: cancelled ? '#DCE2E8' : '#E1EFF1',
-      eyebrowFg: cancelled ? '#58636F' : dark,
-      eyebrow: 'MeetMate: [' + i + '/' + n + ']',
-      title, url, reason,
-      titleSize: cancelled ? '11.5px' : '12.5px',
-      bodyFg: cancelled ? '#58636F' : '#14181D',
-      urlFg: cancelled ? '#58636F' : '#14417F',
-      reasonFg: cancelled ? '#58636F' : dark
+    const dark = {
+      bd: '#232B34', bg: '#161C22', subtle: '#1B222A',
+      eyebrow: '#9BDCE3', ink: '#E6EAF0', muted: '#A0B1C0', prov: '#3FA3AE',
+      url: '#7FB0F5', urlLine: '#478BEB'
+    };
+    const mk = (t, sent, i, n, title, url, why, foot, first) => ({
+      eyebrow: i === 0 ? 'MeetMate: Chủ đề' : 'MeetMate: [' + i + '/' + n + ']',
+      title, url, why, foot,
+      hasUrl: url !== '',
+      bd: t.bd,
+      bg: sent ? t.bg : t.subtle,
+      edge: sent ? t.prov : t.bd,
+      fg: sent ? t.ink : t.muted,
+      eyebrowFg: t.eyebrow,
+      urlFg: sent ? t.url : t.muted,
+      urlLine: sent ? t.urlLine : t.bd,
+      footFg: t.muted,
+      mt: first ? '0' : '8px'
     });
-    const secondTopic = {
-      isTopic: true, isSource: false, isCancelled: false,
-      gap: '6px', pad: '10px 12px', border: accent, bg: '#FFFFFF',
-      eyebrowBg: accent, eyebrowFg: '#FFFFFF', eyebrow: 'MeetMate: Chủ đề',
-      title: 'Tỷ lệ chuyển đổi freemium',
-      query: 'chủ đề mới — 4 tin của chủ đề cũ đang chờ bị hủy',
-      reason: 'Mặt bằng chuyển đổi freemium sang trả phí thường ở khoảng 2–5%, phụ thuộc vào độ sâu của bậc miễn phí.'
-    };
+    const set = (t) => ([
+      mk(t, true, 0, 0, 'Bảng giá gói SME Việt Nam (dữ liệu giả)', '',
+        'Dữ liệu giả: gói SaaS dưới 20 nhân viên thường 300.000–800.000 đồng mỗi tháng.',
+        'tóm tắt · 136 ký tự · đã vào chat', true),
+      mk(t, true, 1, 2, 'Bảng giá mẫu A', 'https://example.com/bang-gia-a',
+        'Vì sao chọn: Dữ liệu giả để thử giao diện.',
+        'nguồn 1/2 · 104 ký tự · đã vào chat', false),
+      mk(t, false, 2, 2, 'Bảng giá mẫu B', 'https://example.com/bang-gia-b',
+        'Vì sao chọn: Dữ liệu giả để thử giao diện.',
+        'nguồn 2/2 · 104 ký tự · chưa gửi vào chat', false)
+    ]);
     return {
-      accent,
-      posts: [
-        topic,
-        src(1, 4, 'Bảng giá — Base.vn', 'https://example.com/base/bang-gia', 'Niêm yết công khai theo người dùng/tháng và có bậc SME.', false),
-        src(3, 4, 'Bảng giá — Topline AMIS', 'https://example.com/topline/amis-bang-gia', 'Gói khởi tạo cho doanh nghiệp nhỏ, ghi rõ số user và thời hạn.', true),
-        secondTopic
+      blocks: [
+        { x: '16px', name: 'Theme sáng — popup theo hệ thống', bg: light.bg, bd: light.bd, headFg: light.muted, posts: set(light) },
+        { x: '400px', name: 'Theme tối — popup ban đêm, panel trong Meet', bg: dark.bg, bd: dark.bd, headFg: dark.muted, posts: set(dark) }
+      ],
+      spec: [
+        { k: '.eyebrow', v: 'Overpass 700 11/15, ls .05em, --prov-ink. Chữ "MeetMate:" hoặc "[i/n]" — đúng nhãn sẽ gõ vào chat.' },
+        { k: '.post__title', v: 'Overpass 700 15/20, ls -.01em. Tên chủ đề hoặc tên nguồn, cắt ở 120 ký tự.' },
+        { k: '.post__url', v: 'mono 400 12/17, --source + gạch --source-line. Không bao giờ cắt URL: nguồn cụt là nguồn mở không được.' },
+        { k: '.post__why', v: 'body 400 14/20. "Vì sao chọn:" nằm trong chuỗi, không đậm — một khối chữ duy nhất.' },
+        { k: '.post__foot', v: 'body 400 12/16 --muted, chặn trên bằng đường hairline.' },
+        { k: '.post--unsent', v: 'viền trái --hairline, nền --subtle, chữ --muted. Cùng kích thước bản đã gửi, chỉ đổi cực tính.' },
+        { k: 'ngân sách', v: 'mỗi tin ≤ 450 ký tự · tóm tắt ≤ 300 · lý do ≤ 200 · tối đa 4 nguồn · cách nhau 600 ms.' }
+      ],
+      notes: [
+        { i: '01', text: 'Viền trái 2px petrol là dấu "MeetMate viết dòng này"; hairline nghĩa là tin chưa lên chat. Hai trạng thái phải đọc được mà không cần đọc foot.' },
+        { i: '02', text: 'Số ký tự trong foot là số thật: 136 / 104 / 104 cho chủ đề này, đếm trên chính chuỗi sẽ gõ.' },
+        { i: '03', text: 'Link ví dụ trỏ example.com vì dữ liệu mẫu tự gắn nhãn "dữ liệu giả"; nguồn thật đi theo đúng form này.' }
       ]
     };
   }

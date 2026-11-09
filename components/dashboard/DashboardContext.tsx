@@ -2,11 +2,13 @@
 
 // components/dashboard/DashboardContext.tsx — state dùng chung cho dashboard.
 //
-// Đơn vị đếm là phiên họp / lượt kiểm chứng / artifact (bảng giá IV.3.1), không
+// Đơn vị đếm là phiên họp / lượt kiểm chứng / lượt xuất PDF (bảng giá IV.3.1), không
 // phải tín dụng. Không có hàm nào trừ tiền: gói chưa mở bán.
 
 import { createContext, useContext } from "react";
 import type { MeetingKind, MeetingLine, MeetingRecord, ResearchPrefs } from "../../lib/dashboardData";
+import type { SavedTopic } from "../../lib/bridgeProtocol";
+import type { KnowledgeCard } from "../../lib/evidence";
 
 /** "auto" follows the OS; the shell resolves it to a real theme before painting. */
 export type Theme = "light" | "dark" | "auto";
@@ -43,6 +45,23 @@ export interface LiveState {
   topicCount: number;
   /** số nguồn đã gửi vào chat */
   sourceCount: number;
+  /** "demo" phát lại dữ liệu mẫu; "extension" nhận sự kiện thật từ MeetMate */
+  mode: LiveMode;
+  /** epoch ms lúc extension bắt đầu nghe — đồng hồ thật, không bị rời phiên làm lệch */
+  sessionStartedAt: number;
+}
+
+export type LiveMode = "demo" | "extension";
+
+/** Phiên do extension đang ghi, sống lâu hơn việc mở/đóng monitor. */
+export interface ExtensionSession {
+  id: string;
+  startedAt: number;
+}
+
+export interface EndCounts {
+  topicCount: number;
+  sourceCount: number;
 }
 
 /** Bản nháp mang từ wizard sang dialog cài tiện ích, trước khi phiên tồn tại. */
@@ -75,7 +94,7 @@ export interface DashboardContextValue {
   quota: Quota;
   /** một lượt nghiên cứu + kiểm chứng cho một chủ đề */
   useVerification: (n?: number) => void;
-  /** một artifact được xuất từ kết quả của phiên */
+  /** một lượt xuất báo cáo PDF từ kết quả của phiên (khóa giữ tên artifact) */
   useArtifact: () => void;
 
   planFocus: PlanId;
@@ -97,14 +116,20 @@ export interface DashboardContextValue {
   requestInstall: (draft: PendingMeeting) => void;
   cancelInstall: () => void;
   live: LiveState | null;
-  startLive: (draft: PendingMeeting, meetingId: string) => void;
+  startLive: (draft: PendingMeeting, meetingId: string, mode?: LiveMode) => void;
+  /** phiên extension đang chạy (null nếu không có hoặc đã kết thúc) */
+  extSession: ExtensionSession | null;
   rejoinLive: (m: MeetingRecord) => void;
   leaveLive: (elapsedSec: number) => void;
-  endLive: (elapsedSec: number) => void;
+  endLive: (elapsedSec: number, counts?: EndCounts) => void;
   liveLines: MeetingLine[];
   pushLiveLine: (line: MeetingLine) => void;
   clearLiveLines: () => void;
   transcripts: Record<string, MeetingLine[]>;
+  /** chủ đề + nguồn thật của các phiên do extension ghi, theo id cuộc họp */
+  sessionTopics: Record<string, SavedTopic[]>;
+  /** thẻ đối chiếu (Knowledge Card) của từng cuộc họp: dữ liệu mẫu hoặc do extension ghi */
+  sessionCards: Record<string, KnowledgeCard[]>;
   prefsOpen: boolean;
   prefsFrom: PrefsFrom;
   setPrefsOpen: (open: boolean, from?: PrefsFrom) => void;

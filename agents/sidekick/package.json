@@ -13,6 +13,7 @@
     "verify:artifacts": "tsx --env-file=.env.local scripts/verify-native-artifacts.ts",
     "verify:sync": "tsx --env-file=.env.local scripts/verify-workspace-sync.ts",
     "agent:build": "node scripts/build-agent.mjs",
+    "extension:build": "node scripts/build-extension.mjs",
     "agent:dev": "npm run agent:build && node --env-file-if-exists=.env.local dist-agent/agent.js dev",
     "agent:start": "node --env-file-if-exists=.env.local dist-agent/agent.js start",
     "verify:livekit": "node scripts/verify-livekit.mjs",
@@ -33,6 +34,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@types/chrome": "^0.3.7",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.13",

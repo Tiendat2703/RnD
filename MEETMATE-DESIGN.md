@@ -513,6 +513,26 @@ that is the rule, the fix is the example.
 an interactive petrol element moves one step toward `{colors.provenance-ink}`, pressed steps back 1px, all
 at 180ms `var(--ease-out-strong)`. Marked `needs-design-decision` below.
 
+## Evidence status (Knowledge Card)
+
+The four evidence states of the RTS2026 brief (Supported, Partially Supported, Contradicted, Insufficient
+Evidence) are drawn by **glyph, fill density and border style — never by a new hue**. The reservation in
+§Colors forbids petrol as a "success" badge, and amber / red belong to degraded and blocked sessions, so a
+green tick and a red cross are not available. Three channels carry the difference, so a projected room or a
+colour-blind colleague still separates them:
+
+| State | Glyph | Fill | Border | Reads as |
+|---|---|---|---|---|
+| Supported | ✓ | `{colors.surface-subtle}` | hairline | good news, asks for no attention |
+| Partially supported | ◐ | `{colors.canvas}` | 1px `{colors.ink}` | read the citation |
+| Contradicted | ✕ | `{colors.ink}` (solid, text inverted) | none | the one solid chip: look here first |
+| Insufficient evidence | ? | transparent | 1px dashed `{colors.boundary}` | "not known", never "wrong" |
+
+The card is a post: 2px petrol left border, `MeetMate: <kind>` eyebrow, the quoted sentence, the verdict, then
+one citation block per source (document, locator in mono, excerpt). Assumptions, decisions and dependencies
+carry no chip: they are recorded, not verified. Sources: `lib/evidence.ts`, `components/dashboard/EvidenceCard.tsx`,
+`extension/src/ui/theme.css` (`.ev-*`).
+
 ## Do's and Don'ts
 
 Do reserve `{colors.provenance}` for text MeetMate generated and is answerable for. Do set links in

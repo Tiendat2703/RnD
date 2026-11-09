@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>MeetMate popup — sẵn sàng, một cú bấm</title>
+<title>MeetMate popup — Chưa nghe</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -11,65 +11,56 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
 <style>
 body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
-a { color: #14417F; } a:hover { color: #0E2E5C; }
-input:focus-visible { outline: 2px solid #0E7C86; outline-offset: 1px; }
+a { color: #14417F; } a:hover { color: #0A2B54; }
+input[type="password"]:focus-visible, input[type="checkbox"]:focus-visible, button:focus-visible { outline: 2px solid #0E7C86; outline-offset: 2px; }
 </style>
 </helmet>
-<div style="width: 360px; height: 520px; box-sizing: border-box; padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 14px; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+<div style="width: 360px; height: 520px; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; color: #14181D; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
 
-  <div style="display: flex; align-items: baseline; gap: 8px">
-    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
-    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; color: #58636F; letter-spacing: 0.04em">0.1.0</span>
-    <span style="margin-left: auto; padding: 3px 9px; border-radius: 999px; border: 1px solid #7E8B99; color: #58636F; font-size: 11px; font-weight: 600">Sẵn sàng</span>
+  <header style="display: flex; align-items: center; justify-content: space-between">
+    <span style="display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 9999px; background: #0E7C86; color: #FFFFFF; font: 800 13px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: -0.025em">MeetMate</span>
+    <span style="display: inline-flex; align-items: center; height: 24px; padding: 3px 9px; border-radius: 9999px; background: #F6F8FA; color: #58636F; border: 1px solid #DCE2E8; font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">Chưa nghe</span>
+  </header>
+
+  <div role="list" aria-label="Các bước xử lý" style="display: flex; align-items: center; gap: 6px">
+    <span role="listitem" title="Đang lắng nghe" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">1</span>
+    <span role="listitem" title="Đang phiên âm" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">2</span>
+    <span role="listitem" title="Đang tách chủ đề" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">3</span>
+    <span role="listitem" title="Đang tìm nguồn" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">4</span>
+    <span role="listitem" title="Đang viết lý do" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">5</span>
+    <span role="listitem" title="Đang gửi vào chat" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">6</span>
   </div>
 
-  <div style="display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF">
-    <div style="display: flex; align-items: center; gap: 7px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block">
-        <rect x="2.5" y="5" width="19" height="12.5" rx="2.5"></rect><path d="M8.5 20.5h7"></path>
-      </svg>
-      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #58636F; overflow-wrap: anywhere">meet.google.com/klm-cdef-rsw</span>
+  <div style="display: grid; gap: 12px">
+    <div style="display: grid; gap: 4px">
+      <label for="blaze">Khóa Blaze</label>
+      <input id="blaze" type="password" value="blaze-sk-demo-0123456789" autocomplete="off" spellcheck="false" style="width: 100%; height: 40px; box-sizing: border-box; padding: 9px 12px; border: 1px solid #7E8B99; border-radius: 16px; background: #FFFFFF; color: #14181D; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
     </div>
-
-    <div style="display: flex; flex-direction: column; gap: 5px">
-      <label for="blaze" style="font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: #58636F">Khóa Blaze</label>
-      <input id="blaze" type="password" value="blaze-sk-demo-key-0123" autocomplete="off" spellcheck="false" style="height: 36px; box-sizing: border-box; padding: 0 10px; border: 1px solid #7E8B99; border-radius: 9px; background: #FFFFFF; color: #14181D; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 12px">
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 5px">
-      <label for="exa" style="font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: #58636F">Khóa Exa</label>
-      <input id="exa" type="password" value="exa-key-demo-456789" autocomplete="off" spellcheck="false" style="height: 36px; box-sizing: border-box; padding: 0 10px; border: 1px solid #7E8B99; border-radius: 9px; background: #FFFFFF; color: #14181D; font-family: &quot;Overpass Mono&quot;, monospace; font-size: 12px">
-    </div>
-
-    <div style="display: flex; gap: 6px; flex-wrap: wrap">
-      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; background: #E1EFF1; color: #0A5F67; font-size: 11px; font-weight: 500">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="display: block"><path d="M12 3v11"></path><path d="M7 10.5a5 5 0 0 0 10 0"></path><path d="M12 19v2"></path></svg>
-        Âm thanh tab
-      </span>
-      <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; background: #E1EFF1; color: #0A5F67; font-size: 11px; font-weight: 500">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0A5F67" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="display: block"><rect x="8.5" y="3" width="7" height="12" rx="3.5"></rect><path d="M5.5 12a6.5 6.5 0 0 0 13 0"></path><path d="M12 18.5V21"></path></svg>
-        Micro của bạn
-      </span>
+    <div style="display: grid; gap: 4px">
+      <label for="exa">Khóa Exa</label>
+      <input id="exa" type="password" value="exa-demo-9876543210" autocomplete="off" spellcheck="false" style="width: 100%; height: 40px; box-sizing: border-box; padding: 9px 12px; border: 1px solid #7E8B99; border-radius: 16px; background: #FFFFFF; color: #14181D; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
     </div>
   </div>
 
-  <div style="display: flex; flex-direction: column; gap: 8px">
-    <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; box-sizing: border-box; border: 0; border-radius: 12px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.01em; cursor: pointer">
-      <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="display: block"><path d="M7 4.5l12 7.5-12 7.5z" fill="#FFFFFF"></path></svg>
-      Bắt đầu
-    </button>
-    <p style="margin: 0; font-size: 11px; line-height: 15px; color: #58636F">Một cú bấm duy nhất: MeetMate xin luồng âm thanh ngay trong lần bấm này, không hỏi lại.</p>
+  <label style="display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid #DCE2E8; border-radius: 16px; background: #F6F8FA; cursor: pointer">
+    <input type="checkbox" style="margin: 3px 0 0; width: 16px; height: 16px; accent-color: #14181D; flex: none">
+    <span>
+      <b style="display: block; font-weight: 600">Chế độ thử</b>
+      <span style="font: 400 12px/16px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif; color: #58636F">Dữ liệu giả, không cần khóa. Không ghi âm và không gõ gì vào chat Meet.</span>
+    </span>
+  </label>
+
+  <div role="status" aria-live="polite" style="display: flex; align-items: flex-start; gap: 8px; color: #58636F; font: 400 12px/16px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block; margin-top: 1px"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 11v5M12 8v.1"></path></svg>
+    <span>Mở một tab Google Meet đang họp, rồi bấm Bắt đầu nghe.</span>
   </div>
 
-  <div style="flex: 1"></div>
+  <div style="flex: 1 1 auto"></div>
 
-  <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 11px; border-top: 1px solid #DCE2E8">
-    <div style="display: flex; align-items: center; gap: 6px">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"></rect><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"></path></svg>
-      <span style="font-size: 10.5px; line-height: 14px; color: #58636F">Hai khóa chỉ nằm trong <span style="font-family: &quot;Overpass Mono&quot;, monospace">chrome.storage.local</span> của máy bạn — không máy chủ nào của MeetMate nhận chúng.</span>
-    </div>
-    <a href="Install.dc.html" style="font-size: 11px; font-weight: 600; text-decoration: none; color: #14417F">Chưa cài? Xem 3 bước cài MeetMate →</a>
-  </div>
+  <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; box-sizing: border-box; padding: 10px 18px; border: 0; border-radius: 24px; background: #0E7C86; color: #FFFFFF; font: 600 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif; cursor: pointer">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block"><path d="M8 5.5v13l10-6.5z"></path></svg>
+    Bắt đầu nghe
+  </button>
 
 </div>
 </x-dc>

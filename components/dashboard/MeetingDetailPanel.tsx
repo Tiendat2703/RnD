@@ -15,16 +15,22 @@ import { cn } from "../../lib/utils";
 import {
   MEETING_KIND_LABEL,
   RESEARCH_FOOTNOTE,
+  initialMeetings,
   formatDuration,
   formatGroupDate,
   formatTime,
   sampleTopics,
 } from "../../lib/dashboardData";
 import { audioSourceLabel, stampFromMs } from "../../lib/formatChat";
-import { LIMITS } from "../../lib/types";
+import { LIMITS, type ResearchResult } from "../../lib/types";
 import { useDashboard } from "./DashboardContext";
 import { useModalBehaviour } from "./controls";
 import { MmPostList } from "./MmPost";
+import { EvidenceCard } from "./EvidenceCard";
+import { StatusChart } from "./StatusChart";
+import { ReportPreview } from "./ReportPreview";
+import { SessionMemoryView } from "./SessionMemoryView";
+import { EVIDENCE_LABEL, EVIDENCE_ORDER, reportMarkdown, statusCounts } from "../../lib/evidence";
 import {
   IconAlert,
   IconCheck,
@@ -46,6 +52,21 @@ const TABS = [
   { id: "artifact", label: "Artifact", icon: IconTable },
   { id: "chi-tiet", label: "Chi tiết", icon: IconInfo },
 ];
+
+/**
+ * Cuộc họp có thẻ đối chiếu (Knowledge Card) thêm hai tab "Nhận định" và "Bối cảnh" và bỏ tab
+ * "Nguồn" — tab đó là nguồn web của luồng cũ và không thuộc cuộc họp này.
+ */
+function tabsFor(hasCards: boolean) {
+  if (!hasCards) return TABS;
+  return [
+    TABS[0],
+    { id: "nhan-dinh", label: "Nhận định", icon: IconCheck },
+    { id: "boi-canh", label: "Bối cảnh", icon: IconNotePencil },
+    TABS[2],
+    TABS[3],
+  ];
+}
 
 /** slug giữ được dấu tiếng Việt — [^\w] sẽ xóa sạch tiêu đề Việt. */
 function slug(s: string): string {
@@ -69,14 +90,12 @@ function download(name: string, text: string, done: (m: string) => void) {
 }
 
 const ARTIFACTS = [
-  { id: "brief", label: "Bản tổng hợp nghiên cứu", icon: IconNotePencil, note: "Chủ đề + nguồn + vì sao chọn, gói lại thành một trang." },
-  { id: "report", label: "Báo cáo cuộc họp", icon: IconFile, note: " Diễn biến, các nhận định đã kiểm chứng và những gì còn mở." },
-  { id: "slides", label: "Bộ slide", icon: IconZap, note: "Mỗi chủ đề một slide, nguồn để ở chân slide." },
-  { id: "sheet", label: "Bảng tính", icon: IconTable, note: "Một dòng một nguồn: tiêu đề, URL, vì sao chọn, trạng thái." },
+  { id: "report", label: "Báo cáo cuộc họp (PDF)", icon: IconFile, note: "Diễn biến, các nhận định đã đối chiếu kèm trạng thái bằng chứng, quyết định và những gì còn mở." },
+  { id: "chart", label: "Biểu đồ trạng thái bằng chứng (PNG)", icon: IconTable, note: "Số nhận định theo từng trạng thái bằng chứng, dựng từ các thẻ đối chiếu." },
 ];
 
 export function MeetingDetailPanel() {
-  const { detailOf, closeDetail } = useDashboard();
+  const { detailOf, closeDetail, sessionCards } = useDashboard();
   const ref = useRef<HTMLDivElement>(null);
   useModalBehaviour(detailOf !== null, closeDetail, ref);
 
@@ -90,6 +109,9 @@ export function MeetingDetailPanel() {
 
   if (!detailOf) return null;
   const { meeting } = detailOf;
+  const cards = sessionCards[meeting.id] ?? [];
+  const tabs = tabsFor(cards.length > 0);
+  const isSample = initialMeetings.some((m) => m.id === meeting.id);
 
   return (
     <div
@@ -108,7 +130,10 @@ export function MeetingDetailPanel() {
       >
         <header className="dp__head">
           <div className="dp__id">
-            <h2 className="dp__title">{meeting.title}</h2>
+            <h2 className="dp__title">
+              {meeting.title}
+              {isSample ? <span className="ev-sample">Dữ liệu mẫu</span> : null}
+            </h2>
             <p className="dp__sub">
               {MEETING_KIND_LABEL[meeting.kind]} · {formatGroupDate(meeting.startedAt)} ·{" "}
               {formatTime(meeting.startedAt)}
@@ -121,7 +146,7 @@ export function MeetingDetailPanel() {
 
         <div className="dp__body">
           <nav className="dp__rail" role="tablist" aria-label="Các phần của cuộc họp">
-            {TABS.map((t) => {
+            {tabs.map((t) => {
               const Icon = t.icon;
               return (
                 <button
@@ -146,7 +171,9 @@ export function MeetingDetailPanel() {
 }
 
 function DetailBody({ id, tab }: { id: string; tab: string }) {
-  const { meetings, transcripts, pushToast, quota, useArtifact, openPricing } = useDashboard();
+  const { meetings, transcripts, sessionTopics, sessionCards, pushToast, quota, useArtifact, openPricing } =
+    useDashboard();
+  const cards = sessionCards[id] ?? [];
   const meeting = meetings.find((m) => m.id === id);
   const [cleared, setCleared] = useState(false);
   const [made, setMade] = useState<string | null>(null);
@@ -161,21 +188,45 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
     .map((l) => `[${stampFromMs(l.atMs)}] ${audioSourceLabel(l.source)}: ${l.text}`)
     .join("\n");
 
-  const sourcesText = sampleTopics
-    .flatMap((t) => t.result.sources.map((s) => `${t.topic.topic}\n  ${s.title}\n  ${s.url}\n  Vì sao chọn: ${s.reason}`))
+  // phiên do extension ghi có chủ đề thật; các cuộc họp mẫu có sẵn dùng dữ liệu mẫu
+  const real = sessionTopics[id];
+  const topics = real
+    ? real.map((t) => ({ topic: t.topic, result: t.result, posted: t.posted }))
+    : sampleTopics.map((t) => ({
+        topic: t.topic,
+        result: t.result as ResearchResult | null,
+        posted: t.cancelled ? t.posted - 1 : t.posted,
+      }));
+
+  const sourcesText = topics
+    .flatMap((t) =>
+      (t.result?.sources ?? []).map(
+        (s) => `${t.topic.topic}\n  ${s.title}\n  ${s.url}\n  Vì sao chọn: ${s.reason}`
+      )
+    )
     .join("\n\n");
 
   return (
     <section className="dp__main" aria-live="polite">
       <div className="dp__toolbar">
-        {tab === "ban-ghi" ? (
+        {tab === "nhan-dinh" ? (
+          <p className="dp__hint">
+            {cards.length} thẻ đối chiếu:{" "}
+            {EVIDENCE_ORDER.filter((s) => statusCounts(cards)[s] > 0)
+              .map((s) => `${statusCounts(cards)[s]} ${EVIDENCE_LABEL[s].toLowerCase()}`)
+              .join(" · ")}
+            . Câu trả lời lấy từ tài liệu của nhóm.
+          </p>
+        ) : tab === "boi-canh" ? (
+          <p className="dp__hint">Những gì MeetMate ghi lại về phiên này ngoài bản ghi.</p>
+        ) : tab === "ban-ghi" ? (
           <p className="dp__hint">
             {lines.length} dòng. Chỉ hai kênh âm — MeetMate không phân biệt ai đang nói.
           </p>
         ) : tab === "nguon" ? (
-          <p className="dp__hint">{sampleTopics.length} chủ đề đã tách trong phiên.</p>
+          <p className="dp__hint">{topics.length} chủ đề đã tách trong phiên.</p>
         ) : tab === "artifact" ? (
-          <p className="dp__hint">Bốn loại artifact bảng giá đếm theo cái, không theo phút.</p>
+          <p className="dp__hint">Đầu ra MVP: báo cáo PDF và biểu đồ PNG. Slide và bảng tính là định hướng sau MVP.</p>
         ) : (
           <p className="dp__hint">Những gì vùng làm việc lưu về phiên này.</p>
         )}
@@ -238,18 +289,44 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
         </div>
       ) : null}
 
+      {tab === "nhan-dinh" ? (
+        <div className="dp__scroll dash-scroll">
+          <div className="ev-list">
+            {cards.map((c) => (
+              <EvidenceCard key={c.id} card={c} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {tab === "boi-canh" ? (
+        <div className="dp__scroll dash-scroll">
+          <SessionMemoryView cards={cards} />
+        </div>
+      ) : null}
+
       {tab === "nguon" ? (
         <div className="dp__scroll dash-scroll">
           <div className="mm-sources">
-            {sampleTopics.map((t) => (
-              <article className="mm-srcgroup" key={t.topic.topic}>
+            {topics.length === 0 ? (
+              <div className="dp__empty">
+                <IconTranscript />
+                <p>Phiên này chưa tách được chủ đề nào.</p>
+              </div>
+            ) : null}
+            {topics.map((t, i) => (
+              <article className="mm-srcgroup" key={`${t.topic.topic}-${i}`}>
                 <h3 className="mm-srcgroup__title">{t.topic.topic}</h3>
                 <ul className="mm-srcgroup__keys">
                   {t.topic.keywords.map((k) => (
                     <li key={k}>{k}</li>
                   ))}
                 </ul>
-                <MmPostList result={t.result} posted={t.cancelled ? t.posted - 1 : t.posted} />
+                {t.result ? (
+                  <MmPostList result={t.result} posted={t.posted} />
+                ) : (
+                  <p className="dp__hint">Chưa tìm được nguồn cho chủ đề này.</p>
+                )}
               </article>
             ))}
           </div>
@@ -270,13 +347,13 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
                   onClick={() => {
                     if (isMade) return;
                     if (quota.artifactsLeft === 0) {
-                      pushToast("Hết artifact của gói Free — xem gói Pro.", "error");
+                      pushToast("Hết lượt xuất báo cáo PDF của gói Free — xem gói Pro.", "error");
                       openPricing("pro");
                       return;
                     }
                     useArtifact();
                     setMade(a.id);
-                    pushToast(`Đã tạo "${a.label}" — 1 artifact của gói Free đã dùng.`, "success");
+                    pushToast(`Đã tạo "${a.label}" — 1 lượt xuất của gói Free đã dùng.`, "success");
                   }}
                 >
                   <span className="artcard__icon">
@@ -303,9 +380,19 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
               );
             })}
           </div>
+          {made === "report" && cards.length > 0 ? (
+            <ReportPreview
+              title={meeting.title}
+              cards={cards}
+              onDownload={() => download(`${name}-bao-cao.md`, reportMarkdown(meeting.title, cards), pushToast)}
+            />
+          ) : null}
+          {made === "chart" && cards.length > 0 ? (
+            <StatusChart title={meeting.title} cards={cards} onDone={(m) => pushToast(m, "success")} />
+          ) : null}
           <p className="dp__footnote">
-            Còn {quota.artifactsLeft} artifact trong gói Free. Bản xuất ở đây là bản mẫu — chưa có
-            pipeline tạo file.
+            Còn {quota.artifactsLeft} lượt xuất báo cáo PDF trong gói Free. Bản xuất ở đây là bản mẫu — chưa có
+            pipeline tạo file PDF hoặc PNG. Nội dung phiên được thiết kế xóa tối đa 24 giờ sau phiên.
           </p>
         </div>
       ) : null}

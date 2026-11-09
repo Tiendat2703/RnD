@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<title>MeetMate popup — Blaze hết credit (lỗi chặn dòng)</title>
+<title>MeetMate popup — đường bị chặn (dải đỏ)</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -11,71 +11,41 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&amp;family=Overpass:wght@600;700;800&amp;family=Overpass+Mono:wght@400;500&amp;display=swap">
 <style>
 body { margin: 0; font-family: "Be Vietnam Pro", system-ui, sans-serif; }
-a { color: #14417F; } a:hover { color: #0E2E5C; }
+a { color: #14417F; } a:hover { color: #0A2B54; }
 </style>
 </helmet>
-<div style="width: 360px; height: 520px; box-sizing: border-box; padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 14px; background: #EEF1F4; color: #14181D; font-family: &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+<div style="width: 360px; height: 520px; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; color: #14181D; font: 400 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
 
-  <div style="display: flex; align-items: baseline; gap: 8px">
-    <span style="font-family: Overpass, sans-serif; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #0E7C86">MeetMate</span>
-    <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 10px; color: #58636F; letter-spacing: 0.04em">0.1.0</span>
-    <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px; background: #A62B22; color: #FFFFFF; font-size: 11px; font-weight: 600">
-      <svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" style="display: block"><rect width="9" height="9" rx="1.5" fill="#FFFFFF"></rect></svg>
-      Đã dừng
-    </span>
+  <header style="display: flex; align-items: center; justify-content: space-between">
+    <span style="display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 9999px; background: #0E7C86; color: #FFFFFF; font: 800 13px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: -0.025em">MeetMate</span>
+    <span style="display: inline-flex; align-items: center; height: 24px; padding: 3px 9px; border-radius: 9999px; background: #F6F8FA; color: #58636F; border: 1px solid #DCE2E8; font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">Chưa nghe</span>
+  </header>
+
+  <section style="display: grid; padding: 12px; border: 1px solid #DCE2E8; border-radius: 16px; background: #F6F8FA">
+    <span style="font: 700 11px/15px &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; color: #58636F">Phiên từ web console</span>
+    <p style="margin: 2px 0 0; font: 600 16px/24px &quot;Overpass&quot;, sans-serif; color: #14181D">Họp nhóm Sản phẩm — chốt giá gói SME</p>
+  </section>
+
+  <div role="list" aria-label="Các bước xử lý" style="display: flex; align-items: center; gap: 6px">
+    <span role="listitem" title="Đang lắng nghe" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid transparent; background: #E1EFF1; color: #14181D; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">1</span>
+    <span role="listitem" aria-current="step" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 9999px; border: 1px solid transparent; background: #0E7C86; color: #FFFFFF; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em; white-space: nowrap">2 Đang phiên âm</span>
+    <span role="listitem" title="Đang tách chủ đề" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">3</span>
+    <span role="listitem" title="Đang tìm nguồn" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">4</span>
+    <span role="listitem" title="Đang viết lý do" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">5</span>
+    <span role="listitem" title="Đang gửi vào chat" style="display: inline-flex; align-items: center; justify-content: center; height: 26px; min-width: 26px; padding: 0 8px; border-radius: 9999px; border: 1px solid #DCE2E8; background: #FFFFFF; color: #58636F; font: 700 11px/1 &quot;Overpass&quot;, sans-serif; letter-spacing: 0.05em">6</span>
   </div>
 
-  <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 12px; border-radius: 12px; background: #A62B22; color: #FFFFFF">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block; margin-top: 1px">
-      <rect x="4" y="4" width="16" height="16" rx="3.5"></rect><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"></path>
-    </svg>
-    <div style="display: flex; flex-direction: column; gap: 4px">
-      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 12.5px; font-weight: 500; line-height: 17px">Blaze STT: Insufficient credits</span>
-      <span style="font-size: 11.5px; line-height: 16px; opacity: 0.92">Không có tin nào được gửi vào chat. Cuộc họp của bạn không bị ảnh hưởng — bạn vẫn nghe và nói bình thường.</span>
-    </div>
+  <div role="status" aria-live="polite" style="display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; border-radius: 12px; background: #A62B22; color: #FFFFFF; font: 400 12px/16px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block; margin-top: 1px"><path d="M8.5 3.5h7l5 5v7l-5 5h-7l-5-5v-7z"></path><path d="M12 8v5M12 15.8v.1"></path></svg>
+    <span>Blaze STT: Insufficient credits</span>
   </div>
 
-  <div style="display: flex; flex-direction: column; gap: 8px; padding: 11px 12px; border: 1px solid #DCE2E8; border-radius: 12px; background: #FFFFFF">
-    <div style="display: flex; align-items: center; gap: 6px">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#58636F" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none; display: block"><path d="M12 3v11"></path><path d="M7 10.5a5 5 0 0 0 10 0"></path><path d="M12 19v2"></path></svg>
-      <span style="font-size: 11.5px; color: #58636F">Âm thanh tab vẫn đang phát lại cho bạn</span>
-    </div>
-    <div style="display: flex; gap: 14px; padding-top: 9px; border-top: 1px solid #EEF1F4">
-      <div style="display: flex; flex-direction: column">
-        <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 17px; font-weight: 500; line-height: 21px">26:00</span>
-        <span style="font-size: 10px; color: #58636F">điểm dừng</span>
-      </div>
-      <div style="display: flex; flex-direction: column">
-        <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 17px; font-weight: 500; line-height: 21px">11</span>
-        <span style="font-size: 10px; color: #58636F">tin đã gửi trước đó</span>
-      </div>
-      <div style="display: flex; flex-direction: column; margin-left: auto">
-        <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 17px; font-weight: 500; line-height: 21px">0</span>
-        <span style="font-size: 10px; color: #58636F">tin lỗi vào chat</span>
-      </div>
-    </div>
-  </div>
+  <div style="flex: 1 1 auto"></div>
 
-  <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 7px; padding: 12px 13px; border: 1px dashed #7E8B99; border-radius: 12px; background: #EEF1F4">
-    <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.03em; color: #58636F">CÁCH TIẾP TỤC</span>
-    <div style="display: flex; gap: 8px; align-items: baseline">
-      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #14181D; flex: none">1</span>
-      <span style="font-size: 12px; line-height: 16px; color: #14181D">Nạp credit cho tài khoản Blaze đang dùng.</span>
-    </div>
-    <div style="display: flex; gap: 8px; align-items: baseline">
-      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #14181D; flex: none">2</span>
-      <span style="font-size: 12px; line-height: 16px; color: #14181D">Dán khóa mới vào ô Khóa Blaze nếu bạn đổi tài khoản.</span>
-    </div>
-    <div style="display: flex; gap: 8px; align-items: baseline">
-      <span style="font-family: &quot;Overpass Mono&quot;, monospace; font-size: 11px; color: #14181D; flex: none">3</span>
-      <span style="font-size: 12px; line-height: 16px; color: #14181D">Bấm Bắt đầu lại. Transcript đã mất trong lúc dừng không phục hồi.</span>
-    </div>
-  </div>
-
-  <div style="display: flex; gap: 8px">
-    <button type="button" style="flex: 1; height: 42px; box-sizing: border-box; border: 1.5px solid #14181D; border-radius: 12px; background: #FFFFFF; color: #14181D; font-family: Overpass, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer">Mở blaze.vn</button>
-    <button type="button" style="flex: 1; height: 42px; box-sizing: border-box; border: 0; border-radius: 12px; background: #0E7C86; color: #FFFFFF; font-family: Overpass, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer">Bắt đầu lại</button>
-  </div>
+  <button type="button" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; box-sizing: border-box; padding: 10px 18px; border: 0; border-radius: 24px; background: #0E7C86; color: #FFFFFF; font: 600 14px/20px &quot;Be Vietnam Pro&quot;, system-ui, sans-serif; cursor: pointer">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; display: block"><path d="M8 5.5v13l10-6.5z"></path></svg>
+    Bắt đầu nghe
+  </button>
 
 </div>
 </x-dc>

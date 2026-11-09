@@ -22,6 +22,8 @@ import {
   sampleTopics,
 } from "../../lib/dashboardData";
 import { audioSourceLabel, stampFromMs } from "../../lib/formatChat";
+import { onExtensionEvent } from "../../lib/extensionBridge";
+import { STATUS_RUNNING } from "../../lib/bridgeProtocol";
 import { LIMITS, type PipelineStage, type ResearchResult, type Topic } from "../../lib/types";
 import { getResearchResult } from "../../lib/mockApi";
 import { useDashboard } from "./DashboardContext";
@@ -86,6 +88,7 @@ export function MeetingMonitor() {
     useVerification,
     quota,
     openPricing,
+    extSession,
   } = useDashboard();
 
   const [now, setNow] = useState(() => Date.now());
@@ -96,6 +99,10 @@ export function MeetingMonitor() {
   const [cards, setCards] = useState<Card[]>([]);
   const [exitOpen, setExitOpen] = useState(false);
   const [leaveChoice, setLeaveChoice] = useState<"leave" | "end">("leave");
+  /** trạng thái extension khác "Đang chạy" (mất kết nối STT, không gửi được chat…) */
+  const [extNotice, setExtNotice] = useState<string | null>(null);
+  /** bước pipeline khi chưa có thẻ nào đang chạy (đang tách chủ đề) */
+  const [extStage, setExtStage] = useState<PipelineStage | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const postsEndRef = useRef<HTMLDivElement>(null);
@@ -115,9 +122,16 @@ export function MeetingMonitor() {
     return () => window.clearInterval(t);
   }, [live]);
 
-  // một phiên mới = replay mới từ đầu
+  // một phiên mới = replay mới từ đầu. Phiên extension thì không replay: quay lại
+  // đúng phiên đang ghi phải giữ nguyên các thẻ đã nhận.
   useEffect(() => {
     if (!live) return;
+    if (live.mode === "extension") {
+      // thẻ của phiên extension được reset khi phiên đổi (effect bên dưới), không
+      // phải mỗi lần mở lại monitor
+      setCapturing(true);
+      return;
+    }
     cardSeq.current = 0;
     dead.current = new Set();
     started.current = new Set();
@@ -126,8 +140,13 @@ export function MeetingMonitor() {
     setCapturing(true);
   }, [live?.meetingId, live]);
 
-  const clockSec = live ? live.elapsedAtLeave + ((now - live.startedRunAt) / 1000) * SIM_SPEED : 0;
-  const visible = capturing ? sampleLines.filter((l) => l.atMs / 1000 <= clockSec) : [];
+  const isExt = live?.mode === "extension";
+  const clockSec = !live
+    ? 0
+    : isExt
+      ? Math.max(0, (now - live.sessionStartedAt) / 1000)
+      : live.elapsedAtLeave + ((now - live.startedRunAt) / 1000) * SIM_SPEED;
+  const visible = isExt ? liveLines : capturing ? sampleLines.filter((l) => l.atMs / 1000 <= clockSec) : [];
   const stamp = formatClock(clockSec);
 
   const patchCard = useCallback((key: number, patch: Partial<Card>) => {
@@ -190,7 +209,7 @@ export function MeetingMonitor() {
   );
 
   useEffect(() => {
-    if (!live) return;
+    if (!live || live.mode === "extension") return;
     for (const t of TRIGGERS) {
       if (visible.length > t.atLine && !started.current.has(t.topicIdx)) {
         started.current.add(t.topicIdx);
@@ -201,7 +220,7 @@ export function MeetingMonitor() {
 
   // đồng hồ đi qua dòng nào thì dòng đó vào bản ghi của phiên, đúng một lần
   useEffect(() => {
-    if (!live) return;
+    if (!live || live.mode === "extension") return;
     for (const l of visible) {
       if (!seen.current.has(l.id)) {
         seen.current.add(l.id);
@@ -213,6 +232,105 @@ export function MeetingMonitor() {
   useEffect(() => {
     postsEndRef.current?.scrollIntoView({ block: "nearest" });
   }, [cards]);
+
+  // --- phiên extension: sự kiện thật thay cho replay ---
+  const endRef = useRef(endLive);
+  const verifyRef = useRef(useVerification);
+  const pushRef = useRef(pushLiveLine);
+  endRef.current = endLive;
+  verifyRef.current = useVerification;
+  pushRef.current = pushLiveLine;
+  const extStartedAt = extSession?.startedAt ?? null;
+  const extId = extSession?.id ?? null;
+
+  useEffect(() => {
+    if (extId === null || extStartedAt === null) return;
+    // phiên extension mới (không còn `live` để reset): thẻ của phiên trước phải bỏ
+    cardSeq.current = 0;
+    setCards([]);
+    setExtNotice(null);
+    setExtStage(null);
+
+    /** Tin thuộc thẻ nào: theo URL nguồn, rồi theo tên chủ đề, rồi thẻ mới nhất. */
+    const cardFor = (text: string): number => {
+      const list = cardsRef.current;
+      const byUrl = list.findIndex((c) => c.result?.sources.some((s) => text.includes(s.url)));
+      if (byUrl >= 0) return byUrl;
+      const byTopic = list.findIndex((c) => text.includes(`Chủ đề: ${c.topic.topic}`));
+      return byTopic >= 0 ? byTopic : list.length - 1;
+    };
+    const expected = (c: Card) =>
+      c.result
+        ? 1 + Math.min(c.result.sources.length, prefsRef.current.sources, LIMITS.maxSources)
+        : Infinity;
+    const counts = () => ({
+      topicCount: cardsRef.current.length,
+      sourceCount: cardsRef.current.reduce((n, c) => n + Math.max(0, c.revealed - 1), 0),
+    });
+
+    return onExtensionEvent((ev) => {
+      switch (ev.type) {
+        case "status":
+          if (ev.sessionId !== null && ev.sessionId !== extId) break;
+          setExtNotice(ev.running ? null : ev.status);
+          break;
+        case "line":
+          pushRef.current(ev.line);
+          break;
+        case "topic": {
+          // chủ đề mới đến trước khi chủ đề cũ gửi xong → phần còn lại không gửi nữa
+          const key = ++cardSeq.current;
+          setCards((prev) => [
+            ...prev.map((c) => (c.stage ? { ...c, killed: true, stage: null } : c)),
+            {
+              key,
+              topic: ev.topic,
+              result: null,
+              stage: "searching",
+              revealed: 0,
+              posted: 0,
+              killed: false,
+            },
+          ]);
+          break;
+        }
+        case "stage":
+          setExtStage(ev.stage);
+          setCards((prev) => {
+            const i = prev.length - 1;
+            if (i < 0 || prev[i].killed) return prev;
+            return prev.map((c, j) => (j === i ? { ...c, stage: ev.stage } : c));
+          });
+          break;
+        case "research":
+          setCards((prev) => {
+            const i = prev.length - 1;
+            return i < 0 ? prev : prev.map((c, j) => (j === i ? { ...c, result: ev.result } : c));
+          });
+          verifyRef.current();
+          break;
+        case "posted": {
+          const i = cardFor(ev.text);
+          setCards((prev) =>
+            prev.map((c, j) => {
+              if (j !== i) return c;
+              const revealed = c.revealed + 1;
+              return { ...c, revealed, stage: revealed >= expected(c) ? null : c.stage };
+            })
+          );
+          break;
+        }
+        case "error":
+          setExtNotice(ev.message);
+          setCards((prev) => prev.map((c) => (c.stage ? { ...c, stage: null, killed: true } : c)));
+          setExtStage(null);
+          break;
+        case "ended":
+          endRef.current(Math.round((Date.now() - extStartedAt) / 1000), counts());
+          break;
+      }
+    });
+  }, [extId, extStartedAt]);
 
   // kebab: click ra ngoài hoặc Escape
   useEffect(() => {
@@ -243,11 +361,13 @@ export function MeetingMonitor() {
   const running = cards.find((c) => c.stage);
   const stage: PipelineStage | null = running
     ? running.stage
-    : !capturing
-      ? null
-      : visible.length < sampleLines.length
-        ? "transcribing"
-        : "listening";
+    : isExt
+      ? (extStage ?? "listening")
+      : !capturing
+        ? null
+        : visible.length < sampleLines.length
+          ? "transcribing"
+          : "listening";
 
   if (!live) return null;
 
@@ -257,10 +377,14 @@ export function MeetingMonitor() {
   const nearCap = !overCap && capLeftMin <= 5;
 
   const confirmExit = () => {
-    const total = Math.round(clockSec / SIM_SPEED);
+    const total = Math.round(isExt ? clockSec : clockSec / SIM_SPEED);
     setExitOpen(false);
     if (leaveChoice === "leave") leaveLive(total);
-    else endLive(total);
+    else
+      endLive(total, {
+        topicCount: cards.length,
+        sourceCount: cards.reduce((n, c) => n + Math.max(0, c.revealed - 1), 0),
+      });
   };
 
   return (
@@ -270,18 +394,24 @@ export function MeetingMonitor() {
           <span className="ovl__pulse" aria-hidden data-on={capturing ? "yes" : "no"} />
           <div className="ovl__idtext">
             <strong className="dc-title">{live.title}</strong>
-            <span className="dc-muted">{MEETING_KIND_LABEL[live.kind]} · Meet</span>
+            <span className="dc-muted">
+              {MEETING_KIND_LABEL[live.kind]} · Meet{isExt ? "" : " · dữ liệu mẫu"}
+            </span>
           </div>
         </div>
 
         <div className="ovl__right">
           <span
             className="pill-timer"
-            title={`Phiên đang chạy. Gói Free giới hạn ${capMin} phút mỗi phiên — đồng hồ này chạy ở tốc độ phát lại ×${SIM_SPEED}.`}
+            title={
+              isExt
+                ? `Phiên đang chạy theo thời gian thật. Gói Free giới hạn ${capMin} phút mỗi phiên.`
+                : `Phiên đang chạy. Gói Free giới hạn ${capMin} phút mỗi phiên — đồng hồ này chạy ở tốc độ phát lại ×${SIM_SPEED}.`
+            }
           >
             <IconMic />
             {stamp}
-            <em>demo ×{SIM_SPEED}</em>
+            <em>{isExt ? "trực tiếp" : `demo ×${SIM_SPEED}`}</em>
           </span>
 
           <div className="menu-anchor" ref={menuRef}>
@@ -427,16 +557,25 @@ export function MeetingMonitor() {
         </div>
       ) : null}
 
+      {isExt && extNotice && extNotice !== STATUS_RUNNING ? (
+        <div className="mm-band mm-band--error ovl__band" role="status">
+          <IconInfo className="mm-band__glyph" />
+          <span>{extNotice}</span>
+        </div>
+      ) : null}
+
       <div className="ovl__split">
         {/* trái — những gì MeetMate nghe được */}
         <section className="ovl__panel" aria-label="Bản ghi đang chạy">
           <div className="ovl__panelhead">
             <h3 className="dc-title">Đang nghe</h3>
             <div className="ovl__panelactions">
-              <button className="btn btn--dark-ghost btn--sm" onClick={() => setCapturing((v) => !v)}>
-                {capturing ? <IconMicOff /> : <IconMic />}
-                {capturing ? "Tạm dừng" : "Nghe tiếp"}
-              </button>
+              {isExt ? null : (
+                <button className="btn btn--dark-ghost btn--sm" onClick={() => setCapturing((v) => !v)}>
+                  {capturing ? <IconMicOff /> : <IconMic />}
+                  {capturing ? "Tạm dừng" : "Nghe tiếp"}
+                </button>
+              )}
               <button
                 className="btn btn--dark-ghost btn--sm"
                 onClick={() => {
@@ -553,8 +692,8 @@ export function MeetingMonitor() {
       >
         <h3 className="dc-title">Rời hay kết thúc phiên?</h3>
         <p className="dc-muted">
-          Rời phiên giữ MeetMate chạy trong tab Chrome của bạn. Kết thúc phiên ghi bản ghi và danh
-          sách nguồn vào cuộc họp.
+          Rời phiên giữ MeetMate chạy trong tab Chrome của bạn. Kết thúc phiên dừng extension, ghi
+          bản ghi và danh sách nguồn vào cuộc họp.
         </p>
 
         <div className="leave__choices" role="radiogroup" aria-label="Chọn việc sẽ xảy ra">

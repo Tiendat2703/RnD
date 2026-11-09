@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["node", "vite/client"]
+    "types": ["node", "vite/client", "chrome"]
   },
-  "include": ["src", "server", "shared", "scripts", "vite.config.ts"]
+  "include": ["src", "server", "shared", "extension", "scripts", "vite.config.ts"]
 }

@@ -135,7 +135,7 @@ export function ProfilePanel() {
           </div>
           <Row
             title="Vùng làm việc"
-            note="Cuộc họp, bản ghi, kết quả research và tài liệu của bạn nằm ở đây cho tới khi bạn xoá."
+            note="Cuộc họp, bản ghi và tài liệu của bạn nằm ở đây. Theo thiết kế, nội dung phiên được xóa tối đa 24 giờ sau phiên."
           >
             <span className="pill pill--type">{ACCOUNT.team}</span>
           </Row>
@@ -164,7 +164,7 @@ export function ProfilePanel() {
                   max={FREE_PLAN.verifications}
                   label="lượt kiểm chứng"
                 />
-                <QuotaCell left={quota.artifactsLeft} max={FREE_PLAN.artifacts} label="artifact" />
+                <QuotaCell left={quota.artifactsLeft} max={FREE_PLAN.artifacts} label="lượt PDF" />
               </div>
               <div className="plan-strip__cta">
                 <button className="btn btn--primary" onClick={() => openPricing("pro")}>
@@ -184,7 +184,7 @@ export function ProfilePanel() {
             </Row>
             <Row
               title={`Gói Pro: ${formatVnd(current.priceMonthly ?? 199_000)}/tháng`}
-              note="15 phiên họp, 60 lượt kiểm chứng, 10 artifact và knowledge base cá nhân. Giá trong bảng IV.3.1 là giả thuyết chưa chốt."
+              note="15 phiên họp (tối đa 60 phút), 75 lượt kiểm chứng, 10 lượt xuất báo cáo PDF kèm biểu đồ PNG và knowledge base cá nhân. Giá trong bảng IV.3.1 là giả thuyết chưa chốt."
             >
               <button className="btn btn--outline" onClick={() => openPricing("pro")}>
                 Chi tiết
@@ -221,7 +221,7 @@ export function ProfilePanel() {
               <IconShield />
               <span>
                 {mode === "private"
-                  ? "Riêng tư: không có Research và Verify. Muốn kiểm chứng một con số bằng nguồn trên web thì truy vấn bắt buộc phải gửi ra ngoài."
+                  ? "Riêng tư (xử lý hoàn toàn trong Chrome) là định hướng sau MVP, chưa phải năng lực đã xác nhận. Hybrid vẫn gửi audio cho Blaze Voice trên cloud."
                   : "Chọn chế độ ở trang này chưa đổi được hành vi của extension — phần đó chưa được viết. Nó ghi lại lựa chọn của bạn để đối chiếu sau này."}
               </span>
             </div>

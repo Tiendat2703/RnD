@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "MeetMate",
+  "version": "0.1.0",
+  "description": "Nghe cuộc họp Google Meet tiếng Việt, tìm nguồn cho chủ đề đang bàn và gửi vào chat.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "tabCapture",
+    "offscreen",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "https://dev-api.blaze.vn/*",
+    "https://api.exa.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MeetMate"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://meet.google.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    },
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "fonts/*"
+      ],
+      "matches": [
+        "https://meet.google.com/*"
+      ]
+    }
+  ]
+}

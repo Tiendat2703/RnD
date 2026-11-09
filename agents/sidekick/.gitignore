@@ -22,3 +22,6 @@ playwright-report/
 /.agents/skills/
 dist-agent/
 .ambi/
+
+# Chrome extension build output
+dist-extension/

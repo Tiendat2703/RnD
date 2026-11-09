@@ -396,23 +396,6 @@ await safe("tài liệu và cài đặt", async () => {
   await btn(/^Sáng$/).click();
 });
 
-/* 8 — trang "/" (phòng họp) */
-await safe("trang /", async () => {
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  await shot("room");
-  await hasHeight("dải nguồn âm chiếm sân khấu", ".mmk-sources", 200);
-  // "Nguồn" tự bật khi nguồn đầu tiên về — hành vi có chủ đích và là lý do duy nhất
-  // khiến `.transcript-entry` biến mất giữa chừng. Chụp đúng lúc nó xảy ra thay vì
-  // giả rằng panel luôn ở tab Bản ghi.
-  await until(async () => (await tab(/Nguồn/).getAttribute("aria-selected")) === "true", 40_000);
-  await shot("room-sources");
-  // dòng vẫn tích lũy trong hook kể cả khi panel đang hiển thị nguồn, nên quay lại
-  // là thấy cả bản ghi, không phải một cột trống
-  await tab(/^Bản ghi$/).click();
-  await until(async () => (await page.locator(".transcript-entry").count()) === 12, 40_000);
-  await shot("room-transcript");
-});
-
 /* 9 — mobile 390: mọi surface phải xếp một cột, không rỉ cuộn ngang */
 await safe("mobile", async () => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -457,24 +440,6 @@ await safe("mobile", async () => {
   await shot("mobile-documents");
   await page.goto(`${BASE}/dashboard/settings`, { waitUntil: "networkidle" });
   await shot("mobile-settings");
-  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
-  await shot("mobile-room");
-  // Sheet 72vh phủ đúng chỗ dải nút của sân khấu ngồi: hai cặp nút cùng làm một
-  // việc mà một cặp chỉ bị che thì người dùng vẫn bấm vào đó và nhận lại khoảng
-  // không. Nên khi sheet mở, dải nút phải biến mất thật chứ không nằm dưới sheet.
-  const wrap = page.locator(".meeting-controls__wrap");
-  if (await wrap.isVisible()) throw new Error("dải nút sân khấu vẫn hiển thị dưới sheet ở 390px");
-  const pauses = await page.getByRole("button", { name: /^Tạm dừng bản ghi$/ }).count();
-  if (pauses !== 1)
-    throw new Error(`ở 390px phải còn đúng một nút "Tạm dừng bản ghi" (của sheet), thấy ${pauses}`);
-  // Ẩn dải nút chỉ an toàn khi sheet tự mang đường ra; đóng rồi thì dải nút phải
-  // hiện lại — đó là lúc nó là đường duy nhất để mở bảng trở lại.
-  await btn("Đóng bảng bản ghi").click();
-  await until(async () => (await page.locator(".transcript-panel").count()) === 0);
-  await until(async () => (await wrap.isVisible()) === true);
-  await shot("mobile-room-closed");
-  await btn(/^Mở bảng bản ghi$/).click();
-  await until(async () => (await page.locator(".transcript-panel").count()) === 1);
   await page.setViewportSize({ width: 1280, height: 800 });
 });
 

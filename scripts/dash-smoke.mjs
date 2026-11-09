@@ -603,51 +603,49 @@ await block("Tùy chọn nghiên cứu", async () => {
 /* ---------------------------------------------------------------- */
 await block("Trang gói dịch vụ theo bảng IV.3.1", async () => {
   await goto("/dashboard/upgrade");
-  const radios = await texts('[role="radio"]');
+  const tiers = await texts(".tier__name h3");
+  ok("4 thẻ gói: Free / Pro / Team / Edu", ["Free", "Pro", "Team", "Edu"].every((n) => tiers.some((x) => x.startsWith(n))), tiers.join(" / "));
+  ok("gói hiện tại có nút bị khóa", (await count(".tier--now button[disabled]")) === 1);
+
+  const card = (id) => page.locator(`.tier[data-tier="${id}"]`);
+  let t = await card("free").innerText();
   ok(
-    "4 gói: Free / Pro / Team / Edu / Pilot",
-    radios.length >= 4 &&
-      radios.some((r) => r.startsWith("Free")) &&
-      radios.some((r) => r.startsWith("Pro")) &&
-      radios.some((r) => r.startsWith("Team")) &&
-      radios.some((r) => r.includes("Edu")),
-    radios.slice(0, 4).join(" / ")
+    "Free: 3 phiên, ≤45 phút, 15 lượt kiểm chứng, 1 lượt PDF",
+    t.includes("3 phiên") && t.includes("45") && t.includes("15 lượt kiểm chứng") && t.includes("1 lượt xuất báo cáo PDF"),
+    t.slice(0, 60)
   );
+  t = await card("pro").innerText();
+  ok("Pro 199.000đ/tháng theo kỳ tháng", t.includes("199.000đ"), t.slice(0, 60));
+  ok("nút Pro không chứa giá, gọi đúng tên gói", (await page.getByRole("button", { name: /^Chọn Pro$/ }).count()) === 1);
 
-  const pick = async (re) => {
-    await page.getByRole("radio", { name: re }).click();
-    await page.waitForTimeout(250);
-    return bodyText();
-  };
-
-  let t = await pick(/^Free/);
-  ok(
-    "Free: 3 phiên, ≤45 phút, 10 lượt kiểm chứng, 1 artifact",
-    t.includes("3 phiên") && t.includes("45") && t.includes("10 lượt kiểm chứng") && t.includes("1 artifact"),
-    t.slice(0, 50)
-  );
-  t = await pick(/^Pro/);
-  await page.getByRole("radio", { name: "Trả theo tháng" }).click();
+  await page.getByRole("radio", { name: /^Theo năm/ }).click();
   await page.waitForTimeout(250);
-  t = await bodyText();
-  ok("Pro 199.000đ/tháng khi chọn chu kỳ tháng", t.includes("199.000đ"), "không thấy 199.000đ");
-  await page.getByRole("radio", { name: "Trả theo năm" }).click();
-  await page.waitForTimeout(250);
-  t = await bodyText();
-  ok("Pro 1.990.000đ/năm khi chọn chu kỳ năm", t.includes("1.990.000đ"), "không thấy 1.990.000đ");
-  const cta = (await texts("button.btn--ink")).join(" / ");
-  ok("CTA nói bằng VND và gọi đúng tên gói", /Chọn Pro · [\d.]+đ/.test(cta), cta.slice(0, 60));
-  t = await pick(/^Team/);
-  ok("Team 179.000đ/người/tháng, tối thiểu 3 người", t.includes("179.000đ") && t.includes("3 người"));
-  t = await pick(/^Edu/);
-  ok("Edu/Pilot 4.500.000đ/quý, tối đa 15 người", t.includes("4.500.000đ") && t.includes("15 người"));
+  t = await card("pro").innerText();
+  ok("Pro 1.990.000đ/năm khi chọn kỳ năm", t.includes("1.990.000đ"), t.slice(0, 80));
+  await page.getByRole("radio", { name: "Theo tháng" }).click();
 
-  await pick(/^Pro/);
+  t = await card("team").innerText();
+  ok("Team 179.000đ/người, tối thiểu 3 người", t.includes("179.000đ") && t.includes("3 người"));
+  await page.getByRole("button", { name: "Thêm một người" }).click();
+  t = await card("team").innerText();
+  ok("thêm một người: Team nhân giá thành 4 người", t.includes("716.000đ"), t.slice(0, 80));
+  t = await card("edu").innerText();
+  ok("Edu/Pilot 4.500.000đ/quý, tối đa 15 người", t.includes("4.500.000đ") && t.includes("15 người") && !t.includes("người người"));
+
   t = await bodyText();
-  ok("trang nói thẳng: chưa mở bán", t.includes("chưa mở bán"));
+  ok("trang nói thẳng: chưa có hoá đơn, chưa thu tiền", t.includes("Chưa có hoá đơn"));
   ok("không có đô la Mỹ trên trang gói", !t.includes("$") && !t.includes("USD"));
-  ok("đơn vị tính là phiên/lượt/artifact", t.includes("lượt kiểm chứng") && t.includes("artifact"));
-  ok("bảng so sánh đánh dấu gói hiện tại", (await count(".matrix .is-here")) >= 1);
+  ok("đơn vị tính là phiên/lượt kiểm chứng/lượt PDF", t.includes("lượt kiểm chứng") && t.includes("PDF"));
+  ok("bảng so sánh đánh dấu gói hiện tại", (await count(".cmp .is-here")) >= 1);
+  await page.getByRole("radio", { name: "Tài liệu và nhóm" }).click();
+  ok("đổi nhóm bảng so sánh có hàng Knowledge base", (await bodyText()).includes("Knowledge base"));
+  ok("FAQ có 7 câu, mở được bằng bàn phím", (await count(".faq__item")) === 7);
+  await page.locator(".faq__item summary").first().focus();
+  await page.keyboard.press("Enter");
+  ok("FAQ mở sau khi nhấn Enter", (await count(".faq__item[open]")) === 1);
+  await page.getByRole("button", { name: "Chọn Pro" }).click();
+  await page.waitForTimeout(250);
+  ok("nút chọn gói báo rõ bản demo, không thu tiền", (await bodyText()).includes("chưa nối với hệ thống thanh toán"));
 });
 
 /* ---------------------------------------------------------------- */
@@ -713,7 +711,7 @@ await block("Cài đặt: giao diện, ngôn ngữ, dữ liệu", async () => {
 });
 
 /* ---------------------------------------------------------------- */
-await block("Giao diện sáng/tối và trang /", async () => {
+await block("Giao diện sáng/tối và mặt chữ", async () => {
   await goto("/dashboard/callSessions");
   const toggle = page.locator('button.topbar__theme');
   const label1 = await toggle.getAttribute("aria-label");
@@ -722,14 +720,6 @@ await block("Giao diện sáng/tối và trang /", async () => {
   await page.waitForTimeout(250);
   const label2 = await toggle.getAttribute("aria-label");
   ok("nhãn đảo thật sau khi bấm", label2 !== label1, `${label1} -> ${label2}`);
-
-  await goto("/");
-  const t = await bodyText();
-  ok("trang / là phòng họp MeetMate", t.includes("MeetMate") && t.includes("Đang lắng nghe"), t.slice(0, 60));
-  for (const b of BANNED_TEXT) ok(`trang / không còn chữ "${b}"`, !t.includes(b));
-  ok("một đồng hồ duy nhất", (await count(".meeting-clock")) === 1);
-  ok("hai điều khiển thật", (await count(".meeting-control")) === 2);
-  ok("dải nguồn âm 2 kênh", (await count(".mmk-src")) === 2);
 
   // Font đo bằng computed style, không bằng mắt. `--font-ui` khai trên `:root`
   // trong globals.css và trỏ tới `var(--font-bv)` mà next/font gắn lên `<html>`;
@@ -742,15 +732,9 @@ await block("Giao diện sáng/tối và trang /", async () => {
       const el = document.querySelector(s);
       return el ? getComputedStyle(el).fontFamily : "MISSING";
     }, sel);
-  const famRoom = await famOf("main");
-  ok(
-    "chữ trên / chạy Be Vietnam Pro, không rơi về serif",
-    /Be Vietnam Pro/.test(famRoom) && !/Times|serif$/.test(famRoom.split(",")[0]),
-    famRoom.slice(0, 46)
-  );
   await goto("/dashboard/callSessions");
   const famDash = await famOf(".dash");
-  ok("console cùng một mặt chữ với /", /Be Vietnam Pro/.test(famDash), famDash.slice(0, 46));
+  ok("console chạy Be Vietnam Pro, không rơi về serif", /Be Vietnam Pro/.test(famDash) && !/Times|serif$/.test(famDash.split(",")[0]), famDash.slice(0, 46));
 });
 
 /* ---------------------------------------------------------------- */

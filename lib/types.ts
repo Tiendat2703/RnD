@@ -28,6 +28,12 @@ export const LIMITS = {
  */
 export type AudioSource = "tab" | "mic";
 
+/**
+ * Extension trộn tab và micro vào một đường PCM trước khi gửi STT, nên một dòng
+ * do extension ghi không biết nó đến từ kênh nào — "mixed" nói đúng điều đó.
+ */
+export type LineSource = AudioSource | "mixed";
+
 /** Loại cuộc họp theo đúng đối tượng trong bản mô tả: nhóm sản phẩm, nghiên cứu, đào tạo, bán lẻ. */
 export type MeetingKind = "san-pham" | "nghien-cuu" | "dao-tao" | "ban-le" | "khac";
 
@@ -38,7 +44,7 @@ export interface MeetingLine {
   text: string;
   /** ms kể từ lúc bắt đầu họp */
   atMs: number;
-  source: AudioSource;
+  source: LineSource;
 }
 
 /** Kết quả tách chủ đề (Task 5). `keywords` tối đa 8. */
@@ -103,10 +109,10 @@ export const DEGRADED_TEXT: Record<Degraded, string> = {
 export const PIPELINE_LABEL: Record<PipelineStage, string> = {
   listening: "Đang lắng nghe",
   transcribing: "Đang phiên âm",
-  topic: "Đang tách chủ đề",
-  searching: "Đang tìm nguồn",
-  writing: "Đang viết lý do",
-  posting: "Đang gửi vào chat",
+  topic: "Đang tìm nhận định",
+  searching: "Đang truy xuất",
+  writing: "Đang đối chiếu",
+  posting: "Đang hiện thẻ",
 };
 
 export const MEETING_KIND_LABEL: Record<MeetingKind, string> = {

@@ -9,7 +9,7 @@
 //   2. URL không bao giờ bị cắt. Một đường dẫn cụt là một nguồn không mở được,
 //      mà nguồn là toàn bộ lý do tồn tại của sản phẩm.
 
-import { LIMITS, type PostedMessage, type ResearchResult } from "./types";
+import { LIMITS, type LineSource, type PostedMessage, type ResearchResult } from "./types";
 
 /** Cắt theo ký tự, thêm dấu lửng, và vẫn nằm trong trần. */
 export function clip(text: string, max: number): string {
@@ -107,7 +107,8 @@ export function toPostedMessages(result: ResearchResult): PostedMessage[] {
 }
 
 /** "Tab Meet" / "Micro của bạn" — nhãn kênh âm, không phải tên người. */
-export function audioSourceLabel(source: "tab" | "mic"): string {
+export function audioSourceLabel(source: LineSource): string {
+  if (source === "mixed") return "Tab Meet + micro";
   return source === "tab" ? "Âm thanh tab Meet" : "Micro của bạn";
 }
 
