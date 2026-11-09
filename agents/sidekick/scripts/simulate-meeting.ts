@@ -18,8 +18,9 @@ import { createPipeline } from '../extension/src/pipeline';
 import { BlazeStt, type SttSocket } from '../extension/src/stt';
 import { ExaProvider } from '../server/providers/exa';
 
-type Expect = 'none' | 'contradiction' | 'answer' | 'not_in_doc';
-export const MEETING: { say: string; expect: Expect; note: string }[] = [
+type Kind = 'contradiction' | 'answer' | 'not_in_doc';
+type Expect = 'none' | Kind | Kind[];
+export const MEETING: { say: string; expect: Expect; note: string; ask?: boolean }[] = [
   { say: 'Chào mọi người, hôm nay mình rà soát lại hợp đồng với bên Sao Mai nhé.', expect: 'none', note: 'mở đầu' },
   { say: 'Theo hợp đồng thì phí bảo trì sau thời gian bảo hành là mười lăm triệu một tháng.', expect: 'contradiction', note: 'tài liệu: 12 triệu' },
   { say: 'Hạn chót bàn giao toàn bộ hệ thống là ngày ba mươi tháng tư năm hai nghìn không trăm hai mươi bảy.', expect: 'contradiction', note: 'tài liệu: 31/03/2027' },
@@ -30,8 +31,13 @@ export const MEETING: { say: string; expect: Expect; note: string }[] = [
   { say: 'Tranh chấp thì sẽ giải quyết ở đâu nhỉ?', expect: 'answer', note: 'hỏi tự động: VIAC' },
   { say: 'Ứng dụng di động mình làm bằng Flutter cho nhanh.', expect: 'contradiction', note: 'tài liệu: React Native' },
   { say: 'Hôm nay trời mưa to quá, mọi người về nhớ cẩn thận nhé.', expect: 'none', note: 'nói chuyện phiếm' },
-  { say: 'Mít mết ơi, ứng dụng có hỗ trợ ví ZaloPay không?', expect: 'answer', note: 'gọi tên: ZaloPay để giai đoạn sau' },
-  { say: 'Mít mết ơi, giá cổ phiếu của Blue River hiện nay là bao nhiêu?', expect: 'not_in_doc', note: 'gọi tên: ngoài tài liệu' },
+  { say: 'Mít mết ơi, ứng dụng có hỗ trợ ví ZaloPay không?', expect: 'answer', note: 'gọi tên: ZaloPay để giai đoạn sau', ask: true },
+  { say: 'Mít mết ơi, giá cổ phiếu của Blue River hiện nay là bao nhiêu?', expect: 'not_in_doc', note: 'gọi tên: ngoài tài liệu', ask: true },
+  // Seen in a live meeting: a wrong claim said again, a document called by the wrong name,
+  // and the name heard as "Mate make ơi".
+  { say: 'Như mình nói lúc nãy, phí bảo trì là mười lăm triệu một tháng mà.', expect: 'contradiction', note: 'nhắc lại ý sai: vẫn hiện, không gửi lại chat' },
+  { say: 'Theo bản kế hoạch thì hạn chót bàn giao là ngày ba mươi tháng tư đúng không?', expect: ['contradiction', 'answer'], note: 'gọi nhầm tên tài liệu: hạn chót nằm trong hợp đồng' },
+  { say: 'Mate make ơi, Việt Nam hiện nay có bao nhiêu tỉnh thành?', expect: 'not_in_doc', note: 'gọi tên kiểu "Mate make ơi": ngoài tài liệu', ask: true },
 ];
 
 const apiKey = process.env.BLAZE_API_KEY;
@@ -141,11 +147,14 @@ console.log('\nResults:');
 let pass = 0;
 MEETING.forEach((m, i) => {
   const got = cards.filter(c => c.kind !== 'research' && lineOf(c) === i);
-  const ok = m.expect === 'none' ? got.every(c => c.kind === 'not_in_doc' && c.mode === 'auto') : got.some(c => c.kind === m.expect);
+  const kinds = m.expect === 'none' ? [] : [m.expect].flat();
+  const ok = m.expect === 'none'
+    ? got.every(c => c.kind === 'not_in_doc' && c.mode === 'auto')
+    : got.some(c => kinds.includes(c.kind as Kind) && (!m.ask || c.mode === 'ask'));
   if (ok) pass++;
   const latency = got.length ? ` (+${(got[0].heardAt - speechEnd(i)).toFixed(1)}s sau khi nói xong)` : '';
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${i + 1}. [${m.expect}] ${m.note}${latency}`);
-  for (const c of got) console.log(`        → ${c.kind}${c.mode === 'ask' ? ' (ask)' : ''}: ${c.text}${c.source ? ` [${c.source}]` : ''}`);
+  for (const c of got) console.log(`        → ${c.kind}${c.mode === 'ask' ? ' (ask)' : ''}${c.repeat ? ' (repeat, chat ' + c.chat + ')' : ''}: ${c.text}${c.source ? ` [${c.source}]` : ''}`);
 });
 const stray = cards.filter(c => c.kind !== 'research' && lineOf(c) < 0);
 for (const c of stray) console.log(`  ? unmatched ${c.kind}: ${c.utterance ?? ''} → ${c.text}`);

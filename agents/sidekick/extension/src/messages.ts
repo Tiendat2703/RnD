@@ -18,6 +18,8 @@ export type Card = {
   links?: { title: string; url: string; reason: string }[];
   chat: ChatStatus;
   chatError?: string;
+  /** Already reported earlier in the meeting; not posted to the chat again. */
+  repeat?: boolean;
 };
 
 export type RunState = 'idle' | 'starting' | 'live' | 'reconnecting' | 'error';

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MeetMate",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Nghe cuộc họp Google Meet, đối chiếu lời nói với tài liệu của bạn và trả lời câu hỏi về tài liệu.",
   "minimum_chrome_version": "116",
   "permissions": ["tabCapture", "offscreen", "storage", "sidePanel", "scripting"],

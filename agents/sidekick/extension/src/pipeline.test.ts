@@ -78,6 +78,19 @@ describe('createPipeline', () => {
   });
 });
 
+describe('repeats', () => {
+  it('show a repeated contradiction in the panel without posting it again', async () => {
+    const s = setup(DEFAULT_SETTINGS, contradiction);
+    s.p.onFinal('Theo hợp đồng phí bảo trì là 15.000.000 một tháng.');
+    await flush();
+    s.p.onFinal('Mình nhắc lại, phí bảo trì 15.000.000 một tháng nhé.');
+    await flush();
+    const cards = s.events.filter(e => e.kind === 'card').map(e => (e as Extract<PanelEvent, { kind: 'card' }>).card);
+    expect(cards.map(c => [c.repeat ?? false, c.chat])).toEqual([[false, 'pending'], [true, 'off']]);
+    expect(s.posts).toHaveLength(1);
+  });
+});
+
 describe('reduce', () => {
   it('keeps transcript, newest cards first and chat outcomes', () => {
     const card = { id: 'a', at: 1, kind: 'answer' as const, text: 'x', chat: 'pending' as const };

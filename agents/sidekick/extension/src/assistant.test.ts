@@ -94,16 +94,16 @@ describe('DocAssistant', () => {
     expect(s.calls.map(c => c.input.mode)).toEqual(['auto']);
   });
 
-  it('reports one document fact once, and lists it for the model', async () => {
+  it('shows a repeated fact as a repeat instead of reporting it afresh', async () => {
     const s = setup();
     s.a.onLine('Phí bảo trì 15 triệu một tháng.');
     s.calls[0].resolve([contradiction()]);
     await flush();
     s.a.onLine('Như mình nói phí bảo trì 15 triệu nhé.');
-    expect(s.calls[1].input.reported).toEqual(['sai lệch: "phí bảo trì hệ thống là 12.000.000 đồng"']);
-    s.calls[1].resolve([contradiction('phí bảo trì  hệ thống là 12.000.000 đồng')]);
+    // The model quotes a longer stretch of the same passage the second time.
+    s.calls[1].resolve([contradiction('Sau thời gian bảo hành, phí bảo trì hệ thống là 12.000.000 đồng mỗi tháng')]);
     await flush();
-    expect(s.emitted).toHaveLength(1);
+    expect(s.emitted.map(f => Boolean(f.repeat))).toEqual([false, true]);
   });
 
   it('reports the same fact again after the report window', async () => {
@@ -115,7 +115,7 @@ describe('DocAssistant', () => {
     s.a.onLine('Phí bảo trì 15 triệu một tháng.');
     s.calls[1].resolve([contradiction()]);
     await flush();
-    expect(s.emitted).toHaveLength(2);
+    expect(s.emitted.map(f => Boolean(f.repeat))).toEqual([false, false]);
   });
 
   it('always delivers direct answers, even repeated ones', async () => {

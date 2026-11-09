@@ -1,3 +1,4 @@
+import { isMeetingUrl } from './meet-url';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Msg, type PanelEvent, type PostReply, type Settings, type StartReply } from './messages';
 import { EMPTY_VIEW, reduce, startView, type View } from './view';
 
@@ -5,7 +6,57 @@ const OFFSCREEN = 'offscreen.html';
 // Blaze sends the last finals within about a second after audio stops (stt.ts CLOSE_GRACE_MS).
 const STOP_GRACE_MS = 1_500;
 
-void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => undefined);
+// The toolbar click is the only gesture that lets an extension capture a tab: a button inside
+// the side panel does not count (measured in Cốc Cốc 154). So the click itself opens the panel
+// and, on a meeting tab, starts listening.
+void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => undefined);
+
+chrome.action.onClicked.addListener(tab => {
+  // sidePanel.open needs the user gesture, so it is called before anything awaits.
+  if (tab.windowId !== undefined) void chrome.sidePanel.open({ windowId: tab.windowId }).catch(() => undefined);
+  if (tab.id === undefined || !isMeetingUrl(tab.url)) {
+    // Never silent: say why the click did not start listening.
+    void apply({
+      kind: 'notice', level: 'info',
+      message: tab.url
+        ? 'Tab này không phải cuộc họp Google Meet. Mở tab cuộc họp rồi bấm biểu tượng MeetMate.'
+        : 'MeetMate không đọc được địa chỉ tab này. Kiểm tra MeetMate được phép truy cập meet.google.com.',
+    });
+    return;
+  }
+  const tabId = tab.id;
+  // Ask for the stream at once, while the click's grant is fresh; it expires within seconds.
+  const streamId = chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+  void startFromClick(tabId, streamId).catch((e: unknown) =>
+    apply({ kind: 'state', state: 'error', detail: `Không bắt đầu được: ${e instanceof Error ? e.message : String(e)}` }));
+});
+
+async function startFromClick(tabId: number, streamId: Promise<string>): Promise<void> {
+  const id = await streamId.catch((e: unknown) => e as Error);
+  const view = await currentView();
+  if (view.state === 'live' || view.state === 'starting' || view.state === 'reconnecting') {
+    await apply({ kind: 'notice', level: 'info', message: 'MeetMate đang nghe. Bấm Dừng trong bảng này nếu muốn dừng.' });
+    return;
+  }
+  await apply({ kind: 'notice', level: 'info', message: 'Đang bắt đầu nghe…' });
+  if (id instanceof Error) {
+    await apply({ kind: 'state', state: 'error', detail: `Không ghi âm được tab Meet: ${id.message}` });
+    return;
+  }
+  const blaze = (await chrome.storage.local.get(STORAGE_KEYS.blaze))[STORAGE_KEYS.blaze];
+  if (!String(blaze ?? '').trim()) {
+    await apply({ kind: 'state', state: 'error', detail: 'Nhập khóa Blaze trong phần Cài đặt, rồi bấm lại biểu tượng MeetMate.' });
+    return;
+  }
+  // The offscreen page cannot show the microphone prompt; ask once in a visible tab first.
+  const mic = await navigator.permissions.query({ name: 'microphone' as PermissionName }).catch(() => null);
+  if (mic?.state === 'prompt') {
+    await chrome.tabs.create({ url: chrome.runtime.getURL('mic-permission.html') });
+    await apply({ kind: 'notice', level: 'info', message: 'Cấp quyền micro trong tab vừa mở, rồi quay lại tab Meet và bấm biểu tượng MeetMate lần nữa.' });
+    return;
+  }
+  await start(tabId, id);
+}
 
 // The service worker can be stopped at any time, so the view lives in session storage and
 // every change is a serialized read-modify-write.

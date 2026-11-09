@@ -13,6 +13,8 @@ export type Finding = {
   /** Verbatim from `chunk`, checked in code; empty for not_in_doc. */
   quote: string;
   chunk: Chunk | null;
+  /** The same fact was already reported this meeting: shown again, not re-posted to the chat. */
+  repeat?: boolean;
 };
 export type DocCheckInput = {
   mode: DocMode;
@@ -20,8 +22,6 @@ export type DocCheckInput = {
   context: string[];
   /** New lines to judge (auto) or the question asked of MeetMate (ask). */
   lines: string[];
-  /** Findings already reported, so the model does not repeat them. */
-  reported: string[];
 };
 
 /**
@@ -40,15 +40,16 @@ export function buildLibrary(chunks: Chunk[], maxChars = FULL_DOC_MAX_CHARS): Do
 
 const INSTRUCTIONS = `Bạn là MeetMate, trợ lý theo dõi một cuộc họp tiếng Việt và đối chiếu với tài liệu của nhóm.
 Lời thoại đến từ nhận dạng giọng nói nên có thể sai chính tả hoặc viết số khác tài liệu ("15.000.000" và "15 triệu" là một; "05" và "5" là một). Tên "MeetMate" thường bị nghe thành "Mít mết".
-Chỉ dựa vào các đoạn tài liệu được cung cấp. Trả về đúng một object JSON:
+Chỉ dựa vào các đoạn tài liệu được cung cấp. Người nói có thể gọi tài liệu bằng tên khác (hợp đồng, hóa đơn, kế hoạch, báo cáo…): hãy đối chiếu theo NỘI DUNG họ nói, không theo cái tên họ gọi tài liệu.
+Trả về đúng một object JSON:
 {"items":[{"kind":"contradiction"|"answer"|"not_in_doc","utterance":string,"chunkId":string,"quote":string,"text":string}]}
 Quy tắc:
 - contradiction: một câu MỚI khẳng định thông tin (con số, ngày, thời hạn, tên người, công nghệ, phạm vi, điều khoản, trách nhiệm) trái với tài liệu. text: một câu nói rõ tài liệu ghi gì và khác lời nói ở điểm nào. KHÔNG báo khi người nói chỉ đề xuất thay đổi, giả định, hỏi lại, nói về tương lai chưa chốt, hoặc nói đúng với tài liệu.
 - answer: một câu MỚI hỏi về nội dung tài liệu có ghi. text: trả lời ngắn gọn tối đa 2 câu, dựa trên tài liệu.
-- not_in_doc: câu hỏi về tài liệu mà tài liệu không có thông tin. text bắt đầu bằng "Tài liệu không đề cập".
+- not_in_doc: chỉ khi tài liệu thật sự không có thông tin nào liên quan tới điều được hỏi. Nếu tài liệu có thông tin trái với lời nói thì dùng contradiction; có thông tin trả lời được thì dùng answer. text bắt đầu bằng "Tài liệu không đề cập".
 - quote: chép NGUYÊN VĂN, không sửa chữ nào, một đoạn ngắn (tối đa 250 ký tự) trong đoạn tài liệu chunkId làm bằng chứng. Bắt buộc với contradiction và answer; để "" với not_in_doc.
 - utterance: chép lại câu trong cuộc họp mà mục này nói tới.
-- Không lặp lại các mục đã báo. Không có gì cần báo thì trả {"items":[]}.
+- Câu mới nhắc lại một ý sai đã nói trước đó thì vẫn báo contradiction như bình thường (hệ thống tự tránh gửi trùng). Không có gì cần báo thì trả {"items":[]}.
 - Chế độ "ask": có người gọi MeetMate và hỏi trực tiếp; luôn trả đúng một mục answer hoặc not_in_doc cho câu hỏi đó. Với not_in_doc ở chế độ này, sau câu "Tài liệu không đề cập…" có thể thêm tối đa một câu hiểu biết chung, mở đầu bằng "Ngoài tài liệu:".
 Viết text bằng tiếng Việt, ngắn gọn, trung lập, không kết luận thay nhóm.`;
 
@@ -63,7 +64,6 @@ export function docMessages(lib: DocLibrary, input: DocCheckInput): { messages: 
   parts.push(input.mode === 'ask'
     ? `Câu hỏi gửi MeetMate:\n- ${input.lines.join(' ')}`
     : `Câu MỚI cần xét:\n${input.lines.map(l => `- ${l}`).join('\n')}`);
-  if (input.reported.length) parts.push(`Đã báo trước đó:\n${input.reported.map(r => `- ${r}`).join('\n')}`);
   return { messages: [{ role: 'system', content: system }, { role: 'user', content: parts.join('\n\n') }], candidates };
 }
 

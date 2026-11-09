@@ -14,9 +14,21 @@ export function worthChecking(text: string): boolean {
 }
 
 function reportKey(f: Finding): string {
-  // One document fact is flagged once, whoever repeats the wrong version; questions by wording.
-  if (f.kind === 'contradiction') return `c:${fold(f.quote)}`;
   return `${f.kind}:${fold(f.utterance)}`;
+}
+
+const words = (s: string) => new Set(fold(s).split(' ').filter(Boolean));
+
+/**
+ * Two contradictions are the same document fact when they cite the same chunk with largely the
+ * same words: the model quotes a longer or shorter stretch of the passage each time.
+ */
+export function sameFact(a: Finding, b: Finding): boolean {
+  if (a.kind !== 'contradiction' || b.kind !== 'contradiction' || a.chunk?.id !== b.chunk?.id) return false;
+  const A = words(a.quote);
+  const B = words(b.quote);
+  const shared = [...A].filter(w => B.has(w)).length;
+  return shared / Math.max(1, Math.min(A.size, B.size)) >= 0.6;
 }
 
 const isAbort = (e: unknown) => (e as { name?: string } | null)?.name === 'AbortError';
@@ -34,7 +46,9 @@ export class DocAssistant {
   private readonly asks: { question: string; context: string[] }[] = [];
   private askBusy = false;
   private wakeAt: number | null = null;
-  private readonly reported = new Map<string, { at: number; label: string }>();
+  /** Report key → when it was first reported (answers and notes, by wording). */
+  private readonly reported = new Map<string, number>();
+  private readonly facts: { finding: Finding; at: number }[] = [];
   private readonly controllers = new Set<AbortController>();
   private stopped = false;
   private readonly now: () => number;
@@ -92,12 +106,6 @@ export class DocAssistant {
     return this.history.slice(Math.max(0, end - DOC_CONTEXT_LINES), end);
   }
 
-  private reportedLabels(): string[] {
-    const now = this.now();
-    for (const [key, r] of this.reported) if (now - r.at > REPORT_TTL_MS) this.reported.delete(key);
-    return [...this.reported.values()].slice(-8).map(r => r.label);
-  }
-
   private ask(question: string, context: string[]): void {
     this.asks.push({ question, context });
     void this.pumpAsk();
@@ -114,7 +122,7 @@ export class DocAssistant {
       if (!lib) {
         this.deps.emit({ kind: 'not_in_doc', mode: 'ask', utterance: question, quote: '', chunk: null, text: 'Chưa có tài liệu nào được tải lên MeetMate.' });
       } else {
-        const findings = await this.run({ mode: 'ask', context, lines: [question], reported: [] });
+        const findings = await this.run({ mode: 'ask', context, lines: [question] });
         for (const f of findings) this.deliver(f, false);
       }
     } finally {
@@ -129,7 +137,7 @@ export class DocAssistant {
     this.pending = [];
     this.autoBusy = true;
     try {
-      const findings = await this.run({ mode: 'auto', context: this.contextBefore(lines), lines, reported: this.reportedLabels() });
+      const findings = await this.run({ mode: 'auto', context: this.contextBefore(lines), lines });
       for (const f of findings) this.deliver(f, true);
     } finally {
       this.autoBusy = false;
@@ -152,10 +160,18 @@ export class DocAssistant {
 
   private deliver(f: Finding, dedupe: boolean): void {
     if (this.stopped) return;
-    const key = reportKey(f);
-    if (dedupe && this.reported.has(key)) return;
-    const label = f.kind === 'contradiction' ? `sai lệch: "${f.quote}"` : `${f.kind}: ${f.utterance}`;
-    this.reported.set(key, { at: this.now(), label });
+    const now = this.now();
+    // Within the window a repeat still shows in the panel, marked, but is not posted again.
+    if (f.kind === 'contradiction') {
+      const seen = this.facts.find(r => now - r.at <= REPORT_TTL_MS && sameFact(r.finding, f));
+      if (dedupe && seen) return this.deps.emit({ ...f, repeat: true });
+      this.facts.push({ finding: f, at: now });
+    } else {
+      const key = reportKey(f);
+      const first = this.reported.get(key);
+      if (dedupe && first !== undefined && now - first <= REPORT_TTL_MS) return this.deps.emit({ ...f, repeat: true });
+      this.reported.set(key, now);
+    }
     this.deps.emit(f);
   }
 }

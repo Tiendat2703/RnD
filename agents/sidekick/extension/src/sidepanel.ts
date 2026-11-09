@@ -43,14 +43,15 @@ function renderControl(): void {
   const toggle = $<HTMLButtonElement>('toggle');
   toggle.textContent = running() ? 'Dừng' : 'Bắt đầu nghe';
   toggle.className = running() ? 'btn big stop' : 'btn primary big';
-  const parts = [elapsed(), `${docs.length} tài liệu`, settings.postToChat ? 'gửi vào chat' : 'không gửi chat'].filter(Boolean);
-  $('meta').textContent = parts.join(' · ');
+  const parts = [elapsed(), `${docs.length} tài liệu`, settings.postToChat ? 'gửi vào chat' : 'không gửi chat', `v${chrome.runtime.getManifest().version}`].filter(Boolean);
+  $('meta').textContent = running() ? parts.join(' · ')
+    : `${parts.join(' · ')} — mẹo: bấm biểu tượng MeetMate trên thanh công cụ khi đang ở tab Meet để bắt đầu nghe ngay`;
 
   const notice = $('notice');
   const shown = localNotice
     ?? (view.state === 'error' && view.detail ? { level: 'error' as const, message: view.detail } : null)
     ?? (view.state === 'reconnecting' ? { level: 'info' as const, message: `Mất kết nối nhận dạng giọng nói, đang thử lại… ${view.detail ?? ''}` } : null)
-    ?? (view.notice && running() ? view.notice : null)
+    ?? (view.notice && (running() || Date.now() - view.notice.at < 60_000) ? view.notice : null)
     ?? (!hasBlazeKey ? { level: 'info' as const, message: 'Nhập khóa Blaze trong phần Cài đặt để bắt đầu.' } : null);
   notice.hidden = !shown;
   if (shown) {
@@ -71,7 +72,8 @@ function renderCard(c: Card): string {
   const links = c.links?.length
     ? `<ol class="links">${c.links.map(l => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a><br>${esc(l.reason)}</li>`).join('')}</ol>`
     : '';
-  const chat = `<footer class="chat ${c.chat}">${CHAT_LABEL[c.chat]}${c.chatError ? `: ${esc(c.chatError)}` : ''}</footer>`;
+  const chatText = c.repeat ? 'Đã báo trước đó, không gửi lại vào chat' : `${CHAT_LABEL[c.chat]}${c.chatError ? `: ${esc(c.chatError)}` : ''}`;
+  const chat = `<footer class="chat ${c.chat}">${chatText}</footer>`;
   return `<article class="card ${c.kind}">
     <header><span class="chip">${KIND_LABEL[c.kind]}${c.mode === 'ask' ? ' · được hỏi' : ''}</span><time>${time(c.at)}</time></header>
     ${said}${title}<p class="${c.kind === 'research' ? '' : 'text'}">${esc(c.text)}</p>${quote}${links}${chat}
@@ -161,8 +163,10 @@ async function start(): Promise<void> {
   let streamId: string;
   try {
     streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id });
-  } catch {
-    return say('error', 'Chrome chưa cho phép MeetMate ghi âm tab này. Bấm biểu tượng MeetMate trên thanh công cụ khi đang ở tab Meet, rồi bấm Bắt đầu nghe.');
+  } catch (error) {
+    // Expected in most browsers: only a toolbar click may start a tab capture.
+    console.info('tabCapture from the side panel:', error);
+    return say('info', 'Để bắt đầu, bấm biểu tượng MeetMate trên thanh công cụ (cạnh thanh địa chỉ) khi đang ở tab Meet. MeetMate sẽ bắt đầu nghe ngay.');
   }
   const toggle = $<HTMLButtonElement>('toggle');
   toggle.disabled = true;
@@ -240,7 +244,8 @@ async function init(): Promise<void> {
     if (area === 'session' && changes[STORAGE_KEYS.view]) {
       const next = (changes[STORAGE_KEYS.view].newValue as View | undefined) ?? EMPTY_VIEW;
       if (next.transcript.length !== view.transcript.length) partial = '';
-      if (next.state !== view.state) localNotice = null;
+      // A newer message from the background replaces whatever the panel said itself.
+      if (next.state !== view.state || next.notice?.at !== view.notice?.at) localNotice = null;
       view = next;
       render();
     }

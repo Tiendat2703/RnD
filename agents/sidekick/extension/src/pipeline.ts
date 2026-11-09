@@ -44,8 +44,8 @@ export function createPipeline(deps: {
 
   const onFinding = (f: Finding) => publish({
     kind: f.kind, mode: f.mode, utterance: f.utterance || undefined, text: f.text,
-    quote: f.quote || undefined, source: citation(f) || undefined,
-  }, [formatFinding(f)], shouldPost(f));
+    quote: f.quote || undefined, source: citation(f) || undefined, repeat: f.repeat || undefined,
+  }, [formatFinding(f)], shouldPost(f) && !f.repeat);
 
   const onResearch = (r: ResearchResult) => publish({
     kind: 'research', title: r.topic, text: r.summary, links: r.sources,

@@ -25,18 +25,24 @@ describe('buildLibrary', () => {
 });
 
 describe('docMessages', () => {
+  it('judges by content, not by what the speaker calls the document, and never asks to skip repeats', () => {
+    const system = docMessages(lib, { mode: 'auto', context: [], lines: ['x'] }).messages[0].content;
+    expect(system).toContain('không theo cái tên họ gọi tài liệu');
+    expect(system).toContain('vẫn báo contradiction');
+  });
+
   it('keeps the system prompt identical across calls so the gateway can cache it', () => {
-    const a = docMessages(lib, { mode: 'auto', context: [], lines: ['một'], reported: [] }).messages;
-    const b = docMessages(lib, { mode: 'ask', context: ['x'], lines: ['hai'], reported: ['y'] }).messages;
+    const a = docMessages(lib, { mode: 'auto', context: [], lines: ['một'] }).messages;
+    const b = docMessages(lib, { mode: 'ask', context: ['x'], lines: ['hai'] }).messages;
     expect(a[0]).toEqual(b[0]);
     expect(b[1].content).toContain('Câu hỏi gửi MeetMate:\n- hai');
     expect(b[1].content).toContain('Lời thoại trước đó:\n- x');
-    expect(b[1].content).toContain('Đã báo trước đó:\n- y');
+    expect(b[1].content).not.toContain('Đã báo');
   });
 
   it('sends only retrieved chunks, in the user message, for large sets', () => {
     const big = buildLibrary(chunks, 10);
-    const { messages, candidates } = docMessages(big, { mode: 'auto', context: [], lines: ['phí bảo trì mỗi tháng'], reported: [] });
+    const { messages, candidates } = docMessages(big, { mode: 'auto', context: [], lines: ['phí bảo trì mỗi tháng'] });
     expect(candidates.map(c => c.id)).toEqual(['hd#4']);
     expect(messages[0].content).not.toContain('12.000.000');
     expect(messages[1].content).toContain('[hd#4]');
@@ -97,13 +103,13 @@ describe('checkDocs', () => {
     const findings = await checkDocs(async (messages, s) => {
       seen = { messages, signal: s };
       return reply([{ kind: 'answer', utterance: 'q', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: '7 người.' }]);
-    }, lib, { mode: 'auto', context: [], lines: ['đội mấy người'], reported: [] }, signal);
+    }, lib, { mode: 'auto', context: [], lines: ['đội mấy người'] }, signal);
     expect(seen.signal).toBe(signal);
     expect(findings).toHaveLength(1);
   });
 
   it('always answers a direct question exactly once', async () => {
-    const input = { mode: 'ask' as const, context: [], lines: ['ai ký hợp đồng'], reported: [] };
+    const input = { mode: 'ask' as const, context: [], lines: ['ai ký hợp đồng'] };
     const none = await checkDocs(async () => reply([]), lib, input, new AbortController().signal);
     expect(none).toHaveLength(1);
     expect(none[0]).toMatchObject({ kind: 'not_in_doc', mode: 'ask', utterance: 'ai ký hợp đồng' });

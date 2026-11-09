@@ -20,6 +20,17 @@ describe('detectWake', () => {
     expect(detectWake('Mua mít về ăn đi')).toBeNull();
   });
 
+  it('accepts looser spellings heard live, only before "ơi"', () => {
+    expect(detectWake('Mate make ơi, tôi muốn xem Việt Nam có bao nhiêu tỉnh thành.')?.question)
+      .toBe('tôi muốn xem Việt Nam có bao nhiêu tỉnh thành.');
+    expect(detectWake('Mi mết ơi hạn chót là ngày nào')?.question).toBe('hạn chót là ngày nào');
+    expect(detectWake('Matemix ơi, Việt Nam hiện nay có bao nhiêu tỉnh thành?')?.question).toBe('Việt Nam hiện nay có bao nhiêu tỉnh thành?');
+    expect(detectWake('Mích mét ơi đội có mấy người')?.question).toBe('đội có mấy người');
+    expect(detectWake('Mẹ mình ơi')).toBeNull();
+    expect(detectWake('Mất mát ơi là mất mát')).toBeNull();
+    expect(detectWake('Make sure mate make it work')).toBeNull();
+  });
+
   it('returns an empty question when the name is said alone', () => {
     expect(detectWake('Mít mết ơi.')).toEqual({ question: '' });
   });
