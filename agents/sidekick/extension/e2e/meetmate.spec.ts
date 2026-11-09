@@ -20,10 +20,14 @@ test.skip(!key, 'BLAZE_API_KEY is not set');
 test.skip(!existsSync(wav), 'meeting.wav missing; see the header of this file');
 
 let context: BrowserContext;
+let panelPage: import('@playwright/test').Page | null = null;
 
 test.beforeAll(async () => {
+  // MEETMATE_BROWSER runs the same test in another Chromium browser, e.g. Cốc Cốc:
+  // MEETMATE_BROWSER=/Applications/CocCoc.app/Contents/MacOS/CocCoc
+  const executablePath = process.env.MEETMATE_BROWSER;
   context = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), 'meetmate-')), {
-    channel: 'chromium',
+    ...(executablePath ? { executablePath, headless: false } : { channel: 'chromium' }),
     args: [
       `--disable-extensions-except=${dist}`,
       `--load-extension=${dist}`,
@@ -36,6 +40,14 @@ test.beforeAll(async () => {
   await context.route('https://meet.google.com/**', route => route.fulfill({ path: join(import.meta.dirname, 'fake-meet.html') }));
 });
 
+// On failure, show what MeetMate heard and reported, to tell STT misses from model misses.
+test.afterEach(async ({}, info) => {
+  if (info.status === info.expectedStatus || !panelPage) return;
+  const heard = await panelPage.locator('#transcript li').allTextContents().catch(() => []);
+  const cards = await panelPage.locator('.card').allTextContents().catch(() => []);
+  console.log(`Transcript:\n  ${heard.join('\n  ')}\nCards:\n  ${cards.map(c => c.replace(/\s+/g, ' ').trim()).join('\n  ')}`);
+});
+
 test.afterAll(async () => {
   await context?.close();
 });
@@ -43,11 +55,19 @@ test.afterAll(async () => {
 test('listens to a meeting, flags contradictions and answers questions in the Meet chat', async () => {
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
   const extensionId = new URL(worker.url()).host;
+  // The APIs MeetMate relies on, as this browser exposes them to the extension.
+  const apis = await worker.evaluate(() => ({
+    sidePanel: typeof chrome.sidePanel?.setPanelBehavior, offscreen: typeof chrome.offscreen?.createDocument,
+    tabCapture: typeof chrome.tabCapture?.getMediaStreamId, userAgent: navigator.userAgent,
+  }));
+  console.log('Extension APIs:', JSON.stringify(apis));
+  expect(apis).toMatchObject({ sidePanel: 'function', offscreen: 'function', tabCapture: 'function' });
 
   const meet = await context.newPage();
   await meet.goto('https://meet.google.com/abc-defg-hij');
 
   const panel = await context.newPage();
+  panelPage = panel;
   await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
   await panel.locator('#blaze-key').fill(key!);
   await panel.locator('#blaze-key').dispatchEvent('change');
