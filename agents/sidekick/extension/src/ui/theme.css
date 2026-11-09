@@ -1,4 +1,4 @@
-/* Token và thành phần dùng chung của extension — thực thi MEETMATE-DESIGN.md.
+/* Token và thành phần dùng chung của extension — thực thi docs/design/MEETMATE-DESIGN.md.
    Một file, hai nơi dùng: popup/trang quyền micro (theo prefers-color-scheme) và panel
    trong Meet (luôn tối, vì nó nổi trên lưới video của Meet). Petrol (--prov) chỉ được
    tô cho: wordmark, bước pipeline đang chạy, nhãn "MeetMate:" + viền trái của bài đăng,

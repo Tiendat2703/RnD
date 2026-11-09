@@ -4,7 +4,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const file = resolve(import.meta.dirname ?? ".", "..", process.argv[2] ?? "DESIGN.md");
+const file = resolve(import.meta.dirname ?? ".", "..", process.argv[2] ?? "docs/design/DESIGN.md");
 const src = readFileSync(file, "utf8");
 
 const problems = [];

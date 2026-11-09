@@ -2,7 +2,7 @@
 
 // components/dashboard/UpgradePanel.tsx — trang Gói dịch vụ.
 //
-// Bố cục dựng lại theo DESIGN-SUBSCRIPTION.md: hàng hạn mức, công tắc kỳ hạn, hàng thẻ
+// Bố cục dựng lại theo docs/design/DESIGN-SUBSCRIPTION.md: hàng hạn mức, công tắc kỳ hạn, hàng thẻ
 // gói (vùng trên trắng + vùng tính năng xám), bảng so sánh chia nhóm, FAQ accordion.
 // Cơ chế được học từ một trang giá khác; tên, chữ, phông, màu và biểu tượng thì không.
 // Nội dung vẫn là của MeetMate và lấy từ bảng IV.3.1 của bản mô tả RTS2026:

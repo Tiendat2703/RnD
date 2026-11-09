@@ -7,7 +7,7 @@
 // góp ý, và bản thân nó chỉ là một banner gài vào danh sách.
 //
 // Xoá dùng chữ danger, không dùng nền danger — nền đỏ chỉ dành cho nút xác nhận
-// trong dialog, theo đúng quy tắc đã ghi ở MEETMATE-DESIGN.md.
+// trong dialog, theo đúng quy tắc đã ghi ở docs/design/MEETMATE-DESIGN.md.
 import { useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { IconInfo, IconMore, IconPencil, IconTrash } from "./icons";

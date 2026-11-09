@@ -3,7 +3,7 @@
  * Mechanics (token architecture, elevation tiers, motion strategy) are reused
  * from the DESIGN.md capture of a competitor's shipped CSS. The brand layer is
  * NOT reproduced: no competitor name, logo, marketing copy or custom fonts.
- * This surface carries the MeetMate identity only; MEETMATE-DESIGN.md is the
+ * This surface carries the MeetMate identity only; docs/design/MEETMATE-DESIGN.md is the
  * contract these tokens implement. DESIGN.md stays as the capture it is.
  *
  * Everything is scoped under `.dash` so nothing here leaks into other routes.
@@ -2637,7 +2637,7 @@ button.nav-item {
   border-radius: var(--radius-pill);
   background: var(--hairline);
 }
-/* ink, not the brand fill: a balance is a fact about your money, and MEETMATE-DESIGN.md
+/* ink, not the brand fill: a balance is a fact about your money, and docs/design/MEETMATE-DESIGN.md
    reserves petrol for what MeetMate generated. Same decision as .credit-card__meter
    below, so the rail and the pricing page read the same bar the same way. */
 .plan-strip__bar {
@@ -3562,7 +3562,7 @@ button.nav-item {
 .doc-indexed { white-space: nowrap; }
 
 /* ================================================================== */
-/* Trang Gói dịch vụ — xem DESIGN-SUBSCRIPTION.md                       */
+/* Trang Gói dịch vụ — xem docs/design/DESIGN-SUBSCRIPTION.md                       */
 /* ================================================================== */
 
 .sub { max-width: 1180px; margin-inline: auto; display: flex; flex-direction: column; gap: var(--sp-lg); }

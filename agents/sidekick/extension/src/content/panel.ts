@@ -1,7 +1,7 @@
 // Panel MeetMate nằm ngay trong trang Google Meet (shadow DOM, không đụng CSS của
 // Meet). Đây là nơi người dùng theo dõi phiên. Nó nổi trên lưới video tối của Meet
 // nên luôn dùng theme tối; mọi thứ khác — token, hàng sáu bước, dải cảnh báo, giải
-// phẫu bài đăng — là cùng một bộ với popup và web console (MEETMATE-DESIGN.md).
+// phẫu bài đăng — là cùng một bộ với popup và web console (docs/design/MEETMATE-DESIGN.md).
 //
 // Nguồn được vẽ bằng `toChatPosts` của web (lib/formatChat.ts), nên thẻ ở đây và tin
 // thật gõ vào chat Meet không thể lệch nhau về chữ hay số ký tự.

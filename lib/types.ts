@@ -1,6 +1,6 @@
 // lib/types.ts — hợp đồng dữ liệu dùng chung giữa web console và extension.
 //
-// Mọi giới hạn ở đây khớp `2026-11-01-meetmate-extension.md` (Task 5–6) và
+// Mọi giới hạn ở đây khớp `docs/plans/2026-11-01-meetmate-extension.md` (Task 5–6) và
 // `agents/sidekick/shared/types.ts`. Web và extension phải import cùng một bộ
 // hằng số này: hai bản sao của cùng một con số thể là hai con số khác nhau sau
 // một lần sửa, và giới hạn 450 ký tự của chat Meet là thứ không được phép lệch.

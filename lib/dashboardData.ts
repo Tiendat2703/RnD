@@ -2,7 +2,7 @@
 //
 // Mọi con số ở đây lấy từ hai nguồn, không nguồn nào là của đối thủ:
 // - Hạn mức và giá: bản mô tả RTS2026, mục IV.3.1 (bảng giá dự kiến).
-// - Giới hạn kỹ thuật: `2026-11-01-meetmate-extension.md`, và `lib/types.ts`
+// - Giới hạn kỹ thuật: `docs/plans/2026-11-01-meetmate-extension.md`, và `lib/types.ts`
 //   là nơi duy nhất khai báo chúng.
 //
 // Đây vẫn là dữ liệu mẫu: extension chưa ghi được phiên nào thật. Vì vậy mọi
