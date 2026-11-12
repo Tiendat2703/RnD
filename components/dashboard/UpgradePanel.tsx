@@ -17,7 +17,6 @@ import Link from "next/link";
 import { cn } from "../../lib/utils";
 import {
   ACCOUNT,
-  FREE_PLAN,
   PLANS,
   PLAN_MATRIX,
   PLAN_MATRIX_GROUPS,
@@ -39,7 +38,7 @@ function priceOf(p: Plan, cycle: Cycle, people: number) {
       big: p.priceQuarterly ? formatVnd(p.priceQuarterly) : "Theo thỏa thuận",
       unit: "/quý",
       struck: null as string | null,
-      sub: p.min ?? "tối đa 15 người",
+      sub: p.min ?? "không giới hạn người dùng",
     };
   }
   if (p.id === "free") return { big: "0đ", unit: "", struck: null, sub: "không cần thẻ" };
@@ -54,7 +53,7 @@ function priceOf(p: Plan, cycle: Cycle, people: number) {
       sub: `≈ ${formatVnd(perMonth)}/tháng, tiết kiệm ${formatVnd(monthly * 12 - p.priceYearly)}`,
     };
   }
-  const base = p.id === "team" ? `${formatVnd(p.priceMonthly ?? 0)} × ${people} người` : "hạn mức reset hằng tháng";
+  const base = p.id === "team" ? `${formatVnd(p.priceMonthly ?? 0)} × ${people} người` : "sử dụng không giới hạn";
   return {
     big: formatVnd(monthly),
     unit: p.unit ? `/${p.unit.replace("người/", "")}` : "/tháng",
@@ -63,32 +62,8 @@ function priceOf(p: Plan, cycle: Cycle, people: number) {
   };
 }
 
-function Meter({ left, max, label }: { left: number; max: number; label: string }) {
-  return (
-    <div className="sub-meter">
-      <div className="sub-meter__row">
-        <span>{label}</span>
-        <strong>
-          {left}
-          <em>/{max}</em>
-        </strong>
-      </div>
-      <span
-        className="sub-meter__bar"
-        role="progressbar"
-        aria-valuenow={left}
-        aria-valuemin={0}
-        aria-valuemax={max}
-        aria-label={`${left}/${max} ${label} còn lại`}
-      >
-        <i style={{ width: `${Math.max(0, Math.min(100, (left / max) * 100))}%` }} />
-      </span>
-    </div>
-  );
-}
-
 export function UpgradePanel() {
-  const { quota, pushToast } = useDashboard();
+  const { pushToast } = useDashboard();
   const [cycle, setCycle] = useState<Cycle>("month");
   const [people, setPeople] = useState(3);
   const [group, setGroup] = useState(PLAN_MATRIX_GROUPS[0].id);
@@ -104,13 +79,12 @@ export function UpgradePanel() {
   return (
     <div className="sub">
       {/* hạn mức: ba đơn vị tính phí, mỗi đơn vị một thanh, không có thanh tổng */}
-      <section className="sub__usage" aria-label="Hạn mức hiện tại">
+      <section className="sub__usage" aria-label="Quyền sử dụng">
         <div className="sub__card">
-          <h3 className="sub__label">Gói Free còn lại</h3>
+          <h3 className="sub__label">Sử dụng không giới hạn</h3>
           <div className="sub__meters">
-            <Meter left={quota.meetingsLeft} max={FREE_PLAN.meetings} label="Phiên họp" />
-            <Meter left={quota.verificationsLeft} max={FREE_PLAN.verifications} label="Lượt kiểm chứng" />
-            <Meter left={quota.artifactsLeft} max={FREE_PLAN.artifacts} label="Lượt xuất PDF" />
+            <p>Phiên họp, thời lượng và kiểm chứng không giới hạn</p>
+            <p>Tải PDF không giới hạn</p>
           </div>
         </div>
         <div className="sub__card sub__card--now">
@@ -120,7 +94,7 @@ export function UpgradePanel() {
           </div>
           <Link className="btn btn--outline btn--sm" href="/dashboard/profile?tab=plan">
             <IconInfo />
-            Xem giới hạn
+            Xem gói hiện tại
           </Link>
         </div>
       </section>
@@ -167,8 +141,8 @@ export function UpgradePanel() {
                       type="button"
                       className="ppl__btn"
                       aria-label="Bớt một người"
-                      disabled={people <= 3}
-                      onClick={() => setPeople((n) => Math.max(3, n - 1))}
+                      disabled={people <= 1}
+                      onClick={() => setPeople((n) => Math.max(1, n - 1))}
                     >
                       −
                     </button>
@@ -179,8 +153,7 @@ export function UpgradePanel() {
                       type="button"
                       className="ppl__btn"
                       aria-label="Thêm một người"
-                      disabled={people >= 15}
-                      onClick={() => setPeople((n) => Math.min(15, n + 1))}
+                      onClick={() => setPeople((n) => n + 1)}
                     >
                       +
                     </button>
@@ -296,7 +269,7 @@ export function UpgradePanel() {
         </div>
         <p className="sub__note">
           <IconInfo />
-          &ldquo;Không ghi trong bảng&rdquo; nghĩa là tài liệu chưa chốt giới hạn đó, không phải không giới hạn.
+          Số phiên họp, thời lượng, lượt kiểm chứng và tải báo cáo không giới hạn ở mọi gói.
           {" "}Cột Team nhân theo số người dùng.
         </p>
       </section>

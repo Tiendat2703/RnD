@@ -10,10 +10,9 @@
 // Mỗi ô tự có bar theo trần của chính nó. Không có bar tổng vì không tồn tại
 // tỉ lệ "bao nhiêu phần trăm gói đã dùng" nào có nghĩa khi mẫu số khác nhau.
 import Link from "next/link";
-import type { Quota } from "./DashboardContext";
 import { IconZap } from "./icons";
 
-export function PlanCard(_props: { quota: Quota }) {
+export function PlanCard() {
   return (
     <div className="credit-card credit-card--bare">
       <Link className="btn btn--outline btn--block credit-card__cta" href="/dashboard/upgrade">

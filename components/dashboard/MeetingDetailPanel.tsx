@@ -10,6 +10,9 @@
 // Mọi dữ liệu là của phiên thật do extension ghi (chủ đề, nguồn, bản ghi).
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
+import { downloadPdf } from "../../lib/downloadPdf";
+import { getSavedSession } from "../../lib/backendApi";
+import { reportToMarkdown } from "../../lib/report";
 import {
   MEETING_KIND_LABEL,
   RESEARCH_FOOTNOTE,
@@ -168,12 +171,13 @@ export function MeetingDetailPanel() {
 }
 
 function DetailBody({ id, tab }: { id: string; tab: string }) {
-  const { meetings, transcripts, sessionTopics, sessionCards, pushToast, quota, useArtifact, openPricing } =
+  const { meetings, transcripts, sessionTopics, sessionCards, pushToast, saves, savedSessions } =
     useDashboard();
   const cards = sessionCards[id] ?? [];
   const meeting = meetings.find((m) => m.id === id);
   const [cleared, setCleared] = useState(false);
   const [made, setMade] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const saved = useMemo(() => transcripts[id] ?? [], [transcripts, id]);
   const lines = cleared ? [] : saved;
@@ -342,16 +346,28 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
                 <button
                   key={a.id}
                   className={cn("artcard", isMade && "artcard--on")}
-                  onClick={() => {
-                    if (isMade) return;
-                    if (quota.artifactsLeft === 0) {
-                      pushToast("Hết lượt xuất báo cáo PDF của gói Free — xem gói Pro.", "error");
-                      openPricing("pro");
+                  disabled={exporting}
+                  onClick={async () => {
+                    if (a.id === 'chart') {
+                      setMade(a.id);
+                      if (!cards.length) pushToast('Phiên chưa có thẻ đối chiếu để xuất biểu đồ.', 'error');
                       return;
                     }
-                    useArtifact();
-                    setMade(a.id);
-                    pushToast(`Đã tạo "${a.label}" — 1 lượt xuất của gói Free đã dùng.`, "success");
+                    setExporting(true);
+                    try {
+                      const state = saves[id];
+                      const response = state?.phase === 'done' ? state.res :
+                        savedSessions[id]?.syncedAt ? await getSavedSession(id) : null;
+                      const text = response?.report ? reportToMarkdown(response.report) :
+                        cards.length ? reportMarkdown(meeting.title, cards) :
+                        transcriptText ? `Bản ghi cuộc họp (chưa có báo cáo AI)\n\n${transcriptText}\n\n${sourcesText}` : '';
+                      if (!text) throw new Error('Phiên chưa có báo cáo hoặc bản ghi để xuất PDF.');
+                      await downloadPdf(meeting.title, text, `${name}-bao-cao.pdf`);
+                      setMade(a.id);
+                      pushToast('Đã tải báo cáo PDF.', 'success');
+                    } catch (error) {
+                      pushToast(error instanceof Error ? error.message : 'Không xuất được PDF.', 'error');
+                    } finally { setExporting(false); }
                   }}
                 >
                   <span className="artcard__icon">
@@ -365,7 +381,7 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
                     {isMade ? (
                       <>
                         <IconCheck />
-                        Đã tạo
+                        {exporting ? 'Đang xuất…' : 'Tải lại'}
                       </>
                     ) : (
                       <>
@@ -389,8 +405,8 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
             <StatusChart title={meeting.title} cards={cards} onDone={(m) => pushToast(m, "success")} />
           ) : null}
           <p className="dp__footnote">
-            Còn {quota.artifactsLeft} lượt xuất báo cáo PDF trong gói Free. Bản xuất ở đây là bản mẫu — chưa có
-            pipeline tạo file PDF hoặc PNG. Nội dung phiên được thiết kế xóa tối đa 24 giờ sau phiên.
+            Xuất PDF từ báo cáo đã lưu; nếu chưa có báo cáo, xuất các thẻ đối chiếu hoặc bản ghi hiện có.
+            Tải file cục bộ không trừ lượt xuất của gói Free.
           </p>
         </div>
       ) : null}
@@ -430,10 +446,9 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
               <dd>{meeting.sourceCount}</dd>
             </div>
             <div>
-              <dt>Trần gói Free</dt>
+              <dt>Thời lượng cho phép</dt>
               <dd>
-                45 phút/phiên
-                {meeting.durationSec > 45 * 60 ? " — phiên này đã vượt trần" : ""}
+                Không giới hạn
               </dd>
             </div>
           </dl>
