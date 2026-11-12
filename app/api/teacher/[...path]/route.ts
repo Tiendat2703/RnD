@@ -7,11 +7,11 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   const origin = request.headers.get('origin');
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: 'Origin không được phép.' }, { status: 403 });
   const path = (await context.params).path.join('/');
-  if (!/^(?:config|rooms(?:\/[\da-f-]{36}(?:\/(?:info|join|documents|messages))?)?)$/i.test(path)) {
+  if (!/^(?:config|rooms(?:\/[\da-f-]{36}(?:\/(?:info|join|documents|messages|voice(?:\/[\da-f-]{36}\/(?:audio|stop))?))?)?)$/i.test(path)) {
     return Response.json({ error: 'Đường dẫn Teacher không hợp lệ.' }, { status: 404 });
   }
   const headers = new Headers();
-  for (const key of ['Content-Type', 'X-Teacher-Member', 'X-File-Name']) {
+  for (const key of ['Content-Type', 'X-Teacher-Member', 'X-File-Name', 'X-Voice-Sequence']) {
     const value = request.headers.get(key); if (value) headers.set(key, value);
   }
   try {

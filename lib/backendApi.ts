@@ -7,7 +7,7 @@
 import type { SavedSession } from "./bridgeProtocol";
 import type { DocumentMeta, StoredDocument } from "./documents";
 import type { SavedSessionResponse } from "./report";
-import type { CreateTeacherRoom, TeacherAccess, TeacherAction, TeacherConfig, TeacherRoom, TeacherRoomSummary } from "./teacher";
+import type { CreateTeacherRoom, TeacherAccess, TeacherAction, TeacherConfig, TeacherRoom, TeacherRoomSummary, TeacherVoiceSnapshot } from "./teacher";
 
 const BASE = (process.env.NEXT_PUBLIC_MEETMATE_API ?? "http://localhost:3001").replace(/\/$/, "");
 
@@ -95,6 +95,15 @@ export const teacherApi = {
   upload: async (id: string, token: string, file: File) => json<TeacherRoom>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/documents`, {
     method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Teacher-Member': token, 'X-File-Name': encodeURIComponent(file.name) }, body: file,
   })),
-  message: async (id: string, token: string, body: { requestId: string; text: string; action: TeacherAction; documentId?: string }) =>
+  startVoice: async (id: string, token: string, signal?: AbortSignal) => json<TeacherVoiceSnapshot>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/voice`, {
+    method: 'POST', headers: { 'X-Teacher-Member': token }, signal,
+  })),
+  voiceAudio: async (id: string, token: string, voiceId: string, sequence: number, audio: ArrayBuffer, signal?: AbortSignal) => json<TeacherVoiceSnapshot>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/voice/${encodeURIComponent(voiceId)}/audio`, {
+    method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Teacher-Member': token, 'X-Voice-Sequence': String(sequence) }, body: audio, signal,
+  })),
+  stopVoice: async (id: string, token: string, voiceId: string, keepalive = false) => json<{ ok: true }>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/voice/${encodeURIComponent(voiceId)}/stop`, {
+    method: 'POST', headers: { 'X-Teacher-Member': token }, keepalive,
+  })),
+  message: async (id: string, token: string, body: { requestId: string; text: string; action: TeacherAction; documentId?: string; source?: 'text' | 'voice'; context?: string[] }) =>
     json<TeacherRoom>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/messages`, { method: 'POST', headers: { 'X-Teacher-Member': token }, body: JSON.stringify(body) })),
 };

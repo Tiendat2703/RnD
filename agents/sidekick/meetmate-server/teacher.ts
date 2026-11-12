@@ -21,6 +21,8 @@ export const teacherMessageSchema = z.object({
   requestId: z.string().uuid(), text: z.string().trim().min(1).max(TEACHER_LIMITS.messageChars),
   action: z.enum(['ask', 'teach', 'exercises', 'solve', 'research']),
   documentId: z.string().uuid().optional(),
+  source: z.enum(['text', 'voice']).optional(),
+  context: z.array(z.string().max(1000)).max(4).optional(),
 });
 type StoredRoom = Omit<TeacherRoom, 'busy' | 'members'> & { members: (TeacherMember & { token: string })[] };
 export type TeacherSearch = (query: string, signal: AbortSignal) => Promise<{ title: string; url: string; text: string }[]>;
@@ -47,9 +49,10 @@ function metadata(room: StoredRoom): TeacherRoomSummary {
 export class TeacherService {
   private readonly queues = new Map<string, Promise<unknown>>();
   private readonly generating = new Set<string>();
-  constructor(private readonly dir: string, private readonly chat: Chat | null, private readonly search: TeacherSearch | null) {}
+  constructor(private readonly dir: string, private readonly chat: Chat | null, private readonly search: TeacherSearch | null, private readonly voiceConfigured = false) {}
 
-  config(): TeacherConfig { return { ai: Boolean(this.chat), web: Boolean(this.search) }; }
+  config(): TeacherConfig { return { ai: Boolean(this.chat), web: Boolean(this.search), voice: this.voiceConfigured }; }
+  async authorize(id: string, token: string): Promise<TeacherMember> { return this.member(await this.read(id), token); }
 
   private path(id: string): string {
     if (!z.string().uuid().safeParse(id).success) throw new HttpError(400, 'Mã phòng học không hợp lệ.');
@@ -157,12 +160,13 @@ export class TeacherService {
       if (!this.chat) throw new HttpError(503, 'Teacher chưa có kết nối AI. Thêm BLAZE_API_KEY vào agents/sidekick/.env.local để bắt đầu học.');
       if (input.action === 'research' && !this.search) throw new HttpError(503, 'Tìm tài liệu web cần EXA_API_KEY trong cấu hình backend. Bạn vẫn có thể học từ tài liệu đã tải lên.');
       const existing = room.messages.find(message => message.requestId === input.requestId && message.role === 'student');
-      if (existing && (existing.memberId !== member.id || existing.text !== input.text || existing.action !== input.action || existing.documentId !== input.documentId)) throw new HttpError(409, 'Mã yêu cầu đã được sử dụng.');
+      if (existing && (existing.memberId !== member.id || existing.text !== input.text || existing.action !== input.action || existing.documentId !== input.documentId
+        || (existing.source ?? 'text') !== (input.source ?? 'text') || JSON.stringify(existing.context ?? []) !== JSON.stringify(input.context ?? []))) throw new HttpError(409, 'Mã yêu cầu đã được sử dụng.');
       let reply = room.messages.find(message => message.requestId === input.requestId && message.role === 'teacher');
       if (reply?.status === 'complete') return this.view(room);
       if (room.messages.length >= 400 && !existing) throw new HttpError(400, 'Phòng đã có 200 lượt trao đổi. Hãy mở phòng mới cho bài học tiếp theo.');
       if (!existing) room.messages.push({ id: randomUUID(), requestId: input.requestId, role: 'student', memberId: member.id,
-        name: member.name, text: input.text, action: input.action, documentId: input.documentId, createdAt: Date.now(), status: 'complete' });
+        name: member.name, text: input.text, action: input.action, documentId: input.documentId, source: input.source ?? 'text', context: input.context, createdAt: Date.now(), status: 'complete' });
       if (!reply) {
         reply = { id: randomUUID(), requestId: input.requestId, role: 'teacher', name: 'Teacher', text: '', action: input.action, createdAt: Date.now(), status: 'pending' };
         room.messages.push(reply);
@@ -180,7 +184,7 @@ export class TeacherService {
           { role: 'user', content: JSON.stringify({
             subject: room.subject, goal: room.goal, level: room.level, mode: room.mode,
             members: room.members.map(member => member.name), asking: member.name, action: input.action,
-            question: input.text, history: room.messages.filter(message => message.status === 'complete').slice(-20).map(({ name, role, text }) => ({ name, role, text })),
+            question: input.text, spokenContext: input.context ?? [], history: room.messages.filter(message => message.status === 'complete').slice(-20).map(({ name, role, text }) => ({ name, role, text })),
             documents: passages, webResults: sources,
           }) },
         ], signal);

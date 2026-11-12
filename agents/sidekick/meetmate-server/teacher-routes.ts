@@ -1,8 +1,9 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import { createTeacherSchema, teacherJoinSchema, teacherMessageSchema, type TeacherService } from './teacher';
 import { HttpError } from './service';
+import type { TeacherVoiceService } from './teacher-voice';
 
-export function teacherRouter(service: TeacherService) {
+export function teacherRouter(service: TeacherService, voice?: TeacherVoiceService) {
   const router = express.Router();
   const route = (fn: (req: Request) => unknown | Promise<unknown>) => (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve().then(() => fn(req)).then(data => res.json(data), next);
@@ -18,6 +19,16 @@ export function teacherRouter(service: TeacherService) {
   }));
   router.get('/rooms/:id/info', route(req => service.info(id(req))));
   router.get('/rooms/:id', route(req => service.get(id(req), token(req))));
+  if (voice) {
+    router.post('/rooms/:id/voice', route(req => voice.start(id(req), token(req))));
+    router.post('/rooms/:id/voice/:voiceId/audio', express.raw({ type: 'application/octet-stream', limit: '32kb' }), route(req => {
+      if (!Buffer.isBuffer(req.body)) throw new HttpError(400, 'Không nhận được âm thanh.');
+      const sequence = req.header('X-Voice-Sequence') ?? '';
+      if (!/^\d+$/.test(sequence)) throw new HttpError(400, 'Gói âm thanh thiếu số thứ tự.');
+      return voice.audio(id(req), token(req), String(req.params.voiceId), Number(sequence), req.body);
+    }));
+    router.post('/rooms/:id/voice/:voiceId/stop', route(req => voice.stop(id(req), token(req), String(req.params.voiceId))));
+  }
   router.post('/rooms/:id/join', route(req => {
     const parsed = teacherJoinSchema.safeParse(req.body);
     if (!parsed.success) throw new HttpError(400, 'Hãy nhập tên của bạn (tối đa 60 ký tự).');

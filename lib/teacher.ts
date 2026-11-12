@@ -18,6 +18,8 @@ export interface TeacherMessage {
   text: string; action: TeacherAction; createdAt: number; status: 'complete' | 'pending' | 'error';
   citations?: TeacherCitation[]; sources?: TeacherSource[];
   documentId?: string;
+  source?: 'text' | 'voice';
+  context?: string[];
 }
 export interface TeacherRoomSummary {
   id: string; title: string; subject: string; goal: string; level: string; mode: 'solo' | 'group';
@@ -30,4 +32,12 @@ export interface CreateTeacherRoom {
   title: string; subject: string; goal: string; level: string; mode: 'solo' | 'group'; name: string;
 }
 export interface TeacherAccess { room: TeacherRoom; memberToken: string }
-export interface TeacherConfig { ai: boolean; web: boolean }
+export interface TeacherQuestionRequest {
+  requestId: string; text: string; action: TeacherAction; documentId?: string; source?: 'text' | 'voice'; context?: string[];
+}
+export interface TeacherConfig { ai: boolean; web: boolean; voice: boolean }
+export interface TeacherVoiceFinal { sequence: number; text: string }
+export interface TeacherVoiceSnapshot {
+  id: string; status: 'connecting' | 'listening' | 'reconnecting' | 'closed' | 'error';
+  partial: string; finals: TeacherVoiceFinal[]; error: string | null;
+}

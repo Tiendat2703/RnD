@@ -7,6 +7,7 @@ import { SESSION_ID, sessionSchema } from './schema';
 import { HttpError, type SessionService } from './service';
 import type { TeacherService } from './teacher';
 import { teacherRouter } from './teacher-routes';
+import type { TeacherVoiceService } from './teacher-voice';
 
 export interface AppOptions {
   service: SessionService;
@@ -14,6 +15,7 @@ export interface AppOptions {
   /** origin web được phép gọi, ví dụ http://localhost:3000 */
   allowedOrigins: string[];
   teacher?: TeacherService;
+  teacherVoice?: TeacherVoiceService;
 }
 
 type Handler = (req: Request, res: Response) => Promise<unknown>;
@@ -35,7 +37,7 @@ const textDocSchema = z.object({
   pages: z.array(z.string().max(2_000_000)).min(1).max(5_000),
 });
 
-export function createApp({ service, documents, allowedOrigins, teacher }: AppOptions) {
+export function createApp({ service, documents, allowedOrigins, teacher, teacherVoice }: AppOptions) {
   const app = express();
   const allowed = new Set(allowedOrigins);
 
@@ -51,7 +53,7 @@ export function createApp({ service, documents, allowedOrigins, teacher }: AppOp
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Teacher-Member, X-File-Name');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Teacher-Member, X-File-Name, X-Voice-Sequence');
     }
     if (req.method === 'OPTIONS') {
       res.sendStatus(204);
@@ -61,7 +63,7 @@ export function createApp({ service, documents, allowedOrigins, teacher }: AppOp
   });
 
   app.use(express.json({ limit: '10mb' }));
-  if (teacher) app.use('/api/teacher', teacherRouter(teacher));
+  if (teacher) app.use('/api/teacher', teacherRouter(teacher, teacherVoice));
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });

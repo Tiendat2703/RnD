@@ -42,6 +42,17 @@
 .dash .teacher-room-head h2 { font: 600 28px/1.3 var(--font-display); margin: 10px 0 8px; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .dash .teacher-room-head p { color: var(--muted-ink); font-size: 13px; margin: 0; }
 .dash .teacher-room-head p span { margin: 0 8px; }
+.dash .teacher-room-head__actions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.dash .teacher-voice { border: 1px solid var(--hairline); border-radius: 12px; background: var(--canvas); padding: 14px 18px; margin: 0 0 18px; }
+.dash .teacher-voice__status { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.dash .teacher-voice__status svg { width: 18px; height: 18px; color: var(--primary); flex-shrink: 0; }
+.dash .teacher-voice__status > span { margin-left: auto; font-size: 10px; color: var(--muted-ink); }
+.dash .teacher-voice > p { font-size: 12px; line-height: 1.8; color: var(--muted-ink); margin: 10px 0 0; }
+.dash .teacher-voice__transcript { margin-top: 12px; font-size: 12px; }
+.dash .teacher-voice__transcript summary { cursor: pointer; color: var(--mm-source); }
+.dash .teacher-voice__transcript { max-height: 150px; overflow-y: auto; }
+.dash .teacher-voice__transcript p { margin: 8px 0; line-height: 1.7; overflow-wrap: anywhere; }
+.dash .teacher-voice__partial { color: var(--mm-provenance-ink) !important; font-style: italic; }
 .dash .teacher-back { font-size: 12px; color: var(--muted-ink); text-decoration: none; }
 .dash .teacher-back:hover { color: var(--primary); }
 .dash .teacher-invite { display: grid; gap: 8px; padding: 14px 18px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--canvas); font-size: 12px; margin-bottom: 16px; }

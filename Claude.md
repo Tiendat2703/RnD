@@ -39,7 +39,7 @@ Nút "Chạy thử với dữ liệu mẫu" trên web vẫn có và được g�
 
 ## 3. Cấu trúc repo
 
-**Teacher:** bước chọn assistant trong `CreateSessionWizard.tsx` mở thêm phòng học tại `/dashboard/teacher`. Hợp đồng dùng chung ở `lib/teacher.ts`; API phòng, tải file, hội thoại và nguồn ở `agents/sidekick/meetmate-server/teacher*.ts`; web gọi qua `app/api/teacher/[...path]/route.ts`. Teacher có chat, tài liệu và học nhóm đồng bộ, chưa có giọng nói. Cần khóa Blaze ở backend và khóa Exa cho tìm web. Chi tiết phạm vi và cách kiểm tra: `docs/plans/teacher-study-rooms.md`.
+**Teacher:** bước chọn assistant trong `CreateSessionWizard.tsx` mở thêm phòng học tại `/dashboard/teacher`. Hợp đồng dùng chung ở `lib/teacher.ts`; API phòng, tải file, hội thoại và nguồn ở `agents/sidekick/meetmate-server/teacher*.ts`; web gọi qua `app/api/teacher/[...path]/route.ts`. Teacher có micro nhận giọng nói, chat, tài liệu và học nhóm đồng bộ; trả lời bằng chữ, chưa có phát âm thanh. Micro dùng Blaze STT như Assistant, chỉ gửi câu hỏi khi gọi “trợ lý”; chức năng được chọn theo yêu cầu học tập. Cần khóa Blaze ở backend và khóa Exa cho tìm web. Chi tiết phạm vi và cách kiểm tra: `docs/plans/teacher-study-rooms.md`.
 
 - `app/`, `components/`, `hooks/`, `lib/`, `mocks/`: web console Next.js 16, React 18, TypeScript, không Tailwind. CSS thường (`app/globals.css`, `app/dashboard/dashboard.css`).
 - `lib/types.ts`: hợp đồng dữ liệu web ↔ extension (`LIMITS`, `Topic`, `ResearchResult`…). Sửa hằng số ở đây, không sửa ở nơi dùng.

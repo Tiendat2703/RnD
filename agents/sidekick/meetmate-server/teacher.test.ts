@@ -83,6 +83,16 @@ describe('Teacher rooms', () => {
     expect(room.messages.at(-1)?.sources).toEqual([{ title: 'Đại học', url: 'https://university.example/lesson' }]);
   });
 
+  it('uses spoken context and keeps the speaker identity for a microphone question', async () => {
+    const chat = vi.fn<Chat>(async () => response);
+    const { service, access } = await setup(chat);
+    const room = await service.message(access.room.id, access.memberToken, {
+      requestId: randomUUID(), text: 'Giảng phần này', action: 'teach', source: 'voice', context: ['Đang học xác suất có điều kiện.'],
+    });
+    expect(room.messages[0]).toMatchObject({ source: 'voice', name: 'Lan', action: 'teach' });
+    expect(JSON.parse(chat.mock.calls[0][0][1].content).spokenContext).toEqual(['Đang học xác suất có điều kiện.']);
+  });
+
   it('serializes concurrent group questions and makes repeated requests idempotent', async () => {
     const chat = vi.fn<Chat>(async () => response);
     const { service, access } = await setup(chat);

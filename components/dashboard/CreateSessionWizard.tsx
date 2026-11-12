@@ -162,7 +162,7 @@ export function CreateSessionWizard() {
           <p className="wiz__note">
             <IconInfo />
             <span>
-              {assistant === 'teacher' ? 'Teacher hoạt động ngay trên web. Học qua chat, tải tài liệu và mời nhóm vào cùng phòng.' : 'Assistant nghe cuộc họp từ extension Chrome. Gọi “trợ lý” để tra tài liệu hoặc tìm web.'}
+              {assistant === 'teacher' ? 'Teacher hoạt động ngay trên web. Hỏi bằng micro hoặc chat, tải tài liệu và mời nhóm vào cùng phòng. Teacher trả lời bằng chữ.' : 'Assistant nghe cuộc họp từ extension Chrome. Gọi “trợ lý” để tra tài liệu hoặc tìm web.'}
             </span>
           </p>
         </aside>
