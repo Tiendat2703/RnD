@@ -12,7 +12,7 @@ npm run extension:build
 1. Mở `chrome://extensions`, bật **Developer mode**, bấm **Load unpacked** rồi chọn thư mục `agents/sidekick/dist-extension`.
 2. Vào một cuộc họp Google Meet, bấm biểu tượng MeetMate trên thanh công cụ để mở side panel.
 3. Trong **Cài đặt**, nhập khóa Blaze (bắt buộc) và khóa Exa (nếu muốn research web).
-4. Trong **Tài liệu**, thêm các file PDF có lớp chữ.
+4. Tài liệu không còn tải lên ở side panel. Chạy web console và backend MeetMate (`npm run dev` ở thư mục gốc, `npm run meetmate:server` ở `agents/sidekick`), thêm PDF ở trang **Tài liệu** của web, chọn tài liệu khi tạo **Cuộc họp mới** rồi bấm **Gửi phiên cho MeetMate**. Extension thay kho tài liệu bằng đúng tài liệu của phiên đó; mục **Tài liệu** trong side panel chỉ để xem. Bắt đầu nghe mà không có phiên từ web thì cuộc họp không có tài liệu.
 5. Bấm **Bắt đầu nghe**. Lần đầu Chrome sẽ hỏi quyền micro. Nên đeo tai nghe khi dùng.
 
 Để tìm kiếm, nói **"Trợ lý ơi, …"** rồi đặt câu hỏi. Chỉ từ khóa **"trợ lý"** mới kích hoạt xử lý; gọi "MeetMate ơi" không kích hoạt nữa. Nếu nói riêng "Trợ lý ơi", câu tiếp theo trong vòng 10 giây được dùng làm câu hỏi. Mỗi lần gọi chỉ xử lý một câu hỏi; muốn hỏi tiếp phải gọi lại từ khóa.

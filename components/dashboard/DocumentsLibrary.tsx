@@ -1,55 +1,74 @@
 "use client";
 
-// components/dashboard/DocumentsLibrary.tsx — kho tài liệu đối chiếu.
+// components/dashboard/DocumentsLibrary.tsx — thư viện tài liệu đối chiếu.
 //
-// Trang này là "lớp mục tiêu", không phải một tính năng đã xong: chưa có tải lên, trích
-// xuất, embedding hay truy xuất thật. File .docx chỉ được đọc trên máy để hiện số đoạn;
-// danh sách bắt đầu rỗng và không có dữ liệu mẫu nào.
+// Tài liệu lưu ở backend MeetMate (agents/sidekick/meetmate-server). PDF gửi nguyên file, backend
+// đọc lớp chữ và chia đoạn theo trang; .docx và văn bản dán được đọc trên trình duyệt rồi gửi
+// các trang chữ. Khi tạo cuộc họp, người dùng chọn tài liệu; nội dung đi kèm phiên sang extension.
 import { useRef, useState } from "react";
-import { initialDocs, type DocItem } from "../../lib/dashboardData";
 import { parseDocx, type ParsedDoc } from "../../lib/docxText";
+import { DOC_LIMITS } from "../../lib/documents";
 import { useDashboard } from "./DashboardContext";
 import { Dialog } from "./Dialog";
 import { IconFolder, IconInfo, IconPlus, IconTrash, IconX } from "./icons";
 
 const DAY = new Intl.DateTimeFormat("vi-VN", { day: "numeric", month: "short", year: "numeric" });
+const isPdf = (f: File) => /\.pdf$/i.test(f.name) || f.type === "application/pdf";
+const isDocx = (f: File) => /\.docx$/i.test(f.name);
+const sizeLabel = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+/** File đã chọn trong hộp thoại: PDF chưa đọc (backend đọc), hoặc .docx đã đọc trên máy. */
+type Picked = { kind: "pdf"; file: File } | { kind: "docx"; file: File; parsed: ParsedDoc };
 
 export function DocumentsLibrary() {
-  const { pushToast } = useDashboard();
-  const [docs, setDocs] = useState<DocItem[]>(initialDocs);
+  const { pushToast, documents, docsLoaded, docsError, refreshDocuments, addDocument, removeDocument } = useDashboard();
   const [addOpen, setAddOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [parsed, setParsed] = useState<ParsedDoc | null>(null);
-  const [fileName, setFileName] = useState("");
+  const [picked, setPicked] = useState<Picked | null>(null);
   const [fileError, setFileError] = useState("");
   const [reading, setReading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const counter = useRef(0);
 
   const resetAdd = () => {
     setTitle("");
     setBody("");
-    setParsed(null);
-    setFileName("");
+    setPicked(null);
     setFileError("");
     setDragging(false);
+  };
+
+  const close = () => {
+    if (saving) return;
+    setAddOpen(false);
+    resetAdd();
   };
 
   const pickFile = async (file: File | undefined) => {
     if (!file) return;
     setFileError("");
-    setParsed(null);
-    if (!/\.docx$/i.test(file.name)) {
-      setFileError("Bản mẫu chỉ đọc file .docx. PDF và XLSX là phạm vi kiến trúc, chưa làm ở bản này.");
+    setPicked(null);
+    if (isPdf(file)) {
+      if (file.size > DOC_LIMITS.maxPdfBytes) {
+        setFileError(`${file.name}: file lớn hơn 40 MB.`);
+        return;
+      }
+      setPicked({ kind: "pdf", file });
+      setTitle((t) => t.trim() || file.name.replace(/\.pdf$/i, ""));
+      return;
+    }
+    if (!isDocx(file)) {
+      setFileError("Chỉ đọc được file PDF (có lớp chữ) và .docx.");
       return;
     }
     setReading(true);
     try {
-      const doc = await parseDocx(file);
-      setParsed(doc);
-      setFileName(file.name);
+      const parsed = await parseDocx(file);
+      setPicked({ kind: "docx", file, parsed });
       setTitle((t) => t.trim() || file.name.replace(/\.docx$/i, ""));
     } catch (e) {
       setFileError(e instanceof Error ? e.message : "Không đọc được file này.");
@@ -58,96 +77,116 @@ export function DocumentsLibrary() {
     }
   };
 
-  const canSave = title.trim() !== "" && (parsed !== null || body.trim() !== "");
+  const canSave = !saving && !reading && title.trim() !== "" && (picked !== null || body.trim() !== "");
 
-  const save = () => {
+  const save = async () => {
     if (!canSave) return;
-    const id = `doc-new-${++counter.current}`;
-    let item: DocItem;
-    if (parsed) {
-      item = {
-        id,
-        title: title.trim(),
-        excerpt: parsed.paragraphs.map((p) => p.text).join(" ").slice(0, 220),
-        addedAt: new Date().toISOString(),
-        format: "DOCX",
-        chunks: parsed.chunks.length,
-        scope: "Cá nhân",
-        owner: "Bạn",
-      };
-    } else {
-      item = { id, title: title.trim(), excerpt: body.trim(), addedAt: new Date().toISOString() };
+    const name = title.trim();
+    setSaving(true);
+    setFileError("");
+    try {
+      let meta;
+      if (picked?.kind === "pdf") {
+        // backend lấy tên từ file: đổi tên file theo ô "Tên tài liệu"
+        const fileName = /\.pdf$/i.test(name) ? name : `${name}.pdf`;
+        meta = await addDocument(new File([picked.file], fileName, { type: "application/pdf" }));
+      } else if (picked?.kind === "docx") {
+        meta = await addDocument({
+          name,
+          format: "DOCX",
+          size: picked.file.size,
+          pages: [picked.parsed.paragraphs.map((p) => p.text).join("\n")],
+        });
+      } else {
+        meta = await addDocument({ name, format: "TEXT", size: new Blob([body]).size, pages: [body.trim()] });
+      }
+      setAddOpen(false);
+      resetAdd();
+      pushToast(`Đã thêm “${meta.name}”: ${meta.pageCount} trang, ${meta.chunkCount} đoạn.`);
+    } catch (e) {
+      setFileError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
     }
-    setDocs((prev) => [item, ...prev]);
-    setAddOpen(false);
-    resetAdd();
-    pushToast(parsed ? `Đã đọc ${parsed.chunks.length} đoạn từ ${fileName} và thêm vào thư viện.` : "Đã thêm tài liệu vào thư viện.");
+  };
+
+  const remove = async (id: string, name: string) => {
+    setDeleting(id);
+    try {
+      await removeDocument(id);
+      pushToast(`Đã xóa “${name}”.`);
+    } catch (e) {
+      pushToast(e instanceof Error ? e.message : String(e), "error");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   return (
     <>
       <div className="toolbar">
-        <button className="btn btn--primary" onClick={() => setAddOpen(true)}>
+        <button className="btn btn--primary" onClick={() => setAddOpen(true)} disabled={!!docsError}>
           <IconPlus />
           Thêm tài liệu
         </button>
       </div>
 
-      <p className="kb-note">
-        <IconInfo />
-        <span>
-          <strong>Giao diện mục tiêu.</strong> Chưa có tải lên, trích xuất hay truy xuất thật: tài liệu
-          chỉ nằm trong trang này và MeetMate chưa dùng chúng để đối chiếu nhận định trong cuộc họp.
-        </span>
-      </p>
+      {docsError ? (
+        <p className="kb-note" role="alert">
+          <IconInfo />
+          <span>
+            <strong>Chưa đọc được thư viện.</strong> {docsError}{" "}
+            <button type="button" className="btn btn--ghost btn--sm" onClick={() => void refreshDocuments()}>
+              Thử lại
+            </button>
+          </span>
+        </p>
+      ) : (
+        <p className="kb-note">
+          <IconInfo />
+          <span>
+            Tài liệu lưu ở backend MeetMate trên máy này. Khi tạo cuộc họp, chọn tài liệu cần đối chiếu;
+            trong họp, nói “Trợ lý ơi, …” để MeetMate tra trong đó và trích dẫn tên file, số trang. Mỗi
+            lần tra, nội dung tài liệu được gửi tới Blaze.
+          </span>
+        </p>
+      )}
 
-      {docs.length === 0 ? (
+      {!docsLoaded ? null : documents.length === 0 ? (
         <div className="empty-state">
           <IconFolder />
           <h3>Chưa có tài liệu nào</h3>
           <p>
-            Thêm bảng giá, tài liệu sản phẩm hoặc bộ câu hỏi bạn muốn đối chiếu khi
-            họp. MeetMate chưa truy xuất những file này — chúng là lớp mục tiêu.
+            Thêm hợp đồng, kế hoạch, bảng giá hoặc tài liệu sản phẩm bạn muốn MeetMate tra cứu khi
+            được hỏi trong cuộc họp.
           </p>
         </div>
       ) : (
         <div className="object-grid">
-          {docs.map((doc) => (
+          {documents.map((doc) => (
             <article className="doc-card" key={doc.id}>
               <div className="session-card__top">
-                <h3 className="doc-card__name">{doc.title}</h3>
+                <h3 className="doc-card__name">{doc.name}</h3>
                 <button
                   className="icon-btn"
-                  aria-label={`Xóa ${doc.title}`}
-                  onClick={() => {
-                    setDocs((prev) => prev.filter((d) => d.id !== doc.id));
-                    pushToast("Đã xóa tài liệu.");
-                  }}
+                  aria-label={`Xóa ${doc.name}`}
+                  disabled={deleting === doc.id}
+                  onClick={() => void remove(doc.id, doc.name)}
                 >
                   <IconTrash />
                 </button>
               </div>
               <p className="doc-card__excerpt">{doc.excerpt}</p>
-              {doc.format ? (
-                <ul className="doc-meta" aria-label="Thông tin lập chỉ mục">
-                  <li>{doc.format}</li>
-                  {doc.pages ? <li>{doc.pages} trang</li> : null}
-                  <li>{doc.chunks} đoạn</li>
-                  <li>{doc.scope}</li>
-                </ul>
-              ) : null}
-              {doc.format ? (
-                <div className="doc-foot">
-                  <span>
-                    {doc.owner} · {DAY.format(new Date(doc.addedAt))}
-                  </span>
-                  <span className="doc-indexed">Đã lập chỉ mục</span>
-                </div>
-              ) : (
-                <div className="doc-card__actions">
-                  <span className="pill pill--credit">Thêm ngày {DAY.format(new Date(doc.addedAt))}</span>
-                </div>
-              )}
+              <ul className="doc-meta" aria-label="Thông tin tài liệu">
+                <li>{doc.format}</li>
+                <li>{doc.pageCount} trang</li>
+                <li>{doc.chunkCount} đoạn</li>
+                {doc.size ? <li>{sizeLabel(doc.size)}</li> : null}
+              </ul>
+              <div className="doc-foot">
+                <span>Thêm ngày {DAY.format(new Date(doc.addedAt))}</span>
+                <span className="doc-indexed">Đã chia đoạn</span>
+              </div>
             </article>
           ))}
         </div>
@@ -155,25 +194,16 @@ export function DocumentsLibrary() {
 
       <Dialog
         open={addOpen}
-        onClose={() => {
-          setAddOpen(false);
-          resetAdd();
-        }}
+        onClose={close}
         title="Thêm tài liệu"
-        description="Tải một file .docx lên, MeetMate tự đọc và chia thành các đoạn để đối chiếu trong cuộc họp. File được đọc ngay trên máy bạn, không gửi đi đâu."
+        description="Tải lên file PDF (có lớp chữ) hoặc .docx. Backend MeetMate trên máy này đọc và chia tài liệu thành các đoạn có số trang để trích dẫn."
         footer={
           <>
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                setAddOpen(false);
-                resetAdd();
-              }}
-            >
+            <button className="btn btn--ghost" onClick={close} disabled={saving}>
               Hủy
             </button>
-            <button className="btn btn--primary" disabled={!canSave} onClick={save}>
-              Lưu tài liệu
+            <button className="btn btn--primary" disabled={!canSave} onClick={() => void save()}>
+              {saving ? "Đang đọc tài liệu…" : "Lưu tài liệu"}
             </button>
           </>
         }
@@ -181,9 +211,9 @@ export function DocumentsLibrary() {
         <input
           ref={fileRef}
           type="file"
-          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           className="visually-hidden"
-          aria-label="Chọn file .docx"
+          aria-label="Chọn file PDF hoặc .docx"
           onChange={(e) => {
             void pickFile(e.target.files?.[0]);
             e.target.value = "";
@@ -202,32 +232,26 @@ export function DocumentsLibrary() {
             void pickFile(e.dataTransfer.files?.[0]);
           }}
         >
-          {parsed ? (
+          {picked ? (
             <div className="dropzone__done">
-              <strong>{fileName}</strong>
+              <strong>{picked.file.name}</strong>
               <span>
-                Đã đọc {parsed.paragraphs.length} đoạn văn, khoảng {parsed.wordCount.toLocaleString("vi-VN")} từ, chia
-                thành {parsed.chunks.length} đoạn truy xuất.
+                {picked.kind === "pdf"
+                  ? `PDF, ${sizeLabel(picked.file.size)}. Backend đọc lớp chữ khi bạn bấm Lưu.`
+                  : `Đã đọc ${picked.parsed.paragraphs.length} đoạn văn, khoảng ${picked.parsed.wordCount.toLocaleString("vi-VN")} từ.`}
               </span>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => {
-                  setParsed(null);
-                  setFileName("");
-                }}
-              >
+              <button type="button" className="btn btn--ghost btn--sm" disabled={saving} onClick={() => setPicked(null)}>
                 <IconX />
                 Chọn file khác
               </button>
             </div>
           ) : (
             <>
-              <p>{reading ? "Đang đọc file…" : "Kéo file .docx vào đây"}</p>
+              <p>{reading ? "Đang đọc file…" : "Kéo file PDF hoặc .docx vào đây"}</p>
               <button type="button" className="btn btn--outline btn--sm" disabled={reading} onClick={() => fileRef.current?.click()}>
-                Chọn file .docx
+                Chọn file
               </button>
-              <small>Tối đa 10 MB. PDF và XLSX chưa đọc được ở bản mẫu.</small>
+              <small>PDF tối đa 40 MB, .docx tối đa 10 MB. PDF scan (không có lớp chữ) chưa đọc được.</small>
             </>
           )}
         </div>
@@ -248,9 +272,10 @@ export function DocumentsLibrary() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
+          <p className="field__hint">Tên này hiện trong trích dẫn khi MeetMate trả lời trong cuộc họp.</p>
         </div>
 
-        {!parsed ? (
+        {!picked ? (
           <details className="dropzone__alt">
             <summary>Hoặc dán nội dung thay cho file</summary>
             <textarea

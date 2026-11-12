@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Server } from 'node:http';
 import type { MeetingReport } from '../../../lib/report';
 import { createApp } from './app';
+import { DocumentStore } from './documents';
 import type { IncomingSession } from './schema';
 import { SessionService, type Generate } from './service';
 import { SessionStore } from './store';
@@ -33,7 +34,11 @@ const fakeReport = (s: IncomingSession): MeetingReport => ({
 async function setup(generate: Generate = async (s) => fakeReport(s)) {
   const dir = mkdtempSync(join(tmpdir(), 'meetmate-api-'));
   const gen = vi.fn(generate);
-  const app = createApp({ service: new SessionService(new SessionStore(dir), gen), allowedOrigins: [WEB] });
+  const app = createApp({
+    service: new SessionService(new SessionStore(dir), gen),
+    documents: new DocumentStore(dir),
+    allowedOrigins: [WEB],
+  });
   const server = await new Promise<Server>((resolve, reject) => {
     const s = app.listen(0, '127.0.0.1', (error?: Error) => (error ? reject(error) : resolve(s)));
   });
@@ -51,7 +56,15 @@ async function setup(generate: Generate = async (s) => fakeReport(s)) {
     });
     return { status: res.status, body: await res.json(), headers: res.headers };
   };
-  return { call, gen, dir };
+  const upload = async (bytes: Uint8Array, name: string) => {
+    const res = await fetch(`${base}/documents/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/pdf', 'X-File-Name': encodeURIComponent(name), Origin: WEB },
+      body: new Blob([bytes as Uint8Array<ArrayBuffer>]),
+    });
+    return { status: res.status, body: await res.json() };
+  };
+  return { call, upload, gen, dir };
 }
 
 const session = (over: Partial<IncomingSession> = {}): IncomingSession => ({
@@ -139,5 +152,46 @@ describe('MeetMate backend', () => {
     expect((await call('POST', '/sessions/missing/report/retry')).status).toBe(404);
     expect((await call('GET', '/sessions', undefined, 'https://evil.example')).status).toBe(403);
     expect(gen).not.toHaveBeenCalled();
+  });
+});
+
+describe('documents API', () => {
+  it('reads a PDF into page-cited chunks, lists it without content, returns it whole, deletes it', async () => {
+    const { call, upload } = await setup();
+    const pdf = new Uint8Array(readFileSync(join(import.meta.dirname, '../extension/fixtures/hop-dong.pdf')));
+    const saved = await upload(pdf, 'Hợp đồng.pdf');
+    expect(saved.status).toBe(200);
+    expect(saved.body).toMatchObject({ name: 'Hợp đồng.pdf', format: 'PDF', size: pdf.byteLength });
+    expect(saved.body.pageCount).toBeGreaterThan(0);
+    expect(saved.body.chunks).toBeUndefined();
+
+    const list = await call('GET', '/documents');
+    expect(list.body).toHaveLength(1);
+    expect(list.body[0].chunks).toBeUndefined();
+
+    const full = await call('GET', `/documents/${saved.body.id}`);
+    expect(full.body.chunks.length).toBe(saved.body.chunkCount);
+    expect(full.body.chunks[0]).toMatchObject({ docId: saved.body.id, docName: 'Hợp đồng.pdf', page: 1 });
+
+    expect((await call('DELETE', `/documents/${saved.body.id}`)).status).toBe(200);
+    expect((await call('GET', '/documents')).body).toEqual([]);
+  });
+
+  it('takes .docx and pasted text as pages read in the browser', async () => {
+    const { call } = await setup();
+    const res = await call('POST', '/documents/text', { name: 'Ghi chú', format: 'TEXT', size: 30, pages: ['Hạn chót là thứ Sáu. Ngân sách 200 triệu.'] });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ format: 'TEXT', pageCount: 1, chunkCount: 1 });
+    expect(res.body.excerpt).toContain('Hạn chót');
+  });
+
+  it('rejects a broken PDF, empty text, bad ids and a foreign origin', async () => {
+    const { call, upload } = await setup();
+    expect((await upload(new TextEncoder().encode('not a pdf'), 'x.pdf')).status).toBe(422);
+    expect((await call('POST', '/documents/text', { name: 'x', format: 'TEXT', size: 0, pages: ['   '] })).status).toBe(422);
+    expect((await call('POST', '/documents/text', { name: 'x', format: 'PDF', size: 0, pages: ['a'] })).status).toBe(400);
+    expect((await call('GET', '/documents/..%2Fx')).status).toBe(400);
+    expect((await call('GET', '/documents/dmissing1')).status).toBe(404);
+    expect((await call('GET', '/documents', undefined, 'https://evil.example')).status).toBe(403);
   });
 });

@@ -33,13 +33,10 @@ await Promise.all([
     },
     outdir: out,
   }),
-  // pdf.js ships as an ES module, so the side panel loads as <script type="module">.
+  // The side panel loads as <script type="module"> (sidepanel.html).
   build({ ...common, format: 'esm', entryPoints: { sidepanel: 'extension/src/sidepanel.ts' }, outdir: out }),
 ]);
 
+// PDFs are read by the MeetMate backend now (meetmate-server/documents.ts), so pdf.js is not shipped.
 await cp('extension/static', out, { recursive: true });
-const pdfjs = 'node_modules/pdfjs-dist';
-await cp(`${pdfjs}/build/pdf.worker.min.mjs`, `${out}/pdf.worker.min.mjs`);
-await cp(`${pdfjs}/cmaps`, `${out}/cmaps`, { recursive: true });
-await cp(`${pdfjs}/standard_fonts`, `${out}/standard_fonts`, { recursive: true });
 console.log(`Built ${out}/ — chrome://extensions → Developer mode → Load unpacked → chọn thư mục này.`);

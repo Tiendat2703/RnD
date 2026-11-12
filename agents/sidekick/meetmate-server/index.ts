@@ -1,7 +1,8 @@
-// Backend MeetMate: nhận phiên từ web khi người dùng bấm "Lưu phiên", tạo báo cáo.
+// Backend MeetMate: lưu tài liệu đối chiếu do web tải lên; nhận phiên khi người dùng bấm "Lưu phiên", tạo báo cáo.
 // Chạy: npm run meetmate:server (trong agents/sidekick). Cấu hình ở .env.local.
 import { resolve } from 'node:path';
 import { createApp } from './app';
+import { DocumentStore } from './documents';
 import { DEFAULT_LLM_MODEL, DEFAULT_LLM_URL, blazeChat } from './llm';
 import { generateReport } from './report';
 import { SessionService } from './service';
@@ -24,7 +25,7 @@ const service = new SessionService(new SessionStore(dataDir), (session) => {
   return generateReport(session, { chat, model });
 });
 
-createApp({ service, allowedOrigins: origins }).listen(port, '127.0.0.1', () => {
+createApp({ service, documents: new DocumentStore(dataDir), allowedOrigins: origins }).listen(port, '127.0.0.1', () => {
   console.log(`MeetMate backend: http://127.0.0.1:${port}`);
   console.log(`  dữ liệu: ${dataDir}`);
   console.log(`  LLM: ${model} @ ${url}${apiKey ? '' : ' (CHƯA có BLAZE_API_KEY)'}`);

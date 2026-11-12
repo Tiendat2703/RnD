@@ -1,15 +1,17 @@
 // The built extension in a real Chromium, end to end with the real Blaze APIs:
-// side panel → PDF upload → offscreen capture (fake microphone playing the scripted meeting)
+// web console session with documents (read by the backend's parser) → offscreen capture (fake microphone playing the scripted meeting)
 // → AudioWorklet → Blaze STT → document checks with Blaze LLM → content script typing into
 // a stand-in Meet chat. Tab capture needs a real toolbar click, so this drives the
 // microphone-only path; everything after the audio source is the production code.
 //
 // Run: BLAZE_API_KEY=... npm run extension:e2e
 // Needs extension/.cache/meeting.wav: BLAZE_API_KEY=... npx tsx scripts/simulate-meeting.ts --wav extension/.cache/meeting.wav --wav-only
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium, expect, test, type BrowserContext } from '@playwright/test';
+import { toSessionDocument } from '../../../../lib/documents';
+import { buildDocument, readPdf } from '../../meetmate-server/documents';
 
 const root = resolve(import.meta.dirname, '../..');
 const dist = join(root, 'dist-extension');
@@ -73,8 +75,17 @@ test('records the meeting and answers keyword-invoked questions in the Meet chat
   await panel.locator('#blaze-key').dispatchEvent('change');
   await panel.locator('#web-research').uncheck();
 
-  await panel.locator('#file').setInputFiles([join(root, 'extension/fixtures/hop-dong.pdf'), join(root, 'extension/fixtures/ke-hoach.pdf')]);
-  await expect(panel.locator('#docs li:not(.busy)')).toHaveCount(2, { timeout: 30_000 });
+  // Documents now come with the session the web console prepares: the backend reads the PDFs,
+  // the web sends their chunks over the bridge (here straight to the background, as bridge.ts does).
+  const documents = await Promise.all(['hop-dong.pdf', 'ke-hoach.pdf'].map(async name => {
+    const data = new Uint8Array(readFileSync(join(root, 'extension/fixtures', name)));
+    return toSessionDocument(buildDocument(name, 'PDF', data.byteLength, await readPdf(data, name)));
+  }));
+  await panel.evaluate(documents => chrome.runtime.sendMessage({
+    type: 'mm.web',
+    msg: { type: 'session.prepare', session: { id: 'e2e', title: 'E2E', kind: 'khac', sources: 4, autoPost: true, documents } },
+  }), documents);
+  await expect(panel.locator('#docs li:not(.empty)')).toHaveCount(2, { timeout: 30_000 });
   await expect(panel.locator('#docs')).toContainText('hop-dong.pdf');
   await expect(panel.locator('#docs-mode')).toContainText('Toàn bộ tài liệu');
 

@@ -48,25 +48,7 @@ export const FREE_PLAN = {
 /* Knowledge base (User Knowledge Base, mục III.1.2)                   */
 /* ------------------------------------------------------------------ */
 
-export interface DocItem {
-  id: string;
-  title: string;
-  excerpt: string;
-  addedAt: string;
-  /** thông tin lập chỉ mục — chỉ có ở tài liệu kho mẫu */
-  format?: string;
-  pages?: number;
-  chunks?: number;
-  scope?: "Nhóm" | "Cá nhân";
-  owner?: string;
-}
-
-// Chuỗi truy xuất là Meeting Context → User Knowledge Base → External Research,
-// nên tài liệu ở đây là lớp giữa: thứ MeetMate đối chiếu trước khi ra ngoài tìm.
-// Chưa đấu nối với luồng AI — thư mục extension chưa có dòng code nào — nên mọi
-// surface dùng danh sách này phải tự nói rõ điều đó ngay trong nhãn.
-/** Kho tài liệu bắt đầu rỗng: chưa có pipeline tài liệu thật. */
-export const initialDocs: DocItem[] = [];
+// Tài liệu đối chiếu: kiểu ở lib/documents.ts, dữ liệu ở backend MeetMate (lib/backendApi.ts).
 
 /* ------------------------------------------------------------------ */
 /* Bản ghi cuộc họp                                                    */

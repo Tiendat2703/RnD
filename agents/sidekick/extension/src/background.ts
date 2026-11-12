@@ -6,6 +6,8 @@ import {
   type ExtToWeb,
   type SessionDraft,
 } from '../../../../lib/bridgeProtocol';
+import { storedDocsOf } from './docs/session';
+import { replaceDocs } from './docs/store';
 import { isMeetingUrl } from './meet-url';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Msg, type PanelEvent, type PostReply, type Settings, type StartReply } from './messages';
 import { currentId, deleteSession, finishCurrent, listSessions, markSynced, recordEvent, startSession } from './sessionStore';
@@ -120,6 +122,8 @@ async function start(tabId: number, streamId: string | null): Promise<StartReply
   const saved: Settings = { ...DEFAULT_SETTINGS, ...(stored[STORAGE_KEYS.settings] as Partial<Settings> | undefined) };
   // A meeting prepared on the web console with auto-post off never posts to the Meet chat.
   const settings: Settings = draft && !draft.autoPost ? { ...saved, postToChat: false } : saved;
+  // Documents belong to the session the web prepared; a meeting started without one has none.
+  if (!draft) await setDocuments([]);
   await update(() => startView(tabId));
   await beginRecording(draft);
   try {
@@ -288,6 +292,13 @@ async function info(): Promise<ExtInfo> {
   };
 }
 
+/** Replaces the document library and tells the offscreen page and the side panel to reload it. */
+async function setDocuments(docs: Parameters<typeof replaceDocs>[0]): Promise<void> {
+  await replaceDocs(docs);
+  await chrome.runtime.sendMessage({ type: 'mm.docs.changed' } satisfies Msg).catch(() => undefined);
+}
+
+/** The draft kept in session storage: everything but the documents, which go to IndexedDB. */
 function cleanDraft(raw: SessionDraft): SessionDraft {
   return {
     id: String(raw.id).slice(0, 64),
@@ -348,6 +359,7 @@ async function handleWeb(web: Extract<Msg, { type: 'mm.web' }>['msg']): Promise<
     case 'ping':
       return { type: 'pong', info: await info() };
     case 'session.prepare':
+      await setDocuments(storedDocsOf(web.session.documents));
       await chrome.storage.session.set({ [STORAGE_KEYS.session]: cleanDraft(web.session) });
       await setStatus(STATUS_WAITING);
       return undefined;

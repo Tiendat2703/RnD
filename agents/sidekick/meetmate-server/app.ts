@@ -1,10 +1,14 @@
 // HTTP cho web console. Chỉ nghe loopback (xem index.ts) và chỉ nhận origin của web.
 import express, { type NextFunction, type Request, type Response } from 'express';
+import { z } from 'zod';
+import { DOC_LIMITS } from '../../../lib/documents';
+import { buildDocument, cleanName, readPdf, type DocumentStore } from './documents';
 import { SESSION_ID, sessionSchema } from './schema';
 import { HttpError, type SessionService } from './service';
 
 export interface AppOptions {
   service: SessionService;
+  documents: DocumentStore;
   /** origin web được phép gọi, ví dụ http://localhost:3000 */
   allowedOrigins: string[];
 }
@@ -20,7 +24,15 @@ function idParam(req: Request): string {
   return id;
 }
 
-export function createApp({ service, allowedOrigins }: AppOptions) {
+// .docx và văn bản dán được đọc trên trình duyệt; backend chỉ nhận các trang chữ.
+const textDocSchema = z.object({
+  name: z.string().min(1).max(500),
+  format: z.enum(['DOCX', 'TEXT']),
+  size: z.number().int().min(0).max(DOC_LIMITS.maxPdfBytes),
+  pages: z.array(z.string().max(2_000_000)).min(1).max(5_000),
+});
+
+export function createApp({ service, documents, allowedOrigins }: AppOptions) {
   const app = express();
   const allowed = new Set(allowedOrigins);
 
@@ -35,8 +47,8 @@ export function createApp({ service, allowedOrigins }: AppOptions) {
       }
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-File-Name');
     }
     if (req.method === 'OPTIONS') {
       res.sendStatus(204);
@@ -66,6 +78,45 @@ export function createApp({ service, allowedOrigins }: AppOptions) {
 
   app.post('/api/sessions/:id/report/retry', route((req) => service.retry(idParam(req))));
 
+  app.get('/api/documents', route(() => documents.list()));
+
+  app.get('/api/documents/:id', route((req) => documents.get(String(req.params.id ?? ''))));
+
+  // PDF gửi nguyên byte (không multipart); tên file nằm ở header, đã encodeURIComponent.
+  app.post(
+    '/api/documents/pdf',
+    express.raw({ type: 'application/pdf', limit: DOC_LIMITS.maxPdfBytes }),
+    route(async (req) => {
+      if (!Buffer.isBuffer(req.body) || !req.body.length) throw new HttpError(400, 'Không nhận được nội dung file PDF.');
+      let name: string;
+      try {
+        name = cleanName(decodeURIComponent(String(req.headers['x-file-name'] ?? '')));
+      } catch {
+        name = 'Tài liệu.pdf';
+      }
+      const pages = await readPdf(new Uint8Array(req.body), name);
+      return documents.save(buildDocument(name, 'PDF', req.body.length, pages));
+    }),
+  );
+
+  app.post(
+    '/api/documents/text',
+    route(async (req) => {
+      const parsed = textDocSchema.safeParse(req.body);
+      if (!parsed.success) throw new HttpError(400, 'Dữ liệu tài liệu không hợp lệ.');
+      const { name, format, size, pages } = parsed.data;
+      return documents.save(buildDocument(cleanName(name), format, size, pages));
+    }),
+  );
+
+  app.delete(
+    '/api/documents/:id',
+    route(async (req) => {
+      await documents.remove(String(req.params.id ?? ''));
+      return { ok: true };
+    }),
+  );
+
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (error instanceof HttpError) {
       res.status(error.status).json({ error: error.message });
@@ -73,7 +124,7 @@ export function createApp({ service, allowedOrigins }: AppOptions) {
     }
     const type = (error as { type?: string }).type;
     if (type === 'entity.too.large') {
-      res.status(413).json({ error: 'Phiên quá lớn để gửi.' });
+      res.status(413).json({ error: 'Dữ liệu quá lớn để gửi (PDF tối đa 40 MB).' });
       return;
     }
     if (type === 'entity.parse.failed') {

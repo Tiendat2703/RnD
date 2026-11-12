@@ -41,3 +41,20 @@ async function run<T>(mode: IDBTransactionMode, body: (store: IDBObjectStore) =>
 export const listDocs = async () => (await run<StoredDoc[]>('readonly', s => s.getAll())).sort((a, b) => a.addedAt - b.addedAt);
 export const saveDoc = (doc: StoredDoc) => run('readwrite', s => s.put(doc)).then(() => undefined);
 export const deleteDoc = (id: string) => run('readwrite', s => s.delete(id)).then(() => undefined);
+/** Thay toàn bộ kho bằng tài liệu của phiên do web gửi (một giao dịch: không bao giờ nửa cũ nửa mới). */
+export async function replaceDocs(docs: StoredDoc[]): Promise<void> {
+  const db = await open();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      store.clear();
+      for (const doc of docs) store.put(doc);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}

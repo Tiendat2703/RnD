@@ -1,6 +1,5 @@
 import { FULL_DOC_MAX_CHARS } from './config';
-import { ingestPdf } from './docs/ingest';
-import { deleteDoc, listDocs, saveDoc, type StoredDoc } from './docs/store';
+import { listDocs, type StoredDoc } from './docs/store';
 import { pickMeetingTab } from './meet-url';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Card, type Msg, type Settings, type StartReply } from './messages';
 import { EMPTY_VIEW, type View } from './view';
@@ -12,7 +11,6 @@ const time = (at: number) => new Date(at).toLocaleTimeString('vi-VN', { hour: '2
 
 let view: View = EMPTY_VIEW;
 let docs: StoredDoc[] = [];
-let busy: { name: string; error?: string }[] = [];
 let settings: Settings = DEFAULT_SETTINGS;
 let hasBlazeKey = false;
 let partial = '';
@@ -98,10 +96,8 @@ function renderDocs(): void {
   const rows = docs.map(d => `<li>
       <span class="name" title="${esc(d.name)}">${esc(d.name)}</span>
       <span class="info">${d.pageCount} trang</span>
-      <button class="btn link" type="button" data-delete="${esc(d.id)}" aria-label="Xóa ${esc(d.name)}">Xóa</button>
     </li>`);
-  const pending = busy.map(b => `<li class="${b.error ? 'bad' : 'busy'}"><span class="name">${esc(b.error ?? `Đang đọc ${b.name}…`)}</span>${b.error ? `<button class="btn link" type="button" data-dismiss="${esc(b.name)}">Đóng</button>` : ''}</li>`);
-  $('docs').innerHTML = [...rows, ...pending].join('');
+  $('docs').innerHTML = rows.length ? rows.join('') : '<li class="empty">Phiên này không có tài liệu.</li>';
   $('doc-count').textContent = docs.length ? `(${docs.length})` : '';
   const chars = docs.reduce((n, d) => n + d.chars, 0);
   $('docs-mode').textContent = !docs.length ? ''
@@ -120,23 +116,6 @@ function render(): void {
 async function refreshDocs(): Promise<void> {
   docs = await listDocs();
   render();
-}
-
-async function addFiles(files: FileList | File[]): Promise<void> {
-  const list = [...files];
-  busy.push(...list.map(f => ({ name: f.name })));
-  renderDocs();
-  for (const file of list) {
-    const entry = busy.find(b => b.name === file.name && !b.error)!;
-    try {
-      await saveDoc(await ingestPdf(file));
-      busy = busy.filter(b => b !== entry);
-    } catch (error) {
-      entry.error = error instanceof Error ? error.message : String(error);
-    }
-    await refreshDocs();
-  }
-  void send({ type: 'mm.docs.changed' });
 }
 
 function say(level: 'info' | 'error', message: string): void {
@@ -209,7 +188,6 @@ async function init(): Promise<void> {
   $<HTMLInputElement>('web-research').checked = settings.webResearch;
   view = ((await chrome.storage.session.get(STORAGE_KEYS.view))[STORAGE_KEYS.view] as View | undefined) ?? EMPTY_VIEW;
   docs = await listDocs();
-  ($('docs-box') as HTMLDetailsElement).open = docs.length === 0;
   ($('settings-box') as HTMLDetailsElement).open = !hasBlazeKey;
   render();
 
@@ -218,27 +196,6 @@ async function init(): Promise<void> {
   $('post-chat').addEventListener('change', e => saveSettings({ ...settings, postToChat: (e.target as HTMLInputElement).checked }));
   $('web-research').addEventListener('change', e => saveSettings({ ...settings, webResearch: (e.target as HTMLInputElement).checked }));
   $('toggle').addEventListener('click', () => void (running() ? stop() : start()));
-
-  const file = $<HTMLInputElement>('file');
-  file.addEventListener('change', () => {
-    if (file.files?.length) void addFiles(file.files);
-    file.value = '';
-  });
-  const drop = $('drop');
-  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
-  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-  drop.addEventListener('drop', e => {
-    e.preventDefault();
-    drop.classList.remove('over');
-    if (e.dataTransfer?.files.length) void addFiles(e.dataTransfer.files);
-  });
-  $('docs').addEventListener('click', e => {
-    const target = e.target as HTMLElement;
-    const id = target.dataset.delete;
-    if (id) void deleteDoc(id).then(refreshDocs).then(() => send({ type: 'mm.docs.changed' }));
-    const dismissed = target.dataset.dismiss;
-    if (dismissed) { busy = busy.filter(b => b.name !== dismissed); renderDocs(); }
-  });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'session' && changes[STORAGE_KEYS.view]) {
@@ -255,6 +212,8 @@ async function init(): Promise<void> {
     }
   });
   chrome.runtime.onMessage.addListener((msg: Msg) => {
+    // the web console sent a session with its documents; the background replaced the library
+    if (msg.type === 'mm.docs.changed') void refreshDocs();
     if (msg.type === 'mm.event' && msg.event.kind === 'partial') {
       partial = msg.event.text;
       renderControl();

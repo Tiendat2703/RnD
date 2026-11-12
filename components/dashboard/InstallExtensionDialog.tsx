@@ -12,12 +12,17 @@
 //      người dùng làm trong tab Meet. Khi extension báo "đang chạy" cho đúng phiên
 //      này, monitor tự mở.
 //
+// Tài liệu đã chọn trong wizard được lấy (đã chia đoạn) từ backend lúc bấm "Gửi phiên" và đi kèm
+// `session.prepare`; extension dùng đúng các tài liệu đó cho phiên này.
+//
 // Khóa API không đi qua đây và không có ô nhập nào cho nó.
 import { useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { MEETING_KIND_LABEL } from "../../lib/dashboardData";
 import type { MeetingRecord } from "../../lib/dashboardData";
 import type { ExtInfo } from "../../lib/bridgeProtocol";
+import { getDocument } from "../../lib/backendApi";
+import { DOC_LIMITS, toSessionDocument, type SessionDocument } from "../../lib/documents";
 import { onExtensionEvent, pingExtension, sendToExtension } from "../../lib/extensionBridge";
 import { useDashboard } from "./DashboardContext";
 import { ChromeDialog } from "./controls";
@@ -78,6 +83,8 @@ export function InstallExtensionDialog() {
   const [info, setInfo] = useState<ExtInfo | null>(null);
   const [phase, setPhase] = useState<"check" | "waiting">("check");
   const [waitStatus, setWaitStatus] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   // tự tick để bỏ qua một điều kiện khi test luồng; dấu tích tự động vẫn thắng
   const [manual, setManual] = useState<Record<string, boolean>>({});
   const draftRef = useRef<string | null>(null);
@@ -90,6 +97,8 @@ export function InstallExtensionDialog() {
       sessionRef.current = null;
       setPhase("check");
       setWaitStatus("");
+      setSendError("");
+      setSending(false);
       setInfo(null);
       setManual({});
     }
@@ -151,7 +160,28 @@ export function InstallExtensionDialog() {
   const allDone = checks.every((c) => c.ok);
   const remaining = checks.filter((c) => !c.ok).length;
 
-  const sendSession = () => {
+  const docCount = draft.documentIds.length;
+
+  const sendSession = async () => {
+    setSending(true);
+    setSendError("");
+    let documents: SessionDocument[];
+    try {
+      documents = (await Promise.all(draft.documentIds.map((id) => getDocument(id)))).map(toSessionDocument);
+    } catch (e) {
+      setSendError(`Không lấy được tài liệu từ backend: ${e instanceof Error ? e.message : String(e)}`);
+      setSending(false);
+      return;
+    }
+    const chars = documents.reduce((n, d) => n + d.chunks.reduce((m, c) => m + c.text.length, 0), 0);
+    if (documents.length > DOC_LIMITS.maxPerSession || chars > DOC_LIMITS.maxSessionChars) {
+      setSendError(
+        `Tài liệu đã chọn quá lớn cho một phiên (tối đa ${DOC_LIMITS.maxPerSession} tài liệu, ` +
+          `${DOC_LIMITS.maxSessionChars.toLocaleString("vi-VN")} ký tự). Quay lại và bỏ bớt tài liệu.`,
+      );
+      setSending(false);
+      return;
+    }
     const id = `m-${Date.now()}`;
     sessionRef.current = id;
     sendToExtension({
@@ -162,8 +192,10 @@ export function InstallExtensionDialog() {
         kind: draft.kind,
         sources: prefs.sources,
         autoPost: prefs.autoPost,
+        documents,
       },
     });
+    setSending(false);
     setWaitStatus("");
     setPhase("waiting");
   };
@@ -199,7 +231,8 @@ export function InstallExtensionDialog() {
             Bắt đầu MeetMate
           </h2>
           <p className="dc-muted">
-            {draft.title} · {MEETING_KIND_LABEL[draft.kind]}
+            {draft.title} · {MEETING_KIND_LABEL[draft.kind]} ·{" "}
+            {docCount ? `${docCount} tài liệu đối chiếu` : "không có tài liệu"}
           </p>
         </div>
         <button className="icon-btn icon-btn--dark" aria-label="Đóng" onClick={cancel}>
@@ -241,6 +274,13 @@ export function InstallExtensionDialog() {
             })}
           </ol>
 
+          {sendError ? (
+            <div className="mm-band mm-band--error conn__band" role="alert">
+              <IconInfo className="mm-band__glyph" />
+              <span>{sendError}</span>
+            </div>
+          ) : null}
+
           <div className="mm-band mm-band--warn conn__band">
             <IconInfo className="mm-band__glyph" />
             <span>
@@ -262,8 +302,8 @@ export function InstallExtensionDialog() {
             <button className="btn btn--dark-ghost" onClick={startDemo}>
               Chạy thử với dữ liệu mẫu
             </button>
-            <button className="btn btn--light" onClick={sendSession} disabled={!allDone}>
-              {allDone ? "Gửi phiên cho MeetMate" : `Còn ${remaining} điều`}
+            <button className="btn btn--light" onClick={() => void sendSession()} disabled={!allDone || sending}>
+              {!allDone ? `Còn ${remaining} điều` : sending ? "Đang lấy tài liệu…" : "Gửi phiên cho MeetMate"}
             </button>
           </div>
         </>
@@ -277,7 +317,9 @@ export function InstallExtensionDialog() {
                 <IconCheck />
               </span>
               <span className="instep__text">
-                <span className="instep__title">Đã gửi “{draft.title}” cho extension</span>
+                <span className="instep__title">
+                  Đã gửi “{draft.title}”{docCount ? ` kèm ${docCount} tài liệu` : ""} cho extension
+                </span>
               </span>
             </li>
             <li className="instep">

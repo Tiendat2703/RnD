@@ -2141,6 +2141,11 @@ button.nav-item {
 .choice__title { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
 .choice__note { display: block; font-size: 12px; line-height: 18px; color: var(--muted-ink); }
 
+/* wizard: chọn nhiều tài liệu đối chiếu — cùng thẻ .choice, ô tick thay chấm tròn */
+.doclist { display: flex; flex-direction: column; gap: var(--sp-xs); max-height: 232px; overflow-y: auto; }
+.doclist .choice { cursor: pointer; }
+.doclist input { flex: none; width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--primary); }
+
 /* ------------------------------------------------------------------ */
 /* 23. Answer preferences (master · detail · persistent preview)       */
 /* ------------------------------------------------------------------ */

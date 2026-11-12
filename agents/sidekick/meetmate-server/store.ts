@@ -30,6 +30,39 @@ export interface SessionMeta {
   reportStatus: ReportStatus | null;
 }
 
+/** Ghi JSON nguyên tử: tệp tạm rồi đổi tên. */
+export async function writeJson(file: string, data: unknown): Promise<void> {
+  await mkdir(join(file, '..'), { recursive: true });
+  const tmp = `${file}.${randomBytes(6).toString('hex')}.tmp`;
+  try {
+    await writeFile(tmp, JSON.stringify(data), 'utf8');
+    await rename(tmp, file);
+  } catch (error) {
+    await rm(tmp, { force: true });
+    throw error;
+  }
+}
+
+/** Đọc JSON; tệp không có thì trả null. */
+export async function readJson<T>(file: string): Promise<T | null> {
+  try {
+    return JSON.parse(await readFile(file, 'utf8')) as T;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
+/** Tên tệp .json trong một thư mục; thư mục chưa có thì rỗng. */
+export async function listJson(dir: string): Promise<string[]> {
+  try {
+    return (await readdir(dir)).filter((n) => n.endsWith('.json')).map((n) => n.slice(0, -5));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw error;
+  }
+}
+
 export class SessionStore {
   constructor(private readonly dir: string) {}
 
@@ -38,25 +71,12 @@ export class SessionStore {
     return join(this.dir, kind, `${id}.json`);
   }
 
-  private async write(file: string, data: unknown): Promise<void> {
-    await mkdir(join(file, '..'), { recursive: true });
-    const tmp = `${file}.${randomBytes(6).toString('hex')}.tmp`;
-    try {
-      await writeFile(tmp, JSON.stringify(data, null, 2), 'utf8');
-      await rename(tmp, file);
-    } catch (error) {
-      await rm(tmp, { force: true });
-      throw error;
-    }
+  private write(file: string, data: unknown): Promise<void> {
+    return writeJson(file, data);
   }
 
-  private async read<T>(file: string): Promise<T | null> {
-    try {
-      return JSON.parse(await readFile(file, 'utf8')) as T;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
-      throw error;
-    }
+  private read<T>(file: string): Promise<T | null> {
+    return readJson<T>(file);
   }
 
   saveSession(record: StoredSession): Promise<void> {
@@ -76,14 +96,7 @@ export class SessionStore {
   }
 
   async list(): Promise<SessionMeta[]> {
-    let names: string[];
-    try {
-      names = await readdir(join(this.dir, 'sessions'));
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
-      throw error;
-    }
-    const ids = names.filter((n) => n.endsWith('.json')).map((n) => n.slice(0, -5)).filter((id) => SESSION_ID.test(id));
+    const ids = (await listJson(join(this.dir, 'sessions'))).filter((id) => SESSION_ID.test(id));
     const metas = await Promise.all(
       ids.map(async (id): Promise<SessionMeta | null> => {
         const s = await this.getSession(id);

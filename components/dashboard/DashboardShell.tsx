@@ -16,7 +16,16 @@ import { onExtensionEvent, sendToExtension } from "../../lib/extensionBridge";
 import type { SavedSession, SavedTopic } from "../../lib/bridgeProtocol";
 import type { KnowledgeCard } from "../../lib/evidence";
 import type { SavedSessionResponse } from "../../lib/report";
-import { getSavedSession, retryReport as retryReportApi, saveSessionToBackend } from "../../lib/backendApi";
+import {
+  deleteDocument,
+  getSavedSession,
+  listDocuments,
+  retryReport as retryReportApi,
+  saveSessionToBackend,
+  uploadPdf,
+  uploadTextDocument,
+} from "../../lib/backendApi";
+import type { DocumentMeta } from "../../lib/documents";
 import {
   FREE_PLAN,
   defaultPrefs,
@@ -31,6 +40,7 @@ import {
   type ExtensionSession,
   type LiveMode,
   type LiveState,
+  type NewDocument,
   type PendingMeeting,
   type PlanId,
   type PrefsFrom,
@@ -138,6 +148,9 @@ export function DashboardShell({
   const [sessionCards, setSessionCards] = useState<Record<string, KnowledgeCard[]>>({});
   const [savedSessions, setSavedSessions] = useState<Record<string, SavedSession>>({});
   const [saves, setSaves] = useState<Record<string, SaveState>>({});
+  const [documents, setDocuments] = useState<DocumentMeta[]>([]);
+  const [docsLoaded, setDocsLoaded] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
   const [prefsOpen, setPrefsOpenState] = useState(false);
   const [prefsFrom, setPrefsFrom] = useState<PrefsFrom>("live");
   // tùy chọn mở từ hai surface có khung khác nhau, nên ai mở phải đi kèm cờ
@@ -245,6 +258,34 @@ export function DashboardShell({
   }, []);
 
   const closeWizard = useCallback(() => setWizard({ open: false }), []);
+
+  /* --- thư viện tài liệu: nguồn sự thật là backend, web chỉ giữ bản danh sách --- */
+  const refreshDocuments = useCallback(async () => {
+    try {
+      setDocuments(await listDocuments());
+      setDocsError(null);
+    } catch (e) {
+      setDocsError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDocsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshDocuments();
+  }, [refreshDocuments]);
+
+  const addDocument = useCallback(async (doc: NewDocument) => {
+    const meta = doc instanceof File ? await uploadPdf(doc) : await uploadTextDocument(doc);
+    setDocuments((prev) => [meta, ...prev.filter((d) => d.id !== meta.id)]);
+    setDocsError(null);
+    return meta;
+  }, []);
+
+  const removeDocument = useCallback(async (id: string) => {
+    await deleteDocument(id);
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+  }, []);
 
   const requestInstall = useCallback((draft: PendingMeeting) => {
     setWizard({ open: false });
@@ -542,6 +583,12 @@ export function DashboardShell({
         saveSession,
         retryReport,
         loadReport,
+        documents,
+        docsLoaded,
+        docsError,
+        refreshDocuments,
+        addDocument,
+        removeDocument,
         prefsOpen,
         prefsFrom,
         setPrefsOpen,

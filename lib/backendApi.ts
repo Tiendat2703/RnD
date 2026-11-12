@@ -1,9 +1,11 @@
 // lib/backendApi.ts — lời gọi duy nhất từ web tới backend MeetMate
 // (agents/sidekick/meetmate-server, chạy local ở cổng 3001).
 //
-// Web chỉ gửi phiên đã kết thúc khi người dùng bấm "Lưu phiên", và đọc lại báo cáo.
+// Web gửi phiên đã kết thúc khi người dùng bấm "Lưu phiên" và đọc lại báo cáo; quản lý tài
+// liệu đối chiếu (backend đọc PDF và chia đoạn, web gửi các đoạn cho extension kèm phiên).
 // Không có khóa nào ở đây: khóa LLM nằm trong .env.local của backend.
 import type { SavedSession } from "./bridgeProtocol";
+import type { DocumentMeta, StoredDocument } from "./documents";
 import type { SavedSessionResponse } from "./report";
 
 const BASE = (process.env.NEXT_PUBLIC_MEETMATE_API ?? "http://localhost:3001").replace(/\/$/, "");
@@ -45,4 +47,38 @@ export async function getSavedSession(id: string): Promise<SavedSessionResponse 
 
 export async function retryReport(id: string): Promise<SavedSessionResponse> {
   return json(await call(`/sessions/${encodeURIComponent(id)}/report/retry`, { method: "POST" }));
+}
+
+export async function listDocuments(): Promise<DocumentMeta[]> {
+  return json(await call("/documents"));
+}
+
+/** Tài liệu kèm toàn bộ đoạn: thứ được gửi sang extension khi bắt đầu cuộc họp. */
+export async function getDocument(id: string): Promise<StoredDocument> {
+  return json(await call(`/documents/${encodeURIComponent(id)}`));
+}
+
+/** PDF gửi nguyên byte; backend đọc lớp chữ và chia đoạn theo trang. */
+export async function uploadPdf(file: File): Promise<DocumentMeta> {
+  return json(
+    await call("/documents/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/pdf", "X-File-Name": encodeURIComponent(file.name) },
+      body: file,
+    }),
+  );
+}
+
+/** .docx (đã đọc trên trình duyệt) hoặc văn bản dán: gửi các trang chữ. */
+export async function uploadTextDocument(doc: {
+  name: string;
+  format: "DOCX" | "TEXT";
+  size: number;
+  pages: string[];
+}): Promise<DocumentMeta> {
+  return json(await call("/documents/text", { method: "POST", body: JSON.stringify(doc) }));
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  await json(await call(`/documents/${encodeURIComponent(id)}`, { method: "DELETE" }));
 }

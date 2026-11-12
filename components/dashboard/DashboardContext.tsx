@@ -8,6 +8,7 @@
 import { createContext, useContext } from "react";
 import type { MeetingKind, MeetingLine, MeetingRecord, ResearchPrefs } from "../../lib/dashboardData";
 import type { SavedSession, SavedTopic } from "../../lib/bridgeProtocol";
+import type { DocumentMeta } from "../../lib/documents";
 import type { KnowledgeCard } from "../../lib/evidence";
 import type { SavedSessionResponse } from "../../lib/report";
 
@@ -80,7 +81,12 @@ export interface EndCounts {
 export interface PendingMeeting {
   title: string;
   kind: MeetingKind;
+  /** tài liệu đối chiếu đã chọn trong wizard; nội dung được gửi cho extension kèm phiên */
+  documentIds: string[];
 }
+
+/** Tài liệu mới: PDF gửi nguyên file; .docx và văn bản dán gửi các trang chữ đã đọc trên trình duyệt. */
+export type NewDocument = File | { name: string; format: "DOCX" | "TEXT"; size: number; pages: string[] };
 
 export interface WizardState {
   open: boolean;
@@ -151,6 +157,15 @@ export interface DashboardContextValue {
   retryReport: (id: string) => Promise<void>;
   /** đọc báo cáo của phiên đã lưu từ backend (khi mở lại web) */
   loadReport: (id: string) => Promise<void>;
+  /** thư viện tài liệu, đọc từ backend MeetMate */
+  documents: DocumentMeta[];
+  /** đã hỏi backend ít nhất một lần */
+  docsLoaded: boolean;
+  /** lỗi lần đọc gần nhất (thường là backend chưa chạy); null = ổn */
+  docsError: string | null;
+  refreshDocuments: () => Promise<void>;
+  addDocument: (doc: NewDocument) => Promise<DocumentMeta>;
+  removeDocument: (id: string) => Promise<void>;
   prefsOpen: boolean;
   prefsFrom: PrefsFrom;
   setPrefsOpen: (open: boolean, from?: PrefsFrom) => void;

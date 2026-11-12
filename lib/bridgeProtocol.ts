@@ -6,6 +6,7 @@
 // nên một thay đổi kiểu sẽ làm cả hai phía lỗi biên dịch cùng lúc.
 //
 // Không có khóa API nào đi qua đây. `keysSet` chỉ là boolean.
+import type { SessionDocument } from "./documents";
 import type { KnowledgeCard } from "./evidence";
 import type { LineSource, MeetingKind, PipelineStage, ResearchResult, Topic } from "./types";
 
@@ -21,6 +22,11 @@ export interface SessionDraft {
   /** số nguồn tối đa mỗi chủ đề */
   sources: number;
   autoPost: boolean;
+  /**
+   * tài liệu đối chiếu đã chọn cho phiên (nội dung đã chia đoạn, lấy từ backend). Extension
+   * thay kho tài liệu của nó bằng đúng danh sách này; thiếu = phiên không có tài liệu.
+   */
+  documents?: SessionDocument[];
 }
 
 export type WebToExt =

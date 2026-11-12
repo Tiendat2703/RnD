@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SavedSession } from '../../../../lib/bridgeProtocol';
 import { newSession } from './sessionStore';
 
+// IndexedDB does not exist in the test runtime; the document library is checked through this mock.
+const replaceDocs = vi.fn(async (_docs: unknown[]) => undefined);
+vi.mock('./docs/store', () => ({ replaceDocs: (docs: unknown[]) => replaceDocs(docs) }));
+
 type Store = Record<string, unknown>;
 
 function area(store: Store) {
@@ -89,7 +93,10 @@ const LIVE: Store = {
 };
 const SESSIONS = () => ({ sessions: { s1: newSession('s1', 'Họp tuần', 'khac', 1_000) } });
 
-beforeEach(() => vi.useFakeTimers());
+beforeEach(() => {
+  vi.useFakeTimers();
+  replaceDocs.mockClear();
+});
 afterEach(() => vi.useRealTimers());
 
 describe('background: kết thúc phiên khi rời họp', () => {
@@ -219,7 +226,18 @@ describe('background: ghi phiên và cầu nối web', () => {
     const t = await boot({ session: {}, local: { sessions: { s1: ended } } });
     await t.send({ type: 'mm.web', msg: { type: 'session.prepare', session: { id: 'w1', title: 'Họp', kind: 'khac', sources: 9, autoPost: false } } }, 9);
     expect(t.session.session).toEqual({ id: 'w1', title: 'Họp', kind: 'khac', sources: 4, autoPost: false });
+    expect(replaceDocs).toHaveBeenCalledWith([]); // phiên không có tài liệu: kho cũ không được giữ lại
     await t.send({ type: 'mm.web', msg: { type: 'sessions.markSynced', id: 's1', syncedAt: 10_000 } }, 9);
     expect(t.saved().syncedAt).toBe(10_000);
+  });
+
+  it('session.prepare thay kho tài liệu bằng tài liệu của phiên; tài liệu không nằm trong bản nháp', async () => {
+    const t = await boot({ session: {}, local: {} });
+    const documents = [{ id: 'dabc1', name: 'Hợp đồng.pdf', pageCount: 1, chunks: [{ id: 'dabc1#1', docId: 'dabc1', docName: 'Hợp đồng.pdf', page: 1, pageEnd: 1, text: 'Phí bảo trì 12.000.000 đồng.' }] }];
+    await t.send({ type: 'mm.web', msg: { type: 'session.prepare', session: { id: 'w1', title: 'Họp', kind: 'khac', sources: 4, autoPost: true, documents } } }, 9);
+    expect(replaceDocs).toHaveBeenCalledWith([expect.objectContaining({ id: 'dabc1', name: 'Hợp đồng.pdf', chunks: documents[0].chunks })]);
+    expect(t.session.session).not.toHaveProperty('documents');
+    const runtime = (globalThis as unknown as { chrome: { runtime: { sendMessage: ReturnType<typeof vi.fn> } } }).chrome.runtime;
+    expect(runtime.sendMessage).toHaveBeenCalledWith({ type: 'mm.docs.changed' });
   });
 });

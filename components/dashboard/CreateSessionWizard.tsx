@@ -9,18 +9,17 @@
 //
 // Bước một do đó gần như trống — và đó là điểm đúng, không phải điểm thiếu.
 import { useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { cn } from "../../lib/utils";
 import {
   LANGUAGES,
   MEETING_KIND_LABEL,
   MODELS,
-  initialDocs,
   type MeetingKind,
 } from "../../lib/dashboardData";
 import { useDashboard } from "./DashboardContext";
 import { Segmented, Switch, useModalBehaviour } from "./controls";
 import {
-  IconChevronDown,
   IconFolder,
   IconInfo,
   IconSend,
@@ -42,6 +41,9 @@ export function CreateSessionWizard() {
     setPrefs,
     setPrefsOpen,
     pushToast,
+    documents,
+    docsLoaded,
+    docsError,
   } = useDashboard();
 
   const editing = wizard.editId ? meetings.find((m) => m.id === wizard.editId) ?? null : null;
@@ -49,7 +51,7 @@ export function CreateSessionWizard() {
   const [step, setStep] = useState(1);
   const [kind, setKind] = useState<MeetingKind>("san-pham");
   const [title, setTitle] = useState("");
-  const [docId, setDocId] = useState("");
+  const [docIds, setDocIds] = useState<string[]>([]);
 
   const panelRef = useRef<HTMLDivElement>(null);
   useModalBehaviour(wizard.open, closeWizard, panelRef);
@@ -61,7 +63,7 @@ export function CreateSessionWizard() {
     setStep(1);
     setKind(wizard.kind ?? editing?.kind ?? "san-pham");
     setTitle(editing?.title ?? "");
-    setDocId("");
+    setDocIds([]);
   }
   if (!wizard.open && lastOpen.current) lastOpen.current = false;
 
@@ -82,6 +84,8 @@ export function CreateSessionWizard() {
     requestInstall({
       title: title.trim() || `${MEETING_KIND_LABEL[kind]} · ${meetings.length + 1}`,
       kind,
+      // tài liệu đã bị xóa khỏi thư viện trong lúc wizard mở thì không gửi
+      documentIds: docIds.filter((id) => documents.some((d) => d.id === id)),
     });
   };
 
@@ -168,31 +172,50 @@ export function CreateSessionWizard() {
               </div>
 
               <p className="wiz__eyebrow">Tài liệu đối chiếu</p>
-              <label className="field">
-                <span className="field__label">Knowledge base</span>
-                <span className="select-wrap">
-                  <select
-                    className="select"
-                    value={docId}
-                    onChange={(e) => setDocId(e.target.value)}
-                    aria-label="Chọn tài liệu đối chiếu"
-                  >
-                    <option value="">
-                      {initialDocs.length ? "Không dùng tài liệu nào" : "Chưa có tài liệu nào"}
-                    </option>
-                    {initialDocs.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.title}
-                      </option>
-                    ))}
-                  </select>
-                  <IconChevronDown />
-                </span>
-              </label>
-              <p className="wiz__helper">
-                Lớp truy xuất của MeetMate là: ngữ cảnh cuộc họp → tài liệu của bạn → tìm nguồn trên
-                web. Chọn một tài liệu ở đây mới chỉ đánh dấu mục tiêu — pipeline chưa đọc file này.
-              </p>
+              {!docsLoaded ? (
+                <p className="wiz__helper">Đang tải thư viện tài liệu…</p>
+              ) : docsError ? (
+                <p className="wiz__helper" role="alert">
+                  Chưa đọc được thư viện tài liệu: {docsError}
+                </p>
+              ) : documents.length === 0 ? (
+                <p className="wiz__helper">
+                  Chưa có tài liệu nào. Thêm PDF ở trang{" "}
+                  <Link href="/dashboard/documents" onClick={closeWizard}>
+                    Tài liệu
+                  </Link>{" "}
+                  rồi tạo cuộc họp, hoặc họp không cần tài liệu.
+                </p>
+              ) : (
+                <>
+                  <div className="doclist" role="group" aria-label="Chọn tài liệu đối chiếu">
+                    {documents.map((d) => {
+                      const on = docIds.includes(d.id);
+                      return (
+                        <label key={d.id} className={cn("choice", on && "choice--on")}>
+                          <input
+                            type="checkbox"
+                            checked={on}
+                            onChange={() =>
+                              setDocIds((prev) => (on ? prev.filter((x) => x !== d.id) : [...prev, d.id]))
+                            }
+                          />
+                          <span>
+                            <span className="choice__title">{d.name}</span>
+                            <span className="choice__note">
+                              {d.format} · {d.pageCount} trang · {d.chunkCount} đoạn
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="wiz__helper">
+                    Khi bấm “Gửi phiên cho MeetMate”, nội dung tài liệu đã chọn được gửi sang extension.
+                    Trong họp, nói “Trợ lý ơi, …” để MeetMate tra trong các tài liệu này.
+                  </p>
+                </>
+              )}
             </div>
           ) : (
             <div className="wiz__body" key="step-2">
