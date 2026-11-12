@@ -15,13 +15,11 @@ import { cn } from "../../lib/utils";
 import { onExtensionEvent, sendToExtension } from "../../lib/extensionBridge";
 import type { SavedSession, SavedTopic } from "../../lib/bridgeProtocol";
 import type { KnowledgeCard } from "../../lib/evidence";
-import claimsFixture from "../../mocks/meeting-claims.json";
+import type { SavedSessionResponse } from "../../lib/report";
+import { getSavedSession, retryReport as retryReportApi, saveSessionToBackend } from "../../lib/backendApi";
 import {
   FREE_PLAN,
   defaultPrefs,
-  SAMPLE_CLAIMS_MEETING_ID,
-  initialMeetings,
-  sampleLines,
   type MeetingKind,
   type MeetingLine,
   type MeetingRecord,
@@ -37,6 +35,7 @@ import {
   type PlanId,
   type PrefsFrom,
   type Quota,
+  type SaveState,
   type ResolvedTheme,
   type Theme,
   type Toast,
@@ -116,7 +115,7 @@ export function DashboardShell({
   const resolvedTheme: ResolvedTheme = theme === "auto" ? (systemDark ? "dark" : "light") : theme;
   const [collapsed, setCollapsed] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
-  const [meetings, setMeetings] = useState<MeetingRecord[]>(initialMeetings);
+  const [meetings, setMeetings] = useState<MeetingRecord[]>([]);
   const [quota, setQuota] = useState<Quota>({
     meetingsLeft: FREE_PLAN.meetings,
     verificationsLeft: FREE_PLAN.verifications,
@@ -133,24 +132,12 @@ export function DashboardShell({
   const [live, setLive] = useState<LiveState | null>(null);
   const [extSession, setExtSession] = useState<ExtensionSession | null>(null);
   const [liveLines, setLiveLines] = useState<MeetingLine[]>([]);
-  // mọi phiên đã chạy đều có bản ghi, nên "Xem chi tiết"/"Xem bản ghi" trên thẻ
-  // không dẫn vào chỗ trống; phiên live đang giữa họp nên mới tích dần. Lọc theo
-  // "kết thúc" từng bỏ sót hai phiên trạng thái ready — panel của chúng mở ra
-  // với 0 dòng, đúng cái người dùng không có cách nào phân biệt với "chưa ghi".
-  const [transcripts, setTranscripts] = useState<Record<string, MeetingLine[]>>(() => ({
-    "m-01": sampleLines.slice(0, 7),
-    ...Object.fromEntries(
-      initialMeetings
-        .filter((m) => m.status !== "live")
-        .map((m, i) => [m.id, i % 2 === 0 ? sampleLines : sampleLines.slice(7)])
-    ),
-    // cuộc họp mẫu có thẻ đối chiếu: bản ghi riêng của nó, không dùng bản ghi chung
-    [SAMPLE_CLAIMS_MEETING_ID]: claimsFixture.lines.map((l) => ({ ...l, source: "mixed" as const })),
-  }));
+  // bản ghi theo id cuộc họp; chỉ có phiên thật do extension ghi (hoặc phiên thử vừa chạy)
+  const [transcripts, setTranscripts] = useState<Record<string, MeetingLine[]>>({});
   const [sessionTopics, setSessionTopics] = useState<Record<string, SavedTopic[]>>({});
-  const [sessionCards, setSessionCards] = useState<Record<string, KnowledgeCard[]>>({
-    [SAMPLE_CLAIMS_MEETING_ID]: claimsFixture.cards as unknown as KnowledgeCard[],
-  });
+  const [sessionCards, setSessionCards] = useState<Record<string, KnowledgeCard[]>>({});
+  const [savedSessions, setSavedSessions] = useState<Record<string, SavedSession>>({});
+  const [saves, setSaves] = useState<Record<string, SaveState>>({});
   const [prefsOpen, setPrefsOpenState] = useState(false);
   const [prefsFrom, setPrefsFrom] = useState<PrefsFrom>("live");
   // tùy chọn mở từ hai surface có khung khác nhau, nên ai mở phải đi kèm cờ
@@ -385,6 +372,7 @@ export function DashboardShell({
       ...Object.fromEntries(list.filter((s) => s.endedAt !== null).map((s) => [s.id, s.lines])),
     }));
     setSessionTopics((p) => ({ ...p, ...Object.fromEntries(list.map((s) => [s.id, s.topics])) }));
+    setSavedSessions((p) => ({ ...p, ...Object.fromEntries(list.map((s) => [s.id, s])) }));
     setSessionCards((p) => ({
       ...p,
       ...Object.fromEntries(list.filter((s) => s.cards?.length).map((s) => [s.id, s.cards!])),
@@ -410,6 +398,80 @@ export function DashboardShell({
       off();
     };
   }, [syncSessions]);
+
+  // "Lưu phiên": web lấy phiên extension đã lưu, gửi backend, chờ báo cáo. Chỉ khi
+  // báo cáo đã được lưu mới báo extension `markSynced`; trước đó extension giữ nguyên
+  // phiên, nên lỗi mạng hay backend tắt không làm mất gì.
+  const savedRef = useRef(savedSessions);
+  savedRef.current = savedSessions;
+  const inFlight = useRef(new Set<string>());
+
+  const settle = useCallback(
+    (id: string, res: SavedSessionResponse) => {
+      setSaves((p) => ({ ...p, [id]: { phase: "done", res } }));
+      if (res.reportStatus === "ok") {
+        if (!savedRef.current[id]?.syncedAt) {
+          sendToExtension({ type: "sessions.markSynced", id, syncedAt: Date.now() });
+          sendToExtension({ type: "sessions.list" });
+        }
+        pushToast("Đã lưu phiên và tạo báo cáo.");
+      } else {
+        pushToast("Đã lưu phiên nhưng chưa tạo được báo cáo.", "error");
+      }
+    },
+    [pushToast]
+  );
+
+  const runSave = useCallback(
+    async (id: string, task: () => Promise<SavedSessionResponse>) => {
+      if (inFlight.current.has(id)) return;
+      inFlight.current.add(id);
+      setSaves((p) => ({ ...p, [id]: { phase: "saving" } }));
+      try {
+        settle(id, await task());
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        setSaves((p) => ({ ...p, [id]: { phase: "error", message } }));
+        pushToast(message, "error");
+      } finally {
+        inFlight.current.delete(id);
+      }
+    },
+    [settle, pushToast]
+  );
+
+  const saveSession = useCallback(
+    async (id: string) => {
+      const s = savedRef.current[id];
+      if (!s) {
+        pushToast("Không tìm thấy phiên này trong extension MeetMate.", "error");
+        return;
+      }
+      if (s.endedAt === null) {
+        pushToast("Cuộc họp vẫn đang diễn ra. Kết thúc rồi mới lưu được.", "error");
+        return;
+      }
+      await runSave(id, () => saveSessionToBackend(s));
+    },
+    [runSave, pushToast]
+  );
+
+  const retryReport = useCallback((id: string) => runSave(id, () => retryReportApi(id)), [runSave]);
+
+  const loadReport = useCallback(async (id: string) => {
+    if (inFlight.current.has(id)) return;
+    inFlight.current.add(id);
+    setSaves((p) => ({ ...p, [id]: { phase: "loading" } }));
+    try {
+      const res = await getSavedSession(id);
+      setSaves((p) => ({ ...p, [id]: res ? { phase: "done", res } : { phase: "missing" } }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setSaves((p) => ({ ...p, [id]: { phase: "error", message } }));
+    } finally {
+      inFlight.current.delete(id);
+    }
+  }, []);
 
   // close the mobile drawer on navigation
   useEffect(() => {
@@ -475,6 +537,11 @@ export function DashboardShell({
         transcripts,
         sessionTopics,
         sessionCards,
+        savedSessions,
+        saves,
+        saveSession,
+        retryReport,
+        loadReport,
         prefsOpen,
         prefsFrom,
         setPrefsOpen,

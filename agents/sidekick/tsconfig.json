@@ -13,5 +13,5 @@
     "noEmit": true,
     "types": ["node", "vite/client", "chrome"]
   },
-  "include": ["src", "server", "shared", "extension", "scripts", "vite.config.ts"]
+  "include": ["src", "server", "shared", "extension", "meetmate-server", "scripts", "vite.config.ts"]
 }

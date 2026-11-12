@@ -5,8 +5,8 @@
 // chiều là "ủng hộ một phần"; lệch trên 50% hoặc ngược chiều là "mâu thuẫn"; tài liệu
 // không nhắc tới là "chưa đủ căn cứ" — hệ thống không được suy đoán.
 //
-// Hiện chưa có pipeline nào sinh ra các thẻ này: chúng đến từ `mocks/meeting-claims.json`
-// qua `lib/mockApi.ts`. Khi có backend, thay phần bên trong mockApi, kiểu ở đây giữ nguyên.
+// Hiện chưa có pipeline nào sinh ra các thẻ này (dữ liệu mẫu đã xóa). Khi có pipeline đối chiếu
+// tài liệu, nó phát sự kiện `card`; kiểu ở đây giữ nguyên.
 
 export type EvidenceStatus = "supported" | "partial" | "contradicted" | "insufficient";
 

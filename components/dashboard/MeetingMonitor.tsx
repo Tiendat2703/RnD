@@ -10,7 +10,7 @@
 // Đồng hồ chạy nhanh gấp 8 lần thời gian thật: replay 12 dòng hội thoại của
 // mocks/meeting-transcript.json diễn ra trong ~30 giây. Nói rõ trên pill vì đây
 // là tốc độ phát lại, không phải tốc độ phiên. Độ trễ của mô hình thì KHÔNG
-// được nén — getResearchResult vẫn 2–4 giây thật, vì đó là chi phí người dùng
+// được nén — bước tìm nguồn vẫn chờ 2–4 giây, vì đó là chi phí người dùng
 // sẽ chờ trong sản phẩm thật.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
@@ -25,7 +25,6 @@ import { audioSourceLabel, stampFromMs } from "../../lib/formatChat";
 import { onExtensionEvent } from "../../lib/extensionBridge";
 import { STATUS_RUNNING } from "../../lib/bridgeProtocol";
 import { LIMITS, type PipelineStage, type ResearchResult, type Topic } from "../../lib/types";
-import { getResearchResult } from "../../lib/mockApi";
 import { useDashboard } from "./DashboardContext";
 import { ChromeDialog, DarkMenu, Switch } from "./controls";
 import { MmPostList } from "./MmPost";
@@ -182,7 +181,9 @@ export function MeetingMonitor() {
       if (stop()) return kill();
       patchCard(key, { stage: "searching" });
 
-      const result = await getResearchResult(entry.topic);
+      // chạy thử: nguồn lấy từ dữ liệu thử, độ trễ 2–4 giây để thấy đúng trạng thái đang tìm
+      await wait(2000 + Math.random() * 2000);
+      const result = entry.result;
       if (stop()) return kill();
       patchCard(key, { stage: "writing", result });
 

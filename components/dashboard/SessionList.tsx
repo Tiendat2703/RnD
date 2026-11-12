@@ -91,8 +91,14 @@ function StatusPill({ status }: { status: MeetingRecord["status"] }) {
 }
 
 export function SessionList() {
-  const { meetings, transcripts, deleteMeeting, openWizard, rejoinLive, openDetail, pushToast } =
+  const { meetings, transcripts, deleteMeeting, openWizard, rejoinLive, openDetail, pushToast, savedSessions } =
     useDashboard();
+  // phiên extension đã kết thúc: chưa gửi backend = "Chờ lưu"
+  const saveStateOf = (m: MeetingRecord): "pending" | "saved" | null => {
+    const s = savedSessions[m.id];
+    if (!s || s.endedAt === null) return null;
+    return typeof s.syncedAt === "number" ? "saved" : "pending";
+  };
 
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -260,6 +266,8 @@ export function SessionList() {
                       Có bản ghi
                     </span>
                   ) : null}
+                  {saveStateOf(m) === "pending" ? <span className="pill pill--live">Chờ lưu</span> : null}
+                  {saveStateOf(m) === "saved" ? <span className="pill pill--ready">Đã lưu</span> : null}
                 </div>
               </div>
 
@@ -275,6 +283,14 @@ export function SessionList() {
                   <button className="btn btn--primary btn--sm" onClick={() => rejoinLive(m)}>
                     <IconRejoin />
                     Mở lại phiên
+                  </button>
+                ) : saveStateOf(m) === "pending" ? (
+                  <button className="btn btn--primary btn--sm" onClick={() => openDetail(m, "bao-cao")}>
+                    Lưu phiên
+                  </button>
+                ) : saveStateOf(m) === "saved" ? (
+                  <button className="btn btn--secondary btn--sm" onClick={() => openDetail(m, "bao-cao")}>
+                    Xem báo cáo
                   </button>
                 ) : (
                   <button

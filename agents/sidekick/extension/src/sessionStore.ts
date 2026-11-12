@@ -17,7 +17,18 @@ export function newSession(
   kind: MeetingKind,
   now: number,
 ): SavedSession {
-  return { id, title, kind, startedAt: now, endedAt: null, lines: [], topics: [], cards: [] };
+  return { id, title, kind, startedAt: now, endedAt: null, lines: [], topics: [], cards: [], syncedAt: null };
+}
+
+/** Phiên được phép dọn: đã kết thúc và backend đã xác nhận lưu. */
+export function isDisposable(s: SavedSession): boolean {
+  return s.endedAt !== null && typeof s.syncedAt === 'number';
+}
+
+/** Đánh dấu đã lưu backend. Chỉ áp cho phiên đã kết thúc; giữ mốc đầu tiên. */
+export function markSyncedPure(s: SavedSession, syncedAt: number): SavedSession {
+  if (s.endedAt === null || !Number.isFinite(syncedAt)) return s;
+  return typeof s.syncedAt === 'number' ? s : { ...s, syncedAt };
 }
 
 /** Tin chat thuộc chủ đề nào: theo URL nguồn, rồi theo tên chủ đề, rồi chủ đề mới nhất. */
@@ -61,17 +72,23 @@ export function finish(s: SavedSession, now: number): SavedSession {
   return s.endedAt === null ? { ...s, endedAt: now } : s;
 }
 
-/** Giữ tối đa MAX_SESSIONS phiên: bỏ các phiên đã kết thúc cũ nhất trước. */
+/**
+ * Giữ tối đa MAX_SESSIONS phiên bằng cách bỏ các phiên đã lưu backend cũ nhất.
+ * Phiên đang chạy hoặc chưa gửi không bao giờ bị bỏ, kể cả khi vượt giới hạn:
+ * mất dữ liệu cuộc họp tệ hơn vượt hạn mức.
+ */
 export function prune(all: Record<string, SavedSession>): Record<string, SavedSession> {
   const list = Object.values(all);
-  if (list.length <= MAX_SESSIONS) return all;
-  const keep = new Set(
-    [...list]
-      .sort((a, b) => (b.endedAt === null ? 1 : 0) - (a.endedAt === null ? 1 : 0) || b.startedAt - a.startedAt)
-      .slice(0, MAX_SESSIONS)
+  const excess = list.length - MAX_SESSIONS;
+  if (excess <= 0) return all;
+  const drop = new Set(
+    list
+      .filter(isDisposable)
+      .sort((a, b) => a.startedAt - b.startedAt)
+      .slice(0, excess)
       .map((x) => x.id),
   );
-  return Object.fromEntries(Object.entries(all).filter(([id]) => keep.has(id)));
+  return Object.fromEntries(Object.entries(all).filter(([id]) => !drop.has(id)));
 }
 
 type Store = Record<string, SavedSession>;
@@ -136,6 +153,18 @@ export function deleteSession(id: string): Promise<void> {
     if (!(id in all)) return;
     delete all[id];
     await chrome.storage.local.set({ [SESSIONS_KEY]: all });
+  });
+}
+
+export function markSynced(id: string, syncedAt: number): Promise<void> {
+  return serial(async () => {
+    const all = await readAll();
+    const s = all[id];
+    if (!s) return;
+    const next = markSyncedPure(s, syncedAt);
+    if (next === s) return;
+    all[id] = next;
+    await chrome.storage.local.set({ [SESSIONS_KEY]: prune(all) });
   });
 }
 

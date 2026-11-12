@@ -3529,6 +3529,10 @@ button.nav-item {
 .rp__time { font-family: var(--font-mono); font-size: 11px; color: var(--muted-ink); }
 .rp__cite { display: block; font-family: var(--font-mono); font-size: 11px; line-height: 16px; color: var(--muted-ink); }
 
+/* ---- tab Báo cáo: lưu phiên lên backend ---- */
+.sr { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.sr__text { margin: 0; font-size: 13px; line-height: 19px; }
+
 /* ---- kho tài liệu (giao diện mục tiêu) ---- */
 .kb-note {
   display: flex;

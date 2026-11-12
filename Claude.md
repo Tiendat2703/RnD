@@ -26,11 +26,12 @@ Cầu nối duy nhất là `window.postMessage` tới content script `agents/sid
 2. "Gửi phiên cho MeetMate" → extension nhận `session.prepare`. Chrome chỉ cho ghi âm tab sau khi người dùng bấm biểu tượng extension, nên bước **Bắt đầu** phải bấm trong popup ở tab Meet.
 3. Extension báo `status: Đang chạy` → hộp thoại tự đóng, **không** mở màn hình toàn trang. Theo dõi trực tiếp nằm ở **panel MeetMate ngay trong trang Meet** (`extension/src/content/panel.ts`: trạng thái, vài dòng transcript, chủ đề, nguồn, nút Dừng). Web chỉ hiện thẻ "Đang diễn ra"; "Mở lại phiên" mở `MeetingMonitor` như một góc nhìn phụ, vẫn nhận cùng sự kiện.
 4. Kết thúc: từ web (`session.stop`), từ panel/popup (Dừng), khi bấm "Rời cuộc gọi"/tab Meet điều hướng đi/đóng tab (`ended`, lý do `left`/`meet-closed`). Meet **không** tải lại trang khi rời cuộc gọi (chỉ đổi nội dung thành "Bạn đã rời khỏi cuộc họp"), nên content script canh hai tín hiệu: bấm nút theo nhãn chữ, và một đoạn chữ ngắn đứng riêng đúng câu của màn hình đó (`content/leave.ts`). Khi họp kết thúc (`left`/`meet-closed`, không phải Dừng nghe), extension **tự chuyển hướng tab Meet** tới `<origin web>/dashboard/callSessions` (origin lấy từ tab web đã bắt tay, mặc định `http://localhost:3000`); tab Meet đã đóng thì dùng/mở tab web. Panel hiện "Phiên đã kết thúc và được lưu".
-5. **Lưu phiên:** extension là nơi lưu (`extension/src/sessionStore.ts`, `chrome.storage.local`, tối đa 50 phiên): transcript, chủ đề, kết quả tìm nguồn, số tin đã vào chat. Web hỏi `sessions.list` mỗi lần mở và mỗi khi một phiên kết thúc rồi gộp vào danh sách cuộc họp, nên phiên diễn ra lúc web đóng hoặc sau khi tải lại trang vẫn còn. Xóa cuộc họp trên web gửi `sessions.delete`. Tab "Nguồn" trong chi tiết dùng chủ đề/nguồn thật của phiên; cuộc họp mẫu có sẵn vẫn dùng dữ liệu mẫu.
+5. **Lưu phiên trong lúc họp:** extension ghi từng sự kiện ngay khi có (`extension/src/sessionStore.ts`, `chrome.storage.local`): transcript, chủ đề, kết quả tìm nguồn, số tin đã vào chat. Web hỏi `sessions.list` mỗi lần mở và mỗi khi một phiên kết thúc rồi gộp vào danh sách cuộc họp, nên phiên diễn ra lúc web đóng hoặc sau khi tải lại trang vẫn còn. Xóa cuộc họp trên web gửi `sessions.delete` (chỉ xóa bản trong extension, không xóa bản trên backend). Tab "Nguồn" trong chi tiết dùng chủ đề/nguồn thật của phiên; cuộc họp mẫu có sẵn vẫn dùng dữ liệu mẫu.
+6. **Lưu phiên lên backend (thủ công):** phiên đã kết thúc hiện "Chờ lưu". Người dùng bấm "Lưu phiên" (thẻ cuộc họp hoặc tab "Báo cáo", `components/dashboard/SessionReport.tsx`) → web gửi `SavedSession` tới backend MeetMate (`lib/backendApi.ts`) → backend ghi JSON và tạo báo cáo bằng một lượt LLM: những gì đã diễn ra, ai làm gì, kế hoạch tiếp theo (`lib/report.ts`, dùng chung web + backend). Chỉ khi báo cáo đã lưu, web mới gửi `sessions.markSynced`. Extension chỉ dọn (giới hạn 50) phiên đã có `syncedAt`; phiên đang chạy hoặc chưa gửi không bao giờ bị dọn. Transcript không phân biệt người nói, nên "ai" chỉ có khi tên được nhắc trong câu căn cứ; câu căn cứ không có thật trong transcript thì mục bị loại. Kế hoạch: `docs/plans/2026-11-11-backend-session-integration.md`.
 
 **Giao diện extension** tuân `docs/design/MEETMATE-DESIGN.md` (không phải `DESIGN.md`): token và thành phần dùng chung ở `extension/src/ui/theme.css` (popup theo prefers-color-scheme, panel luôn tối), ba họ phông đóng gói trong `extension/static/fonts/` (không gọi Google Fonts), hàng 6 bước ở `ui/stages.ts`, phân loại dải vàng/đỏ ở `ui/status.ts`. Popup là khung cố định 360×520. Panel vẽ nguồn bằng `toChatPosts` của web nên không lệch tin thật. Cố ý **không có icon/logo**: hợp đồng cấm tự vẽ.
 
-**Knowledge Card (giao diện mục tiêu, dữ liệu mẫu).** Kiểu dữ liệu ở `lib/evidence.ts` (dùng chung web + extension), kịch bản `mocks/meeting-claims.json` (ví dụ mục III.3.2 của bản mô tả), kho tài liệu `mocks/kb.json`, API giả `lib/mockApi.ts`. Extension ở chế độ thử phát thẻ qua sự kiện `card`; web hiển thị ở tab Nhận định / Bối cảnh / Artifact của chi tiết cuộc họp và trang Tài liệu; mọi nơi gắn nhãn "Dữ liệu mẫu". Bảng nối backend: `docs/plans/2026-11-04-prototype-gap-plan.md`. Ảnh chụp: `docs/screenshots/` (`node scripts/prototype-shots.mjs`). Bốn trạng thái bằng chứng phân biệt bằng biểu tượng + độ đặc nền + kiểu viền, không thêm màu (xem `docs/design/MEETMATE-DESIGN.md`).
+**Knowledge Card (giao diện mục tiêu, chưa có nguồn dữ liệu).** Kiểu dữ liệu ở `lib/evidence.ts` (dùng chung web + extension). Dữ liệu và API giả cho thẻ (`mocks/meeting-claims.json`, `mocks/kb.json`, `lib/mockApi.ts`) **đã bị xóa (11/11/2026)**, cùng các cuộc họp mẫu trên web: danh sách cuộc họp và kho tài liệu bắt đầu rỗng, chỉ có phiên thật do extension ghi. Chưa có pipeline nào sinh thẻ, nên các tab Nhận định / Bối cảnh và phần Artifact chỉ hiện khi một phiên có thẻ (hiện không phiên nào có). Bốn trạng thái bằng chứng phân biệt bằng biểu tượng + độ đặc nền + kiểu viền, không thêm màu (xem `docs/design/MEETMATE-DESIGN.md`). Ảnh trong `docs/screenshots/` chụp từ bản còn dữ liệu mẫu, đã cũ.
 
 Nút "Chạy thử với dữ liệu mẫu" vẫn có và được gắn nhãn "dữ liệu mẫu" trên monitor.
 
@@ -38,8 +39,8 @@ Nút "Chạy thử với dữ liệu mẫu" vẫn có và được gắn nhãn "
 
 - `app/`, `components/`, `hooks/`, `lib/`, `mocks/`: web console Next.js 16, React 18, TypeScript, không Tailwind. CSS thường (`app/globals.css`, `app/dashboard/dashboard.css`).
 - `lib/types.ts`: hợp đồng dữ liệu web ↔ extension (`LIMITS`, `Topic`, `ResearchResult`…). Sửa hằng số ở đây, không sửa ở nơi dùng.
-- `lib/mockApi.ts`: chỗ giả lập AI. Chỉ đổi phần bên trong hàm khi nối backend thật, không đổi chữ ký.
-- `agents/sidekick/`: code nhập từ dự án hackathon Sidekick (OpenAI/LiveKit/Exa/Ambiguous). Có `package.json` riêng. Phần `extension/` là code MeetMate (dùng lại `ExaProvider` và vitest ở đây); phần còn lại của package là Sidekick gốc, không sửa trừ khi task nêu rõ.
+- `agents/sidekick/`: code nhập từ dự án hackathon Sidekick (OpenAI/LiveKit/Exa/Ambiguous). Có `package.json` riêng. Phần `extension/` là code MeetMate (dùng lại `ExaProvider` và vitest ở đây); `meetmate-server/` là backend MeetMate (Express, cổng 3001, chỉ loopback, lưu tệp JSON ở `.meetmate-data/`, LLM Blaze `openai/gpt-6-luna` như nhánh main, khóa `BLAZE_API_KEY` trong `agents/sidekick/.env.local`); phần còn lại của package là Sidekick gốc, không sửa trừ khi task nêu rõ.
+- `lib/backendApi.ts`: lời gọi duy nhất từ web tới backend MeetMate (`NEXT_PUBLIC_MEETMATE_API`, mặc định `http://localhost:3001`).
 - `docs/design/DESIGN-SUBSCRIPTION.md`: hợp đồng riêng cho trang Gói dịch vụ (`/dashboard/upgrade`, `components/dashboard/UpgradePanel.tsx`). Học **cơ chế bố cục** của một trang giá khác (hạn mức, công tắc kỳ hạn, thẻ gói, bảng so sánh, FAQ), không lấy tên/chữ/phông/màu/biểu tượng của họ. Giá là giả thuyết "Dự kiến", nút chọn gói chỉ báo toast demo. Ảnh chụp: `node scripts/subscription-shots.mjs` → `docs/screenshots/subscription/`.
 - `docs/design/` (kèm `docs/design/mockups/`): hợp đồng thiết kế. `DESIGN.md` chỉ là capture tham khảo từ sản phẩm khác, **không** dùng logo, tên, copy, minh họa hay phông chữ từ đó.
 - `2026-11-0x-*.md`: kế hoạch và sổ đối chiếu (extension, conflict register, replatform, consistency checklist).
@@ -53,6 +54,10 @@ npm ci
 npm run dev        # web console
 npm run lint       # tsc --noEmit
 npm run build
+
+# backend MeetMate (trong agents/sidekick)
+npm run meetmate:server
+npx vitest run meetmate-server extension
 ```
 
 Trước khi sửa Next.js, đọc `AGENTS.md` và `node_modules/next/dist/docs/` — phiên bản này có breaking changes.
@@ -60,8 +65,8 @@ Trước khi sửa Next.js, đọc `AGENTS.md` và `node_modules/next/dist/docs/
 ## 5. Quy ước
 
 - Mọi chữ hiển thị cho người dùng bằng **tiếng Việt**. Thương hiệu chỉ là **MeetMate / MeetMateAI**.
-- Dữ liệu giả nằm trong `mocks/` hoặc `lib/dashboardData.ts`, không hardcode trong component.
-- Web app không bao giờ giữ khóa Blaze/Exa; không có `fetch`/`wss` ra ngoài trong `lib/mockApi.ts` cho đến khi có quyết định backend.
+- Dữ liệu giả còn lại (chỉ cho nút "Chạy thử") nằm trong `mocks/` và `lib/dashboardData.ts`, không hardcode trong component.
+- Web app không bao giờ giữ khóa Blaze/Exa. Khóa STT/Exa ở extension, khóa LLM tạo báo cáo ở backend. Lời gọi backend thật chỉ nằm trong `lib/backendApi.ts`.
 - Không tuyên bố trong UI hoặc tài liệu điều code chưa làm. Số liệu chưa đo gọi là "mục tiêu"/"mô phỏng".
 - Nhánh `feature/<tên>`, PR review trước khi merge vào `main`.
 

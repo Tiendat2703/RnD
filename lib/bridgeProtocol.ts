@@ -30,7 +30,9 @@ export type WebToExt =
   /** xin toàn bộ phiên extension đã lưu (kể cả phiên diễn ra khi web không mở) */
   | { type: "sessions.list" }
   /** xóa một phiên đã lưu (khi người dùng xóa cuộc họp trên web) */
-  | { type: "sessions.delete"; id: string };
+  | { type: "sessions.delete"; id: string }
+  /** backend đã lưu phiên và báo cáo: extension đánh dấu để được phép dọn phiên này */
+  | { type: "sessions.markSynced"; id: string; syncedAt: number };
 
 export interface ExtInfo {
   version: string;
@@ -74,6 +76,11 @@ export interface SavedSession {
   topics: SavedTopic[];
   /** thẻ đối chiếu (Knowledge Card); phiên lưu trước khi có thẻ thì thiếu trường này */
   cards?: KnowledgeCard[];
+  /**
+   * epoch ms lúc backend xác nhận đã lưu phiên (bấm "Lưu phiên" trên web).
+   * Thiếu hoặc null = chưa gửi: extension không được dọn phiên này.
+   */
+  syncedAt?: number | null;
 }
 
 export type ExtToWeb =

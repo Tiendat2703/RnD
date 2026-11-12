@@ -10,7 +10,7 @@ import {
 } from '../../../../lib/bridgeProtocol';
 import type { Msg } from './messages';
 
-const ALLOWED: WebToExt['type'][] = ['ping', 'session.prepare', 'session.stop', 'sessions.list', 'sessions.delete'];
+const ALLOWED: WebToExt['type'][] = ['ping', 'session.prepare', 'session.stop', 'sessions.list', 'sessions.delete', 'sessions.markSynced'];
 
 function toWeb(payload: ExtToWeb) {
   const envelope: Envelope<ExtToWeb> = { source: BRIDGE_EXT, payload };

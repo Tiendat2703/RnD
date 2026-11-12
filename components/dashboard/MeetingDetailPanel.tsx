@@ -7,22 +7,17 @@
 // (chi tiết). Panel cũ của đối thủ có "AI notes" và "Ask AI" — hai thứ giả vì
 // sản phẩm này không tóm tắt thay bạn và không có chat với AI về buổi họp.
 //
-// Nguồn là mẫu: mocks/meetmate-output.json, cùng dữ liệu monitor dùng. Một phiên
-// thật sẽ có chủ đề riêng; ở đây mọi phiên cùng trỏ về một bản ghi pipeline đã
-// định nghĩa, nên panel nói rõ điều đó thay vì làm ra vẻ mỗi phiên một kết quả.
+// Mọi dữ liệu là của phiên thật do extension ghi (chủ đề, nguồn, bản ghi).
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import {
   MEETING_KIND_LABEL,
   RESEARCH_FOOTNOTE,
-  initialMeetings,
   formatDuration,
   formatGroupDate,
   formatTime,
-  sampleTopics,
 } from "../../lib/dashboardData";
 import { audioSourceLabel, stampFromMs } from "../../lib/formatChat";
-import { LIMITS, type ResearchResult } from "../../lib/types";
 import { useDashboard } from "./DashboardContext";
 import { useModalBehaviour } from "./controls";
 import { MmPostList } from "./MmPost";
@@ -30,15 +25,16 @@ import { EvidenceCard } from "./EvidenceCard";
 import { StatusChart } from "./StatusChart";
 import { ReportPreview } from "./ReportPreview";
 import { SessionMemoryView } from "./SessionMemoryView";
+import { SessionReport } from "./SessionReport";
 import { EVIDENCE_LABEL, EVIDENCE_ORDER, reportMarkdown, statusCounts } from "../../lib/evidence";
 import {
-  IconAlert,
   IconCheck,
   IconClock,
   IconDownload,
   IconEraser,
   IconFile,
   IconInfo,
+  IconList,
   IconNotePencil,
   IconTable,
   IconTranscript,
@@ -57,15 +53,18 @@ const TABS = [
  * Cuộc họp có thẻ đối chiếu (Knowledge Card) thêm hai tab "Nhận định" và "Bối cảnh" và bỏ tab
  * "Nguồn" — tab đó là nguồn web của luồng cũ và không thuộc cuộc họp này.
  */
-function tabsFor(hasCards: boolean) {
-  if (!hasCards) return TABS;
-  return [
-    TABS[0],
-    { id: "nhan-dinh", label: "Nhận định", icon: IconCheck },
-    { id: "boi-canh", label: "Bối cảnh", icon: IconNotePencil },
-    TABS[2],
-    TABS[3],
-  ];
+function tabsFor(hasCards: boolean, hasSession: boolean) {
+  const base = !hasCards
+    ? TABS
+    : [
+        TABS[0],
+        { id: "nhan-dinh", label: "Nhận định", icon: IconCheck },
+        { id: "boi-canh", label: "Bối cảnh", icon: IconNotePencil },
+        TABS[2],
+        TABS[3],
+      ];
+  // phiên do extension ghi: tab "Báo cáo" để lưu phiên lên backend và xem báo cáo
+  return hasSession ? [base[0], { id: "bao-cao", label: "Báo cáo", icon: IconList }, ...base.slice(1)] : base;
 }
 
 /** slug giữ được dấu tiếng Việt — [^\w] sẽ xóa sạch tiêu đề Việt. */
@@ -95,7 +94,7 @@ const ARTIFACTS = [
 ];
 
 export function MeetingDetailPanel() {
-  const { detailOf, closeDetail, sessionCards } = useDashboard();
+  const { detailOf, closeDetail, sessionCards, savedSessions } = useDashboard();
   const ref = useRef<HTMLDivElement>(null);
   useModalBehaviour(detailOf !== null, closeDetail, ref);
 
@@ -110,8 +109,7 @@ export function MeetingDetailPanel() {
   if (!detailOf) return null;
   const { meeting } = detailOf;
   const cards = sessionCards[meeting.id] ?? [];
-  const tabs = tabsFor(cards.length > 0);
-  const isSample = initialMeetings.some((m) => m.id === meeting.id);
+  const tabs = tabsFor(cards.length > 0, meeting.id in savedSessions);
 
   return (
     <div
@@ -132,7 +130,6 @@ export function MeetingDetailPanel() {
           <div className="dp__id">
             <h2 className="dp__title">
               {meeting.title}
-              {isSample ? <span className="ev-sample">Dữ liệu mẫu</span> : null}
             </h2>
             <p className="dp__sub">
               {MEETING_KIND_LABEL[meeting.kind]} · {formatGroupDate(meeting.startedAt)} ·{" "}
@@ -188,15 +185,8 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
     .map((l) => `[${stampFromMs(l.atMs)}] ${audioSourceLabel(l.source)}: ${l.text}`)
     .join("\n");
 
-  // phiên do extension ghi có chủ đề thật; các cuộc họp mẫu có sẵn dùng dữ liệu mẫu
-  const real = sessionTopics[id];
-  const topics = real
-    ? real.map((t) => ({ topic: t.topic, result: t.result, posted: t.posted }))
-    : sampleTopics.map((t) => ({
-        topic: t.topic,
-        result: t.result as ResearchResult | null,
-        posted: t.cancelled ? t.posted - 1 : t.posted,
-      }));
+  // chủ đề + nguồn thật của phiên do extension ghi
+  const topics = (sessionTopics[id] ?? []).map((t) => ({ topic: t.topic, result: t.result, posted: t.posted }));
 
   const sourcesText = topics
     .flatMap((t) =>
@@ -217,6 +207,8 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
               .join(" · ")}
             . Câu trả lời lấy từ tài liệu của nhóm.
           </p>
+        ) : tab === "bao-cao" ? (
+          <p className="dp__hint">Báo cáo do backend MeetMate tạo từ bản ghi sau khi bạn lưu phiên.</p>
         ) : tab === "boi-canh" ? (
           <p className="dp__hint">Những gì MeetMate ghi lại về phiên này ngoài bản ghi.</p>
         ) : tab === "ban-ghi" ? (
@@ -286,6 +278,12 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
               </div>
             ))
           )}
+        </div>
+      ) : null}
+
+      {tab === "bao-cao" ? (
+        <div className="dp__scroll dash-scroll">
+          <SessionReport id={id} onDownload={(file, text) => download(`${name}-${file}`, text, pushToast)} />
         </div>
       ) : null}
 
@@ -439,14 +437,6 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
               </dd>
             </div>
           </dl>
-
-          <div className="mm-band mm-band--warn dp__band">
-            <IconAlert className="mm-band__glyph" />
-            <span>
-              Số chủ đề và số nguồn lấy từ bản ghi mẫu của pipeline, không phải từ một phiên MeetMate
-              thật — extension chưa ghi được phiên nào.
-            </span>
-          </div>
         </div>
       ) : null}
     </section>

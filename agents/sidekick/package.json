@@ -14,6 +14,7 @@
     "verify:sync": "tsx --env-file=.env.local scripts/verify-workspace-sync.ts",
     "agent:build": "node scripts/build-agent.mjs",
     "extension:build": "node scripts/build-extension.mjs",
+    "meetmate:server": "tsx watch --env-file-if-exists=.env.local meetmate-server/index.ts",
     "agent:dev": "npm run agent:build && node --env-file-if-exists=.env.local dist-agent/agent.js dev",
     "agent:start": "node --env-file-if-exists=.env.local dist-agent/agent.js start",
     "verify:livekit": "node scripts/verify-livekit.mjs",

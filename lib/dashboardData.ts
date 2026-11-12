@@ -44,102 +44,6 @@ export const FREE_PLAN = {
 /* Cuộc họp                                                            */
 /* ------------------------------------------------------------------ */
 
-/** Id cuộc họp mẫu có thẻ đối chiếu (mocks/meeting-claims.json). */
-export const SAMPLE_CLAIMS_MEETING_ID = "m-claims";
-
-export const initialMeetings: MeetingRecord[] = [
-  {
-    id: SAMPLE_CLAIMS_MEETING_ID,
-    title: claimsFixture.title,
-    kind: "san-pham",
-    startedAt: "2026-11-03T14:00:00",
-    durationSec: 2700,
-    topicCount: claimsFixture.cards.length,
-    sourceCount: 0,
-    status: "ended",
-  },
-  {
-    id: "m-01",
-    title: "Bảng giá gói SME",
-    kind: "san-pham",
-    startedAt: "2026-11-01T09:40:00",
-    durationSec: 1440,
-    topicCount: 4,
-    sourceCount: 11,
-    status: "live",
-  },
-  {
-    id: "m-02",
-    title: "Nghiên cứu khách hàng: nhóm product",
-    kind: "nghien-cuu",
-    startedAt: "2026-11-01T08:15:00",
-    durationSec: 2520,
-    topicCount: 6,
-    sourceCount: 18,
-    status: "ready",
-  },
-  {
-    id: "m-03",
-    title: "Họp tuần sản phẩm",
-    kind: "san-pham",
-    startedAt: "2026-10-30T15:00:00",
-    durationSec: 1875,
-    topicCount: 3,
-    sourceCount: 7,
-    status: "ended",
-  },
-  {
-    id: "m-04",
-    title: "Lớp học phần AI tạo sinh: ôn chủ đề kiểm chứng",
-    kind: "dao-tao",
-    startedAt: "2026-10-30T10:30:00",
-    durationSec: 3480,
-    topicCount: 5,
-    sourceCount: 14,
-    status: "ready",
-  },
-  {
-    id: "m-05",
-    title: "Đàm phán đại lý miền Trung",
-    kind: "ban-le",
-    startedAt: "2026-10-29T14:00:00",
-    durationSec: 2118,
-    topicCount: 4,
-    sourceCount: 9,
-    status: "ended",
-  },
-  {
-    id: "m-06",
-    title: "Đánh giá prototype MeetMate",
-    kind: "san-pham",
-    startedAt: "2026-10-29T09:00:00",
-    durationSec: 1620,
-    topicCount: 7,
-    sourceCount: 21,
-    status: "ended",
-  },
-  {
-    id: "m-07",
-    title: "Nhóm nghiên cứu: bộ dữ liệu kiểm thử claim Việt–Anh",
-    kind: "nghien-cuu",
-    startedAt: "2026-10-28T11:00:00",
-    durationSec: 2760,
-    topicCount: 5,
-    sourceCount: 16,
-    status: "ended",
-  },
-  {
-    id: "m-08",
-    title: "Kênh phân phối B2B",
-    kind: "san-pham",
-    startedAt: "2026-10-28T09:20:00",
-    durationSec: 598,
-    topicCount: 2,
-    sourceCount: 5,
-    status: "ended",
-  },
-];
-
 /* ------------------------------------------------------------------ */
 /* Knowledge base (User Knowledge Base, mục III.1.2)                   */
 /* ------------------------------------------------------------------ */
@@ -161,7 +65,8 @@ export interface DocItem {
 // nên tài liệu ở đây là lớp giữa: thứ MeetMate đối chiếu trước khi ra ngoài tìm.
 // Chưa đấu nối với luồng AI — thư mục extension chưa có dòng code nào — nên mọi
 // surface dùng danh sách này phải tự nói rõ điều đó ngay trong nhãn.
-export const initialDocs: DocItem[] = kbFixture.docs as DocItem[];
+/** Kho tài liệu bắt đầu rỗng: chưa có pipeline tài liệu thật. */
+export const initialDocs: DocItem[] = [];
 
 /* ------------------------------------------------------------------ */
 /* Bản ghi cuộc họp                                                    */
@@ -171,8 +76,6 @@ export const initialDocs: DocItem[] = kbFixture.docs as DocItem[];
 // micro của người dùng). Ghi "ai đó nói gì" sẽ bịa ra một thứ dữ liệu hệ thống
 // không hề thu thập.
 import transcriptFixture from "../mocks/meeting-transcript.json";
-import claimsFixture from "../mocks/meeting-claims.json";
-import kbFixture from "../mocks/kb.json";
 
 export const sampleLines: MeetingLine[] = transcriptFixture as MeetingLine[];
 

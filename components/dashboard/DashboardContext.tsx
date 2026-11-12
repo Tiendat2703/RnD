@@ -7,8 +7,20 @@
 
 import { createContext, useContext } from "react";
 import type { MeetingKind, MeetingLine, MeetingRecord, ResearchPrefs } from "../../lib/dashboardData";
-import type { SavedTopic } from "../../lib/bridgeProtocol";
+import type { SavedSession, SavedTopic } from "../../lib/bridgeProtocol";
 import type { KnowledgeCard } from "../../lib/evidence";
+import type { SavedSessionResponse } from "../../lib/report";
+
+/** Tiến trình "Lưu phiên" của một cuộc họp, phía web. */
+export type SaveState =
+  | { phase: "loading" }
+  | { phase: "saving" }
+  /** backend đã trả lời; báo cáo có thể vẫn lỗi (`res.reportStatus`) */
+  | { phase: "done"; res: SavedSessionResponse }
+  /** không gửi được hoặc backend từ chối */
+  | { phase: "error"; message: string }
+  /** extension ghi là đã lưu nhưng backend không còn bản nào */
+  | { phase: "missing" };
 
 /** "auto" follows the OS; the shell resolves it to a real theme before painting. */
 export type Theme = "light" | "dark" | "auto";
@@ -130,6 +142,15 @@ export interface DashboardContextValue {
   sessionTopics: Record<string, SavedTopic[]>;
   /** thẻ đối chiếu (Knowledge Card) của từng cuộc họp: dữ liệu mẫu hoặc do extension ghi */
   sessionCards: Record<string, KnowledgeCard[]>;
+  /** phiên nguyên bản extension đã lưu, theo id: thứ được gửi khi bấm "Lưu phiên" */
+  savedSessions: Record<string, SavedSession>;
+  saves: Record<string, SaveState>;
+  /** gửi phiên đã kết thúc lên backend và tạo báo cáo */
+  saveSession: (id: string) => Promise<void>;
+  /** tạo lại báo cáo cho phiên backend đã có */
+  retryReport: (id: string) => Promise<void>;
+  /** đọc báo cáo của phiên đã lưu từ backend (khi mở lại web) */
+  loadReport: (id: string) => Promise<void>;
   prefsOpen: boolean;
   prefsFrom: PrefsFrom;
   setPrefsOpen: (open: boolean, from?: PrefsFrom) => void;

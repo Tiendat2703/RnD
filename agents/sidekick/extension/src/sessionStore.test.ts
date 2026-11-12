@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ResearchResult } from '../../../../lib/types';
-import { applyEvent, finish, newSession, prune } from './sessionStore';
+import { applyEvent, finish, markSyncedPure, newSession, prune } from './sessionStore';
 
 const result: ResearchResult = {
   topic: 'Giá',
@@ -44,16 +44,53 @@ describe('sessionStore.applyEvent', () => {
   });
 });
 
+describe('sessionStore.markSyncedPure', () => {
+  it('marks an ended session once and keeps the first timestamp', () => {
+    const ended = finish(fresh(), 2000);
+    const synced = markSyncedPure(ended, 3000);
+    expect(synced.syncedAt).toBe(3000);
+    expect(markSyncedPure(synced, 4000)).toBe(synced);
+  });
+
+  it('refuses a running session or a bad timestamp', () => {
+    const running = fresh();
+    expect(markSyncedPure(running, 3000)).toBe(running);
+    const ended = finish(fresh(), 2000);
+    expect(markSyncedPure(ended, Number.NaN)).toBe(ended);
+  });
+});
+
 describe('sessionStore.prune', () => {
-  it('keeps at most 50 sessions and never drops a running one', () => {
-    const all = Object.fromEntries(
-      Array.from({ length: 60 }, (_, i) => {
-        const s = newSession(`s${i}`, 't', 'khac', i);
-        return [s.id, i === 0 ? s : { ...s, endedAt: i + 1 }];
-      }),
-    );
-    const out = prune(all);
+  const make = (i: number, state: 'running' | 'unsynced' | 'synced') => {
+    const s = newSession(`s${i}`, 't', 'khac', i);
+    if (state === 'running') return s;
+    const ended = { ...s, endedAt: i + 1 };
+    return state === 'synced' ? { ...ended, syncedAt: i + 2 } : ended;
+  };
+  const store = (list: ReturnType<typeof make>[]) => Object.fromEntries(list.map((s) => [s.id, s]));
+
+  it('drops the oldest synced sessions down to 50', () => {
+    const out = prune(store(Array.from({ length: 60 }, (_, i) => make(i, i === 0 ? 'running' : 'synced'))));
     expect(Object.keys(out)).toHaveLength(50);
     expect(out.s0).toBeDefined();
+    expect(out.s1).toBeUndefined();
+    expect(out.s10).toBeUndefined();
+    expect(out.s11).toBeDefined();
+  });
+
+  it('never drops an unsynced or running session, even over the limit', () => {
+    const list = Array.from({ length: 60 }, (_, i) => make(i, i === 0 ? 'running' : i < 55 ? 'unsynced' : 'synced'));
+    const out = prune(store(list));
+    // 5 phiên đã lưu đều bị dọn, 55 phiên còn lại giữ nguyên dù vượt 50
+    expect(Object.keys(out)).toHaveLength(55);
+    for (let i = 0; i < 55; i++) expect(out[`s${i}`]).toBeDefined();
+  });
+
+  it('treats sessions saved before syncedAt existed as unsynced', () => {
+    const legacy = Array.from({ length: 60 }, (_, i) => {
+      const { syncedAt: _drop, ...rest } = make(i, 'unsynced');
+      return rest;
+    });
+    expect(Object.keys(prune(store(legacy)))).toHaveLength(60);
   });
 });

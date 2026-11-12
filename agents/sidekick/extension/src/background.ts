@@ -17,7 +17,7 @@ import {
   WEB_TAB_KEY,
   type Msg,
 } from './messages';
-import { deleteSession, finishCurrent, listSessions, recordEvent, startSession } from './sessionStore';
+import { deleteSession, finishCurrent, listSessions, markSynced, recordEvent, startSession } from './sessionStore';
 
 // Phòng họp có hai dạng URL: meet.google.com/abc-defg-hij và meet.google.com/meet/abc-defg-hij.
 const MEET_MEETING_URL = /^https:\/\/meet\.google\.com\/(?:meet\/)?[a-z]{3}-[a-z]{4}-[a-z]{3}/;
@@ -229,6 +229,9 @@ chrome.runtime.onMessage.addListener((msg: Msg, sender, sendResponse) => {
         sendResponse(undefined);
       } else if (web.type === 'sessions.delete') {
         await deleteSession(String(web.id));
+        sendResponse(undefined);
+      } else if (web.type === 'sessions.markSynced') {
+        await markSynced(String(web.id), Number(web.syncedAt));
         sendResponse(undefined);
       } else if (web.type === 'sessions.list') {
         sendResponse({ type: 'sessions', sessions: await listSessions() } satisfies ExtToWeb);

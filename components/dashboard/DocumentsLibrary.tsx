@@ -3,16 +3,14 @@
 // components/dashboard/DocumentsLibrary.tsx — kho tài liệu đối chiếu.
 //
 // Trang này là "lớp mục tiêu", không phải một tính năng đã xong: chưa có tải lên, trích
-// xuất, embedding hay truy xuất thật. Thông tin lập chỉ mục (định dạng, số trang, số đoạn)
-// và ô "Kiểm tra truy xuất" chạy trên dữ liệu mẫu (mocks/kb.json qua lib/mockApi.ts) và
-// được gắn nhãn như vậy. Khi có Supabase + pgvector, chỉ thay phần bên trong mockApi.
+// xuất, embedding hay truy xuất thật. File .docx chỉ được đọc trên máy để hiện số đoạn;
+// danh sách bắt đầu rỗng và không có dữ liệu mẫu nào.
 import { useRef, useState } from "react";
 import { initialDocs, type DocItem } from "../../lib/dashboardData";
 import { parseDocx, type ParsedDoc } from "../../lib/docxText";
-import { addKbChunks, removeKbChunks, searchKnowledgeBase, type KbHit } from "../../lib/mockApi";
 import { useDashboard } from "./DashboardContext";
 import { Dialog } from "./Dialog";
-import { IconFolder, IconInfo, IconPlus, IconSearch, IconTrash, IconX } from "./icons";
+import { IconFolder, IconInfo, IconPlus, IconTrash, IconX } from "./icons";
 
 const DAY = new Intl.DateTimeFormat("vi-VN", { day: "numeric", month: "short", year: "numeric" });
 
@@ -29,16 +27,6 @@ export function DocumentsLibrary() {
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const counter = useRef(0);
-  const [query, setQuery] = useState("API trả về bao nhiêu bản ghi mỗi trang?");
-  const [hits, setHits] = useState<KbHit[] | null>(null);
-  const [searching, setSearching] = useState(false);
-
-  const runSearch = async () => {
-    if (!query.trim() || searching) return;
-    setSearching(true);
-    setHits(await searchKnowledgeBase(query));
-    setSearching(false);
-  };
 
   const resetAdd = () => {
     setTitle("");
@@ -77,7 +65,6 @@ export function DocumentsLibrary() {
     const id = `doc-new-${++counter.current}`;
     let item: DocItem;
     if (parsed) {
-      addKbChunks(id, title.trim(), parsed.chunks);
       item = {
         id,
         title: title.trim(),
@@ -109,53 +96,10 @@ export function DocumentsLibrary() {
       <p className="kb-note">
         <IconInfo />
         <span>
-          <strong>Dữ liệu mẫu.</strong> Giao diện mục tiêu của kho tài liệu: chưa có tải lên, trích xuất hay
-          truy xuất thật. Tài liệu chỉ nằm trong phiên làm việc của nhóm và chỉ được dùng để đối chiếu
-          nhận định trong cuộc họp.
+          <strong>Giao diện mục tiêu.</strong> Chưa có tải lên, trích xuất hay truy xuất thật: tài liệu
+          chỉ nằm trong trang này và MeetMate chưa dùng chúng để đối chiếu nhận định trong cuộc họp.
         </span>
       </p>
-
-      <section className="kb-search" aria-label="Kiểm tra truy xuất">
-        <div className="kb-search__bar">
-          <label className="kb-search__label" htmlFor="kb-q">
-            Kiểm tra truy xuất
-          </label>
-          <div className="kb-search__row">
-            <input
-              id="kb-q"
-              className="input"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && void runSearch()}
-              placeholder="Hỏi một điều có trong tài liệu của nhóm"
-            />
-            <button className="btn btn--primary" onClick={() => void runSearch()} disabled={searching}>
-              <IconSearch />
-              {searching ? "Đang truy xuất…" : "Truy xuất"}
-            </button>
-          </div>
-        </div>
-        {hits !== null ? (
-          hits.length === 0 ? (
-            <p className="kb-search__empty">
-              Không có đoạn nào khớp. Đây là trạng thái “chưa đủ căn cứ”: hệ thống không suy đoán.
-            </p>
-          ) : (
-            <ol className="kb-hits">
-              {hits.map((h) => (
-                <li className="kb-hit" key={`${h.doc}-${h.locator}`}>
-                  <div className="kb-hit__head">
-                    <span className="kb-hit__doc">{h.doc}</span>
-                    <span className="kb-hit__loc">{h.locator}</span>
-                    <span className="kb-hit__score">độ khớp {Math.round(h.score * 100)}%</span>
-                  </div>
-                  <p className="kb-hit__text">{h.excerpt}</p>
-                </li>
-              ))}
-            </ol>
-          )
-        ) : null}
-      </section>
 
       {docs.length === 0 ? (
         <div className="empty-state">
@@ -176,7 +120,6 @@ export function DocumentsLibrary() {
                   className="icon-btn"
                   aria-label={`Xóa ${doc.title}`}
                   onClick={() => {
-                    removeKbChunks(doc.id);
                     setDocs((prev) => prev.filter((d) => d.id !== doc.id));
                     pushToast("Đã xóa tài liệu.");
                   }}
