@@ -37,12 +37,6 @@ export interface Toast {
   kind: ToastKind;
 }
 
-/** Hạn mức gói Free còn lại, tính bằng đơn vị của bảng giá. */
-export interface Quota {
-  meetingsLeft: number;
-  verificationsLeft: number;
-  artifactsLeft: number;
-}
 
 /** Cuộc họp đang hiển thị trong monitor (dark chrome). */
 export interface LiveState {
@@ -103,11 +97,6 @@ export interface DashboardContextValue {
   addMeeting: (m: MeetingRecord) => void;
   updateMeeting: (id: string, patch: Partial<MeetingRecord>) => void;
 
-  quota: Quota;
-  /** một lượt nghiên cứu + kiểm chứng cho một chủ đề */
-  useVerification: (n?: number) => void;
-  /** một lượt xuất báo cáo PDF từ kết quả của phiên (khóa giữ tên artifact) */
-  useArtifact: () => void;
 
   planFocus: PlanId;
   setPlanFocus: (p: PlanId) => void;

@@ -29,16 +29,7 @@ export {
 /* Hạn mức gói Free (bảng giá IV.3.1)                                  */
 /* ------------------------------------------------------------------ */
 
-// Free không giới hạn theo phút mà theo ba đơn vị: phiên họp có AI, lượt kiểm
-// chứng, và lượt xuất báo cáo PDF (khóa `artifacts` giữ tên cũ; bản 2 của tài liệu chỉ
-// còn PDF và biểu đồ PNG là đầu ra MVP). Card hết hạn mức phải nói rõ hết cái nào — "hết lượt kiểm
-// chứng giữa cuộc họp" chính là điểm chạm nâng cấp thứ nhất trong tài liệu.
-export const FREE_PLAN = {
-  meetings: 3,
-  meetingCapMin: 45,
-  verifications: 15,
-  artifacts: 1,
-} as const;
+// Các gói không giới hạn số phiên, thời lượng, kiểm chứng hoặc tải báo cáo.
 
 /* ------------------------------------------------------------------ */
 /* Cuộc họp                                                            */
@@ -290,7 +281,7 @@ export const PLANS: readonly Plan[] = [
     priceQuarterly: null,
     unit: "",
     min: null,
-    limits: ["3 phiên họp", "tối đa 45 phút/phiên", "15 lượt kiểm chứng trên tài liệu của bạn", "1 lượt xuất báo cáo PDF"],
+    limits: ["Phiên họp không giới hạn", "Thời lượng không giới hạn", "Kiểm chứng không giới hạn", "Tải PDF không giới hạn"],
     audience: "Cá nhân dùng thử, sinh viên",
     current: true,
   },
@@ -302,7 +293,7 @@ export const PLANS: readonly Plan[] = [
     priceQuarterly: null,
     unit: "",
     min: null,
-    limits: ["15 phiên họp", "tối đa 60 phút/phiên", "75 lượt kiểm chứng", "10 lượt xuất báo cáo PDF kèm biểu đồ PNG", "Knowledge base cá nhân"],
+    limits: ["Phiên họp không giới hạn", "Thời lượng không giới hạn", "Kiểm chứng không giới hạn", "Tải PDF không giới hạn, kèm biểu đồ PNG", "Knowledge base cá nhân"],
     audience: "Freelancer, tư vấn viên, trưởng nhóm",
     current: false,
     inherits: "Free",
@@ -314,9 +305,9 @@ export const PLANS: readonly Plan[] = [
     priceYearly: null,
     priceQuarterly: null,
     unit: "người/tháng",
-    min: "tối thiểu 3 người",
+    min: "không giới hạn người dùng",
     limits: [
-      "Hạn mức như Pro (mỗi phiên tối đa 60 phút), nhân theo số người",
+      "Phiên họp, thời lượng và kiểm chứng không giới hạn",
       "Dùng chung trong nhóm",
       "Knowledge base chung; phân quyền và quản trị hoàn thiện ở giai đoạn Validation",
       "Danh sách phiên của nhóm: mã phiên, ngày, thời lượng, số nhận định",
@@ -332,15 +323,15 @@ export const PLANS: readonly Plan[] = [
     priceYearly: null,
     priceQuarterly: 4_500_000,
     unit: "quý",
-    min: "tối đa 15 người",
-    limits: ["Hạn mức phiên, phút, lượt kiểm chứng và PDF chốt trong thỏa thuận trước khi bán", "Hỗ trợ triển khai", "Báo cáo hiệu quả sử dụng"],
+    min: "không giới hạn người dùng",
+    limits: ["Phiên họp, thời lượng, kiểm chứng và tải PDF không giới hạn", "Hỗ trợ triển khai", "Báo cáo hiệu quả sử dụng"],
     audience: "Khoa, trung tâm nghiên cứu, vườn ươm, doanh nghiệp pilot",
     current: false,
     inherits: "Team",
   },
 ];
 
-/** Đơn vị tính phí — tài liệu nói rõ: phiên họp, lượt kiểm chứng, lượt xuất báo cáo PDF; không phải phút. */
+/** So sánh hạn mức phiên họp, kiểm chứng và chức năng của các gói. */
 export const PLAN_MATRIX = {
   columns: [
     { id: "free", label: "Free", note: "Gói hiện tại" },
@@ -349,10 +340,10 @@ export const PLAN_MATRIX = {
     { id: "edu", label: "Edu / Pilot", note: "Theo tổ chức" },
   ],
   rows: [
-    { object: "Phiên họp có AI hỗ trợ", free: "3 / tháng", pro: "15 / tháng", team: "15 × số người", edu: "Chốt trong thỏa thuận" },
-    { object: "Độ dài mỗi phiên", free: "45 phút", pro: "60 phút", team: "60 phút", edu: "Chốt trong thỏa thuận" },
-    { object: "Lượt kiểm chứng", free: "15", pro: "75", team: "75 × số người", edu: "Chốt trong thỏa thuận" },
-    { object: "Lượt xuất báo cáo PDF", free: "1 (PDF)", pro: "10 (PDF kèm PNG)", team: "10 × số người", edu: "Chốt trong thỏa thuận" },
+    { object: "Phiên họp có AI hỗ trợ", free: "Không giới hạn", pro: "Không giới hạn", team: "Không giới hạn", edu: "Không giới hạn" },
+    { object: "Độ dài mỗi phiên", free: "Không giới hạn", pro: "Không giới hạn", team: "Không giới hạn", edu: "Không giới hạn" },
+    { object: "Lượt kiểm chứng", free: "Không giới hạn", pro: "Không giới hạn", team: "Không giới hạn", edu: "Không giới hạn" },
+    { object: "Tải báo cáo PDF", free: "Không giới hạn", pro: "Không giới hạn", team: "Không giới hạn", edu: "Không giới hạn" },
     { object: "Knowledge base", free: "—", pro: "Cá nhân", team: "Chung cho nhóm", edu: "Chung cho đơn vị" },
     { object: "Lịch sử phiên họp của nhóm", free: "—", pro: "—", team: "Có", edu: "Có" },
     { object: "Hỗ trợ triển khai + báo cáo hiệu quả", free: "—", pro: "—", team: "—", edu: "Có" },
@@ -364,7 +355,7 @@ export const PLAN_MATRIX_GROUPS: { id: string; label: string; rows: string[] }[]
   {
     id: "dung",
     label: "Phiên họp và kiểm chứng",
-    rows: ["Phiên họp có AI hỗ trợ", "Độ dài mỗi phiên", "Lượt kiểm chứng", "Lượt xuất báo cáo PDF"],
+    rows: ["Phiên họp có AI hỗ trợ", "Độ dài mỗi phiên", "Lượt kiểm chứng", "Tải báo cáo PDF"],
   },
   {
     id: "nhom",
@@ -378,8 +369,7 @@ export const PLAN_TERMS: Record<string, string> = {
   "Phiên họp có AI hỗ trợ": "Mỗi cuộc họp có MeetMate chạy là một phiên.",
   "Lượt kiểm chứng":
     "Một lần MeetMate đối chiếu một nhận định hoặc trả lời một câu hỏi trong họp bằng tài liệu nội bộ bạn đã tải lên.",
-  "Lượt xuất báo cáo PDF":
-    "Một lần xuất báo cáo cuộc họp (PDF), ở gói Pro kèm biểu đồ PNG. Đây là số lượt xuất, không phải số cuộc họp được lưu.",
+  "Tải báo cáo PDF": "Tải báo cáo cuộc họp dưới dạng PDF không giới hạn số lần ở mọi gói.",
   "Knowledge base": "Tài liệu nhóm tải lên để MeetMate đối chiếu trong cuộc họp.",
 };
 
@@ -387,23 +377,23 @@ export const PLAN_TERMS: Record<string, string> = {
 export const UPGRADE_FAQ: { q: string; a: string }[] = [
   {
     q: "Một phiên họp có AI hỗ trợ được tính thế nào?",
-    a: "Một cuộc họp do host xử lý một lần là một phiên, không nhân theo số người tham dự. Free tối đa 45 phút mỗi phiên; Pro và Team tối đa 60 phút mỗi phiên.",
+    a: "Một cuộc họp do host xử lý một lần là một phiên, không nhân theo số người tham dự. Số phiên và thời lượng mỗi phiên không giới hạn ở mọi gói.",
   },
   {
     q: "Một lượt kiểm chứng là gì?",
     a: "Một lần MeetMate đối chiếu một nhận định hoặc trả lời một câu hỏi trong họp bằng tài liệu nội bộ bạn đã tải lên, rồi hiện kết quả ở một thẻ có trạng thái bằng chứng và trích dẫn. Trong MVP, MeetMate chưa tìm nguồn trên web.",
   },
   {
-    q: "Lượt xuất báo cáo PDF là gì?",
-    a: "Một lần xuất báo cáo cuộc họp gồm nhận định, trạng thái bằng chứng, trích dẫn và quyết định; gói Pro kèm biểu đồ PNG. Slide và bảng tính là định hướng sau MVP.",
+    q: "Tải báo cáo PDF có giới hạn không?",
+    a: "Không. Bạn có thể tải lại báo cáo PDF không giới hạn số lần ở mọi gói.",
   },
   {
     q: "Khi nào bắt đầu thu phí?",
     a: "Chức năng thanh toán đã được phát triển nhưng chỉ cung cấp để trải nghiệm, chưa có giao dịch trả phí nào. Thu phí chính thức bắt đầu ở giai đoạn Paid beta, sau pilot tháng 1/2027. Giá, hạn mức và điều kiện phải hiện trước khi bạn xác nhận mua.",
   },
   {
-    q: "Hạn mức có cộng dồn sang tháng sau không?",
-    a: "Bản mô tả chưa quy định. Nhóm sẽ chốt sau khi có số liệu từ đợt thử nghiệm.",
+    q: "Các gói có giới hạn sử dụng không?",
+    a: "Không. Số phiên họp, thời lượng, lượt kiểm chứng và tải báo cáo đều không giới hạn.",
   },
   {
     q: "Dữ liệu cuộc họp được lưu bao lâu?",
@@ -411,13 +401,13 @@ export const UPGRADE_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Gói Edu / Pilot B2B dành cho ai?",
-    a: "Khoa, trung tâm nghiên cứu, vườn ươm và doanh nghiệp pilot: từ 4.500.000đ mỗi quý cho tối đa 15 người. Hạn mức phiên, phút, lượt kiểm chứng và PDF được chốt trong thỏa thuận trước khi bán, kèm hỗ trợ triển khai và báo cáo hiệu quả sử dụng.",
+    a: "Khoa, trung tâm nghiên cứu, vườn ươm và doanh nghiệp pilot: từ 4.500.000đ mỗi quý không giới hạn người dùng. Phiên họp, thời lượng, kiểm chứng và tải PDF không giới hạn, kèm hỗ trợ triển khai và báo cáo hiệu quả sử dụng.",
   },
 ];
 
 /** Hai điểm chạm nâng cấp, theo mục IV.3.2 bản 2 — đặt ở trang giá vì đó là chỗ quyết định. */
 export const UPGRADE_TOUCHPOINTS = [
-  "Hết lượt kiểm chứng giữa một cuộc họp quan trọng: hệ thống báo số lượt còn lại và gợi ý nâng cấp ngay trong phiên.",
+  "Kiểm chứng không giới hạn trong suốt cuộc họp.",
   "Nhu cầu chia sẻ knowledge base cho cả nhóm — dự kiến, sẽ được kiểm chứng ở giai đoạn Validation trước khi thu phí.",
 ] as const;
 
@@ -433,7 +423,7 @@ export const ACCOUNT = {
   team: "MeetMateAI · nhóm 4 người",
   joined: "Tham gia tháng 9/2026",
   plan: "Free",
-  planNote: "Bạn đang ở gói Free. Hạn mức còn lại hiển thị ngay trên thẻ này.",
+  planNote: "Bạn đang ở gói Free, sử dụng không giới hạn.",
   renews: null,
   method: "Chưa có phương thức thanh toán",
 } as const;

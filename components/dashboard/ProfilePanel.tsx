@@ -18,7 +18,6 @@ import { cn } from "../../lib/utils";
 import {
   ACCOUNT,
   DATA_ROWS,
-  FREE_PLAN,
   formatVnd,
   PLANS,
   PRIVACY_MODES,
@@ -47,31 +46,8 @@ function Row({ title, note, children }: { title: string; note: string; children?
   );
 }
 
-/** Một ô hạn mức: tử số là cái còn lại, mẫu số là cái gói Free cho phép. */
-function QuotaCell({ left, max, label }: { left: number; max: number; label: string }) {
-  return (
-    <div className="quota">
-      <span className="quota__n">
-        {left}
-        <em>/{max}</em>
-      </span>
-      <span className="quota__l">{label}</span>
-      <span
-        className="quota__bar"
-        role="progressbar"
-        aria-valuenow={left}
-        aria-valuemin={0}
-        aria-valuemax={max}
-        aria-label={`${left}/${max} ${label}`}
-      >
-        <i style={{ width: `${Math.max(0, Math.min(100, (left / max) * 100))}%` }} />
-      </span>
-    </div>
-  );
-}
-
 export function ProfilePanel() {
-  const { quota, openPricing, pushToast } = useDashboard();
+  const { openPricing, pushToast } = useDashboard();
   const [tab, setTab] = useState<TabId>("account");
   const [mode, setMode] = useState<string>(
     PRIVACY_MODES.find((m) => m.on)?.id ?? PRIVACY_MODES[0].id
@@ -158,13 +134,8 @@ export function ProfilePanel() {
                 <span>{ACCOUNT.planNote}</span>
               </div>
               <div className="quota-grid quota-grid--strip">
-                <QuotaCell left={quota.meetingsLeft} max={FREE_PLAN.meetings} label="phiên họp" />
-                <QuotaCell
-                  left={quota.verificationsLeft}
-                  max={FREE_PLAN.verifications}
-                  label="lượt kiểm chứng"
-                />
-                <QuotaCell left={quota.artifactsLeft} max={FREE_PLAN.artifacts} label="lượt PDF" />
+                <p>Phiên họp, thời lượng và kiểm chứng không giới hạn</p>
+                <p>Tải PDF không giới hạn</p>
               </div>
               <div className="plan-strip__cta">
                 <button className="btn btn--primary" onClick={() => openPricing("pro")}>
@@ -184,7 +155,7 @@ export function ProfilePanel() {
             </Row>
             <Row
               title={`Gói Pro: ${formatVnd(current.priceMonthly ?? 199_000)}/tháng`}
-              note="15 phiên họp (tối đa 60 phút), 75 lượt kiểm chứng, 10 lượt xuất báo cáo PDF kèm biểu đồ PNG và knowledge base cá nhân. Giá trong bảng IV.3.1 là giả thuyết chưa chốt."
+              note="Phiên họp, thời lượng và kiểm chứng không giới hạn, tải PDF không giới hạn, biểu đồ PNG và knowledge base cá nhân. Giá trong bảng IV.3.1 là giả thuyết chưa chốt."
             >
               <button className="btn btn--outline" onClick={() => openPricing("pro")}>
                 Chi tiết

@@ -15,7 +15,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import {
-  FREE_PLAN,
   MEETING_KIND_LABEL,
   formatClock,
   sampleLines,
@@ -84,8 +83,6 @@ export function MeetingMonitor() {
     setPrefsOpen,
     openWizard,
     pushToast,
-    useVerification,
-    quota,
     openPricing,
     extSession,
   } = useDashboard();
@@ -204,9 +201,8 @@ export function MeetingMonitor() {
       // sự không gửi hết — nếu người dùng giảm số nguồn và phần còn lại gửi hết
       // rồi thì thẻ phải báo "xong", không được giữ nhãn "đã ngắt".
       patchCard(key, { stage: null, killed: entry.cancelled && landable < total });
-      useVerification();
     },
-    [patchCard, useVerification]
+    [patchCard]
   );
 
   useEffect(() => {
@@ -236,10 +232,8 @@ export function MeetingMonitor() {
 
   // --- phiên extension: sự kiện thật thay cho replay ---
   const endRef = useRef(endLive);
-  const verifyRef = useRef(useVerification);
   const pushRef = useRef(pushLiveLine);
   endRef.current = endLive;
-  verifyRef.current = useVerification;
   pushRef.current = pushLiveLine;
   const extStartedAt = extSession?.startedAt ?? null;
   const extId = extSession?.id ?? null;
@@ -308,7 +302,6 @@ export function MeetingMonitor() {
             const i = prev.length - 1;
             return i < 0 ? prev : prev.map((c, j) => (j === i ? { ...c, result: ev.result } : c));
           });
-          verifyRef.current();
           break;
         case "posted": {
           const i = cardFor(ev.text);
@@ -372,10 +365,6 @@ export function MeetingMonitor() {
 
   if (!live) return null;
 
-  const capMin = FREE_PLAN.meetingCapMin;
-  const capLeftMin = capMin - Math.floor(clockSec / 60);
-  const overCap = capLeftMin <= 0;
-  const nearCap = !overCap && capLeftMin <= 5;
 
   const confirmExit = () => {
     const total = Math.round(isExt ? clockSec : clockSec / SIM_SPEED);
@@ -406,8 +395,8 @@ export function MeetingMonitor() {
             className="pill-timer"
             title={
               isExt
-                ? `Phiên đang chạy theo thời gian thật. Gói Free giới hạn ${capMin} phút mỗi phiên.`
-                : `Phiên đang chạy. Gói Free giới hạn ${capMin} phút mỗi phiên — đồng hồ này chạy ở tốc độ phát lại ×${SIM_SPEED}.`
+                ? `Phiên đang chạy theo thời gian thật, không giới hạn thời lượng.`
+                : `Phiên không giới hạn thời lượng — đồng hồ chạy ở tốc độ phát lại ×${SIM_SPEED}.`
             }
           >
             <IconMic />
@@ -526,38 +515,6 @@ export function MeetingMonitor() {
         </div>
       </header>
 
-      {overCap || nearCap || quota.verificationsLeft === 0 ? (
-        <div
-          className={cn(
-            "mm-band",
-            overCap || quota.verificationsLeft === 0 ? "mm-band--error" : "mm-band--warn",
-            "ovl__band"
-          )}
-          role="status"
-        >
-          <IconInfo className="mm-band__glyph" />
-          {overCap ? (
-            <span>
-              Phiên đã vượt {capMin} phút — trần của gói Free.{" "}
-              <button className="link" onClick={() => openPricing("pro")}>
-                Xem gói Pro
-              </button>
-              .
-            </span>
-          ) : quota.verificationsLeft === 0 ? (
-            <span>
-              Hết lượt kiểm chứng của gói Free — MeetMate vẫn phiên âm nhưng không tìm nguồn nữa.{" "}
-              <button className="link" onClick={() => openPricing("pro")}>
-                Xem gói Pro
-              </button>
-              .
-            </span>
-          ) : (
-            <span>Còn {capLeftMin} phút trong trần {capMin} phút của gói Free.</span>
-          )}
-        </div>
-      ) : null}
-
       {isExt && extNotice && extNotice !== STATUS_RUNNING ? (
         <div className="mm-band mm-band--error ovl__band" role="status">
           <IconInfo className="mm-band__glyph" />
@@ -625,7 +582,7 @@ export function MeetingMonitor() {
         <section className="ovl__panel ovl__panel--answers" aria-label="Kết quả nghiên cứu">
           <div className="ovl__panelhead">
             <h3 className="dc-title">Kết quả MeetMate</h3>
-            <span className="dchip">{quota.verificationsLeft} lượt kiểm chứng còn lại</span>
+            <span className="dchip">Kiểm chứng không giới hạn</span>
           </div>
 
           <PipelineBar stage={stage} className="ovl__pipeline" />
@@ -709,7 +666,7 @@ export function MeetingMonitor() {
             <span>
               <span className="choice__title">Rời phiên</span>
               <span className="choice__note">
-                Extension vẫn nghe. Quay lại tab này để xem tiếp, không mất thêm hạn mức.
+                Extension vẫn nghe. Quay lại tab này để xem tiếp, không gián đoạn phiên.
               </span>
             </span>
           </button>

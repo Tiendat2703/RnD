@@ -94,6 +94,12 @@ let host: HTMLElement | null = null;
 let root: ShadowRoot | null = null;
 
 function ensureRoot(): ShadowRoot {
+  // Extension reloads (or another unpacked copy) have separate JS state but
+  // share the page DOM. Retire their orphaned panel before showing this one.
+  for (const previous of document.querySelectorAll('[id="meetmate-panel"]')) {
+    if (previous !== host) previous.remove();
+  }
+  if (host && !host.isConnected) document.documentElement.append(host);
   if (root) return root;
   installFonts(); // @font-face phải nằm ở tài liệu, không nằm trong shadow root
   host = document.createElement('div');

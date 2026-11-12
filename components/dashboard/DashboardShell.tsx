@@ -18,7 +18,6 @@ import type { KnowledgeCard } from "../../lib/evidence";
 import type { SavedSessionResponse } from "../../lib/report";
 import { getSavedSession, retryReport as retryReportApi, saveSessionToBackend } from "../../lib/backendApi";
 import {
-  FREE_PLAN,
   defaultPrefs,
   type MeetingKind,
   type MeetingLine,
@@ -34,7 +33,6 @@ import {
   type PendingMeeting,
   type PlanId,
   type PrefsFrom,
-  type Quota,
   type SaveState,
   type ResolvedTheme,
   type Theme,
@@ -116,11 +114,6 @@ export function DashboardShell({
   const [collapsed, setCollapsed] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const [meetings, setMeetings] = useState<MeetingRecord[]>([]);
-  const [quota, setQuota] = useState<Quota>({
-    meetingsLeft: FREE_PLAN.meetings,
-    verificationsLeft: FREE_PLAN.verifications,
-    artifactsLeft: FREE_PLAN.artifacts,
-  });
   const [planFocus, setPlanFocus] = useState<PlanId>("pro");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
@@ -210,31 +203,6 @@ export function DashboardShell({
   const updateMeeting = useCallback((id: string, patch: Partial<MeetingRecord>) => {
     setMeetings((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)));
   }, []);
-
-  // Một lượt kiểm chứng = một chủ đề được nghiên cứu. Đây là đơn vị tính phí thật
-  // của sản phẩm (mục IV.3.1), không phải "tín dụng cuộc gọi".
-  const useVerification = useCallback(
-    (n: number = 1) => {
-      setQuota((q) => {
-        const left = Math.max(0, q.verificationsLeft - n);
-        if (q.verificationsLeft > 0 && left === 0) {
-          pushToast("Hết lượt kiểm chứng của gói Free — xem gói Pro.", "error");
-        }
-        return { ...q, verificationsLeft: left };
-      });
-    },
-    [pushToast]
-  );
-
-  const useArtifact = useCallback(() => {
-    setQuota((q) => {
-      const left = Math.max(0, q.artifactsLeft - 1);
-      if (q.artifactsLeft > 0 && left === 0) {
-        pushToast("Đã dùng hết lượt xuất báo cáo PDF của gói Free.", "error");
-      }
-      return { ...q, artifactsLeft: left };
-    });
-  }, [pushToast]);
 
   const setPrefs = useCallback((patch: Partial<ResearchPrefs>) => {
     setPrefsState((prev) => ({ ...prev, ...patch }));
@@ -509,9 +477,6 @@ export function DashboardShell({
         clearMeetings,
         addMeeting,
         updateMeeting,
-        quota,
-        useVerification,
-        useArtifact,
         planFocus,
         setPlanFocus,
         openPricing,
@@ -596,7 +561,7 @@ export function DashboardShell({
 
           <div className="sidebar__spacer" />
 
-          <PlanCard quota={quota} />
+          <PlanCard />
 
           <UserMenu />
         </aside>
