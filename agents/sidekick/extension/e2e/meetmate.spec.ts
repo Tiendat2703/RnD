@@ -52,7 +52,7 @@ test.afterAll(async () => {
   await context?.close();
 });
 
-test('listens to a meeting, flags contradictions and answers questions in the Meet chat', async () => {
+test('records the meeting and answers keyword-invoked questions in the Meet chat', async () => {
   const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
   const extensionId = new URL(worker.url()).host;
   // The APIs MeetMate relies on, as this browser exposes them to the extension.
@@ -85,13 +85,11 @@ test('listens to a meeting, flags contradictions and answers questions in the Me
   expect(reply).toEqual({ ok: true });
   await expect(panel.locator('#pill')).toHaveText('Đang nghe', { timeout: 15_000 });
 
-  // The scripted meeting is 56 s of audio; MeetMate answers within seconds of each line.
+  // Regenerate meeting.wav from simulate-meeting.ts after changing the scripted requests.
   const chat = meet.locator('#messages li');
-  await expect.poll(async () => (await chat.allTextContents()).filter(t => t.includes('⚠️')).length, { timeout: 120_000, intervals: [2_000] })
-    .toBeGreaterThanOrEqual(4);
-  await expect.poll(async () => (await chat.allTextContents()).join('\n'), { timeout: 60_000, intervals: [2_000] })
+  await expect.poll(async () => (await chat.allTextContents()).join('\n'), { timeout: 120_000, intervals: [2_000] })
     .toMatch(/40%[\s\S]*VIAC|VIAC[\s\S]*40%/);
-  // The last two lines ask MeetMate by name: one answered from the plan, one outside the documents.
+  // Keyword requests: one answered from the plan, one explicitly asks about missing file content.
   await expect.poll(async () => (await chat.allTextContents()).join('\n'), { timeout: 60_000, intervals: [2_000] })
     .toMatch(/ZaloPay[\s\S]*Tài liệu không đề cập/);
 
@@ -100,10 +98,12 @@ test('listens to a meeting, flags contradictions and answers questions in the Me
   expect(messages.every(m => m.startsWith('MeetMate: '))).toBe(true);
   expect(messages.join('\n')).toContain('12.000.000');
   expect(messages.join('\n')).toContain('React Native');
-  // Every chat line about a contradiction cites a page of a real document.
-  for (const m of messages.filter(t => t.includes('⚠️'))) expect(m).toMatch(/📄 (hop-dong|ke-hoach)\.pdf, tr\. \d/);
-
-  await expect(panel.locator('.card.contradiction')).toHaveCount(messages.filter(t => t.includes('⚠️')).length);
+  // Ordinary incorrect claims must no longer produce automatic contradiction cards.
+  expect(messages.filter(t => t.includes('⚠️'))).toEqual([]);
+  for (const m of messages.filter(t => !t.includes('Tài liệu không đề cập'))) {
+    expect(m).toMatch(/📄 (hop-dong|ke-hoach)\.pdf, tr\. \d/);
+  }
+  await expect(panel.locator('.card.contradiction')).toHaveCount(0);
   await expect(panel.locator('.card .chat.sent').first()).toBeVisible();
   await expect(panel.locator('#transcript li')).not.toHaveCount(0);
 

@@ -33,5 +33,5 @@ export const MIN_MEANINGFUL_TERMS = 4;
 export const REPORT_TTL_MS = 10 * 60_000;
 // Lines before the new ones that give the LLM conversational context.
 export const DOC_CONTEXT_LINES = 4;
-// "MeetMate ơi" said alone: the next line within this window is the question.
+// "Trợ lý" said alone: only the next line within this window is the question.
 export const WAKE_FOLLOWUP_MS = 10_000;

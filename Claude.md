@@ -20,6 +20,8 @@ Ba nguồn đang mô tả ba kiến trúc khác nhau, nên chia làm hai lớp:
 
 ## 2b. Luồng web ↔ extension
 
+**Kích hoạt tìm kiếm (v0.3.2):** transcript vẫn được ghi trong lúc nghe, nhưng chỉ từ khóa **“trợ lý”** mới kích hoạt phân nguồn và tra tài liệu/web. Ví dụ “Trợ lý ơi, phí bảo trì trong hợp đồng bao nhiêu?” hoặc “Trợ lý, Ngũ Hành Sơn ở đâu?”. Nói riêng “Trợ lý ơi” cho phép đúng một câu tiếp theo trong 10 giây. Mỗi yêu cầu cần gọi lại từ khóa; không tự đối chiếu lời thoại hay research theo chủ đề, và tên gọi cũ “MeetMate ơi” không còn kích hoạt. Quy tắc này thay thế cơ chế tự động/gọi tên mô tả ở bản trước.
+
 Cầu nối duy nhất là `window.postMessage` tới content script `agents/sidekick/extension/src/bridge.ts` (chạy trên `localhost`). Giao thức nằm ở `lib/bridgeProtocol.ts`, **web và extension import cùng một file**. Không khóa API nào đi qua cầu nối.
 
 1. Wizard "Cuộc họp mới" → `InstallExtensionDialog`: ping extension, ba dấu tích do extension trả lời (đã cài, đã có khóa Blaze, có tab Meet). Khóa Exa không bắt buộc: thiếu thì chỉ tắt research web.

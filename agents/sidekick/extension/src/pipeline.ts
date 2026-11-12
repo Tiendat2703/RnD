@@ -4,9 +4,7 @@ import { citation, formatFinding, shouldPost } from './format';
 import type { Chat } from './llm';
 import type { Card, PanelEvent, Settings } from './messages';
 import { formatChatMessages, research, type ResearchResult, type Search } from './research';
-import { ResearchSession } from './session';
 import { routeQuestion } from './question-route';
-import { detectTopic } from './topic';
 import { TranscriptWindow } from './transcript';
 
 export type Pipeline = {
@@ -18,7 +16,7 @@ export type Pipeline = {
 
 /**
  * The meeting brain, shared by the extension's offscreen page and the Node meeting simulation:
- * transcript → (dedupe) → document checks and web research → cards and chat messages.
+ * transcript → (dedupe) → "trợ lý" → routed document/web search → cards and chat.
  */
 export function createPipeline(deps: {
   chat: Chat;
@@ -34,7 +32,7 @@ export function createPipeline(deps: {
   const now = deps.now ?? Date.now;
   const newId = deps.newId ?? (() => crypto.randomUUID());
   const window = new TranscriptWindow();
-  const webWindow = new TranscriptWindow();
+  let stopped = false;
   const error = (message: string) => deps.emit({ kind: 'notice', level: 'error', message });
 
   const publish = (card: Omit<Card, 'id' | 'at' | 'chat'>, messages: string[], post: boolean) => {
@@ -90,33 +88,21 @@ export function createPipeline(deps: {
     now,
   });
 
-  const search = deps.search;
-  const web = search && new ResearchSession({
-    detect: (current, transcript, signal) => detectTopic(deps.chat, current, transcript, signal, deps.library()),
-    research: (topic, signal) => research(topic, { search, chat: deps.chat }, signal),
-    deliver: onResearch,
-    onError: message => error(`Research web: ${message}`),
-    transcript: () => webWindow.text(now()),
-    now,
-  });
-
   return {
     onFinal(text) {
+      if (stopped) return;
       const at = now();
       if (!window.add(text, at)) return; // the same sentence heard twice (loudspeaker into mic)
       deps.emit({ kind: 'final', text, at });
-      const question = assistant.onLine(text);
-      if (!question) {
-        webWindow.add(text, at);
-        if (deps.settings().webResearch) web?.onLine();
-      }
+      assistant.onLine(text);
     },
     onPartial(text) {
+      if (stopped) return;
       deps.emit({ kind: 'partial', text });
     },
     stop() {
+      stopped = true;
       assistant.stop();
-      web?.stop();
     },
   };
 }

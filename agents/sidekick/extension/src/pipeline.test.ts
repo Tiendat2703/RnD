@@ -28,27 +28,15 @@ function setup(settings: Settings = DEFAULT_SETTINGS, reply = '{"items":[]}') {
   return { p, events, posts, prompts };
 }
 
-const contradiction = JSON.stringify({ items: [{
-  kind: 'contradiction', utterance: 'phí bảo trì 15 triệu', chunkId: 'hd#4',
-  quote: 'phí bảo trì hệ thống là 12.000.000 đồng mỗi tháng', text: 'Tài liệu ghi 12 triệu mỗi tháng.',
-}] });
-
 describe('createPipeline', () => {
-  it('turns a contradicting line into a card and one chat message', async () => {
-    const s = setup(DEFAULT_SETTINGS, contradiction);
+  it('records ordinary speech without document checks or routing calls', async () => {
+    const s = setup();
     s.p.onFinal('Theo hợp đồng phí bảo trì là 15.000.000 một tháng.');
+    s.p.onFinal('Phí bảo trì bao nhiêu?');
     await flush();
-    const card = s.events.find(e => e.kind === 'card');
-    expect(card).toMatchObject({ card: { id: 'c1', kind: 'contradiction', source: 'hop-dong.pdf, tr. 3', chat: 'pending' } });
-    expect(s.posts).toHaveLength(1);
-    expect(s.posts[0].messages[0]).toMatch(/^MeetMate: ⚠️/);
-  });
-
-  it('shows cards without posting when chat posting is off', async () => {
-    const s = setup({ postToChat: false, webResearch: false }, contradiction);
-    s.p.onFinal('Theo hợp đồng phí bảo trì là 15.000.000 một tháng.');
-    await flush();
-    expect(s.events.find(e => e.kind === 'card')).toMatchObject({ card: { chat: 'off' } });
+    expect(s.events.filter(e => e.kind === 'final')).toHaveLength(2);
+    expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
+    expect(s.prompts).toEqual([]);
     expect(s.posts).toEqual([]);
   });
 
@@ -60,7 +48,7 @@ describe('createPipeline', () => {
     await flush();
     expect(s.events.filter(e => e.kind === 'final')).toHaveLength(1);
     expect(s.events[0]).toEqual({ kind: 'partial', text: 'Theo hợp' });
-    expect(s.prompts).toHaveLength(1);
+    expect(s.prompts).toHaveLength(0);
   });
 
   it('reports model failures as notices, never as chat messages', async () => {
@@ -71,7 +59,7 @@ describe('createPipeline', () => {
       library: () => lib, search: null, settings: () => DEFAULT_SETTINGS,
       emit: e => events.push(e), post: (...a) => posts.push(a),
     });
-    p.onFinal('Đội mình có 6 người thôi.');
+    p.onFinal('Trợ lý ơi, đội mình có mấy người?');
     await flush();
     expect(events.at(-1)).toMatchObject({ kind: 'notice', level: 'error', message: 'Đối chiếu tài liệu: Blaze LLM lỗi HTTP 402' });
     expect(posts).toEqual([]);
@@ -102,10 +90,25 @@ describe('question source routing', () => {
     return { p, events, posts, search, chat };
   }
 
+  it('never routes or searches uninvoked speech, even with documents, Exa and web enabled', async () => {
+    const s = routingSetup({ docs: true });
+    for (const text of [
+      'Ngũ Hành Sơn ở đâu?', 'Phí bảo trì trong hợp đồng bao nhiêu?',
+      'Ngân sách dự án là 500 triệu.', 'Hãy tìm giúp tôi địa chỉ Đại học Duy Tân.',
+      'MeetMate ơi, tìm trên mạng.', 'Mít mết ơi, xem trong tài liệu.',
+    ]) s.p.onFinal(text);
+    await flush();
+    expect(s.events.filter(e => e.kind === 'final')).toHaveLength(6);
+    expect(s.chat).not.toHaveBeenCalled();
+    expect(s.search).not.toHaveBeenCalled();
+    expect(s.posts).toEqual([]);
+    s.p.stop();
+  });
+
   it.each([
-    'MeetMate ơi, hãy cho tôi biết Ngũ Hành Sơn nằm ở đâu?',
-    'Cho tôi biết Đại học Duy Tân nằm ở đâu.',
-    'MeetMate ơi, cách truy cập vào cloud như thế nào?',
+    'Trợ lý ơi, hãy cho tôi biết Ngũ Hành Sơn nằm ở đâu?',
+    'Trợ lý, cho tôi biết Đại học Duy Tân nằm ở đâu.',
+    'Trợ lý ơi, cách truy cập vào cloud như thế nào?',
   ])('researches a public question immediately without documents: %s', async question => {
     const s = routingSetup();
     s.p.onFinal(question);
@@ -114,19 +117,22 @@ describe('question source routing', () => {
     expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'research', text: 'Web answer' } }]);
     expect(s.posts).toHaveLength(1);
     expect(s.chat).toHaveBeenCalledTimes(2); // routing and research, never document check
+    s.p.onFinal('Còn Đại học Duy Tân thì sao?');
+    await flush();
+    expect(s.chat).toHaveBeenCalledTimes(2); // one keyword authorizes one request
     s.p.stop();
   });
 
   it('still uses the web for a public question when an unrelated document is loaded', async () => {
     const s = routingSetup({ docs: true });
-    s.p.onFinal('MeetMate ơi, Đại học Duy Tân ở đâu?');
+    s.p.onFinal('Trợ lý ơi, Đại học Duy Tân ở đâu?');
     await flush();
     expect(s.search).toHaveBeenCalledTimes(1);
     expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'research' } }]);
     s.p.stop();
   });
 
-  it.each(['MeetMate ơi, phí bảo trì trong hợp đồng bao nhiêu?', 'Phí bảo trì bao nhiêu?'])(
+  it.each(['Trợ lý ơi, phí bảo trì trong hợp đồng bao nhiêu?', 'Trợ lý, phí bảo trì bao nhiêu?'])(
     'answers document questions with a citation and never searches private facts: %s', async question => {
       const s = routingSetup({ docs: true, route: 'docs' });
       s.p.onFinal(question);
@@ -141,7 +147,7 @@ describe('question source routing', () => {
 
   it('reports missing files only for a question routed to documents', async () => {
     const s = routingSetup({ route: 'docs' });
-    s.p.onFinal('MeetMate ơi, tài liệu tôi tải lên ghi phí bảo trì bao nhiêu?');
+    s.p.onFinal('Trợ lý ơi, tài liệu tôi tải lên ghi phí bảo trì bao nhiêu?');
     await flush();
     expect(s.search).not.toHaveBeenCalled();
     expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: {
@@ -152,7 +158,7 @@ describe('question source routing', () => {
 
   it.each([{ web: false }, { key: false }])('explains unavailable web research without falling back to documents: %j', async options => {
     const s = routingSetup({ docs: true, ...options });
-    s.p.onFinal('MeetMate ơi, Ngũ Hành Sơn nằm ở đâu?');
+    s.p.onFinal('Trợ lý ơi, Ngũ Hành Sơn nằm ở đâu?');
     await flush();
     expect(s.search).not.toHaveBeenCalled();
     expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
@@ -162,7 +168,7 @@ describe('question source routing', () => {
 
   it('asks for context instead of inventing a document miss', async () => {
     const s = routingSetup({ route: 'clarify' });
-    s.p.onFinal('MeetMate ơi, cái này ở đâu?');
+    s.p.onFinal('Trợ lý ơi, cái này ở đâu?');
     await flush();
     expect(s.search).not.toHaveBeenCalled();
     expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
@@ -172,7 +178,7 @@ describe('question source routing', () => {
 
   it('handles a question following a standalone wake word through the same router', async () => {
     const s = routingSetup();
-    s.p.onFinal('MeetMate ơi.');
+    s.p.onFinal('Trợ lý ơi.');
     s.p.onFinal('Ngũ Hành Sơn nằm ở đâu?');
     await flush();
     expect(s.search).toHaveBeenCalledTimes(1);
@@ -183,7 +189,7 @@ describe('question source routing', () => {
     const s = routingSetup();
     let complete!: (sources: { title: string; url: string; text: string }[]) => void;
     s.search.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
-    s.p.onFinal('MeetMate ơi, Ngũ Hành Sơn ở đâu?');
+    s.p.onFinal('Trợ lý ơi, Ngũ Hành Sơn ở đâu?');
     await flush();
     const signal = s.search.mock.calls[0]?.[1] as AbortSignal | undefined;
     s.p.stop();
@@ -191,19 +197,6 @@ describe('question source routing', () => {
     complete([{ title: 'Source', url: 'https://example.org/source', text: 'Late result' }]);
     await flush();
     expect(s.posts).toEqual([]);
-  });
-});
-
-describe('repeats', () => {
-  it('show a repeated contradiction in the panel without posting it again', async () => {
-    const s = setup(DEFAULT_SETTINGS, contradiction);
-    s.p.onFinal('Theo hợp đồng phí bảo trì là 15.000.000 một tháng.');
-    await flush();
-    s.p.onFinal('Mình nhắc lại, phí bảo trì 15.000.000 một tháng nhé.');
-    await flush();
-    const cards = s.events.filter(e => e.kind === 'card').map(e => (e as Extract<PanelEvent, { kind: 'card' }>).card);
-    expect(cards.map(c => [c.repeat ?? false, c.chat])).toEqual([[false, 'pending'], [true, 'off']]);
-    expect(s.posts).toHaveLength(1);
   });
 });
 
