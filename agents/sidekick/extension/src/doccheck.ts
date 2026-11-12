@@ -44,13 +44,14 @@ Chỉ dựa vào các đoạn tài liệu được cung cấp. Người nói có
 Trả về đúng một object JSON:
 {"items":[{"kind":"contradiction"|"answer"|"not_in_doc","utterance":string,"chunkId":string,"quote":string,"text":string}]}
 Quy tắc:
+- Phân biệt phạm vi: chỉ xét câu hỏi/thông tin thực sự liên quan đến nội dung tài liệu hoặc dữ kiện riêng của nhóm. Câu hỏi kiến thức công khai, địa điểm (Ngũ Hành Sơn, Đại học Duy Tân ở đâu), hướng dẫn chung hoặc yêu cầu tìm trên mạng KHÔNG phải câu hỏi tài liệu chỉ vì cuộc họp có file. Bỏ qua chúng, không tạo not_in_doc. Không lấy chủ đề cũ để ép câu hỏi mới vào tài liệu.
 - contradiction: một câu MỚI khẳng định thông tin (con số, ngày, thời hạn, tên người, công nghệ, phạm vi, điều khoản, trách nhiệm) trái với tài liệu. text: một câu nói rõ tài liệu ghi gì và khác lời nói ở điểm nào. KHÔNG báo khi người nói chỉ đề xuất thay đổi, giả định, hỏi lại, nói về tương lai chưa chốt, hoặc nói đúng với tài liệu.
 - answer: một câu MỚI hỏi về nội dung tài liệu có ghi. text: trả lời ngắn gọn tối đa 2 câu, dựa trên tài liệu.
 - not_in_doc: chỉ khi tài liệu thật sự không có thông tin nào liên quan tới điều được hỏi. Nếu tài liệu có thông tin trái với lời nói thì dùng contradiction; có thông tin trả lời được thì dùng answer. text bắt đầu bằng "Tài liệu không đề cập".
 - quote: chép NGUYÊN VĂN, không sửa chữ nào, một đoạn ngắn (tối đa 250 ký tự) trong đoạn tài liệu chunkId làm bằng chứng. Bắt buộc với contradiction và answer; để "" với not_in_doc.
 - utterance: chép lại câu trong cuộc họp mà mục này nói tới.
 - Câu mới nhắc lại một ý sai đã nói trước đó thì vẫn báo contradiction như bình thường (hệ thống tự tránh gửi trùng). Không có gì cần báo thì trả {"items":[]}.
-- Chế độ "ask": có người gọi MeetMate và hỏi trực tiếp; luôn trả đúng một mục answer hoặc not_in_doc cho câu hỏi đó. Với not_in_doc ở chế độ này, sau câu "Tài liệu không đề cập…" có thể thêm tối đa một câu hiểu biết chung, mở đầu bằng "Ngoài tài liệu:".
+- Chế độ "ask": câu hỏi đã được phân loại là hỏi tài liệu; trả đúng một mục answer hoặc not_in_doc. Không thêm hiểu biết chung hay đoán câu trả lời từ ngoài tài liệu. Tài liệu thiếu thông tin nội bộ không có nghĩa phải tìm thông tin đó trên mạng.
 Viết text bằng tiếng Việt, ngắn gọn, trung lập, không kết luận thay nhóm.`;
 
 export function docMessages(lib: DocLibrary, input: DocCheckInput): { messages: ChatMessage[]; candidates: Chunk[] } {

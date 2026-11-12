@@ -2,7 +2,8 @@ import type { Source } from '../../shared/types';
 export class ExaProvider {
   constructor(
     private apiKey = process.env.EXA_API_KEY,
-    private fetcher: typeof fetch = fetch,
+    // search() calls this as a method; browser fetch requires the global receiver.
+    private fetcher: typeof fetch = globalThis.fetch.bind(globalThis),
   ) {}
   async search(query: string, signal?: AbortSignal): Promise<Source[]> {
     if (!this.apiKey)

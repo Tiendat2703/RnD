@@ -5,6 +5,7 @@ import type { Chat } from './llm';
 import type { Card, PanelEvent, Settings } from './messages';
 import { formatChatMessages, research, type ResearchResult, type Search } from './research';
 import { ResearchSession } from './session';
+import { routeQuestion } from './question-route';
 import { detectTopic } from './topic';
 import { TranscriptWindow } from './transcript';
 
@@ -33,6 +34,7 @@ export function createPipeline(deps: {
   const now = deps.now ?? Date.now;
   const newId = deps.newId ?? (() => crypto.randomUUID());
   const window = new TranscriptWindow();
+  const webWindow = new TranscriptWindow();
   const error = (message: string) => deps.emit({ kind: 'notice', level: 'error', message });
 
   const publish = (card: Omit<Card, 'id' | 'at' | 'chat'>, messages: string[], post: boolean) => {
@@ -51,8 +53,34 @@ export function createPipeline(deps: {
     kind: 'research', title: r.topic, text: r.summary, links: r.sources,
   }, formatChatMessages(r), true);
 
+  const notice = (message: string) => deps.emit({ kind: 'notice', level: 'info', message });
+
   const assistant = new DocAssistant({
     library: deps.library,
+    routeQuestion: async (input, signal) => {
+      const route = await routeQuestion(deps.chat, deps.library(), input, signal);
+      if (signal.aborted) return true;
+      if (route.source === 'docs') return false;
+      if (route.source === 'clarify') {
+        if (input.mode === 'ask') notice('Bạn muốn hỏi nội dung nào, trong tài liệu hay trên mạng? Hãy nói rõ đối tượng cần tìm.');
+        return true;
+      }
+      if (!deps.settings().webResearch || !deps.search) {
+        if (input.mode === 'ask') notice('Câu hỏi này cần tìm trên web. Hãy bật Research web và thêm khóa Exa trong cài đặt.');
+        return true;
+      }
+      try {
+        const result = await research({ topic: input.lines.join(' '), query: route.query, keywords: [] }, {
+          search: deps.search, chat: deps.chat,
+        }, signal);
+        if (signal.aborted) return true;
+        if (result) onResearch(result);
+        else if (input.mode === 'ask') notice('Chưa tìm được nguồn web phù hợp để trả lời câu hỏi này.');
+      } catch (cause) {
+        if (!signal.aborted) error(`Research web: ${cause instanceof Error ? cause.message : String(cause)}`);
+      }
+      return true;
+    },
     check: (input, signal) => {
       const lib = deps.library();
       return lib ? checkDocs(deps.chat, lib, input, signal) : Promise.resolve([]);
@@ -64,11 +92,11 @@ export function createPipeline(deps: {
 
   const search = deps.search;
   const web = search && new ResearchSession({
-    detect: (current, transcript, signal) => detectTopic(deps.chat, current, transcript, signal),
+    detect: (current, transcript, signal) => detectTopic(deps.chat, current, transcript, signal, deps.library()),
     research: (topic, signal) => research(topic, { search, chat: deps.chat }, signal),
     deliver: onResearch,
     onError: message => error(`Research web: ${message}`),
-    transcript: () => window.text(now()),
+    transcript: () => webWindow.text(now()),
     now,
   });
 
@@ -77,8 +105,11 @@ export function createPipeline(deps: {
       const at = now();
       if (!window.add(text, at)) return; // the same sentence heard twice (loudspeaker into mic)
       deps.emit({ kind: 'final', text, at });
-      assistant.onLine(text);
-      if (deps.settings().webResearch) web?.onLine();
+      const question = assistant.onLine(text);
+      if (!question) {
+        webWindow.add(text, at);
+        if (deps.settings().webResearch) web?.onLine();
+      }
     },
     onPartial(text) {
       deps.emit({ kind: 'partial', text });

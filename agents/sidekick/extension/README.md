@@ -17,6 +17,14 @@ npm run extension:build
 
 Để hỏi trực tiếp, nói "MeetMate ơi, …" rồi đặt câu hỏi.
 
+Câu hỏi được phân loại theo nguồn trước khi trả lời, dựa vào câu mới nhất, ngữ cảnh và các đoạn tài liệu liên quan:
+
+- “Ngũ Hành Sơn nằm ở đâu?”, “Đại học Duy Tân ở đâu?”, “Cách truy cập cloud?” → tìm web ngay, kể cả khi chưa tải tài liệu. Cần bật **Research web** và có khóa Exa.
+- “Phí bảo trì trong hợp đồng bao nhiêu?” hoặc câu hỏi về dữ kiện riêng của nhóm → tra tài liệu và trích dẫn file/trang; không tìm dữ kiện nội bộ trên web khi file thiếu thông tin.
+- “Cái này ở đâu?” khi chưa rõ đối tượng → yêu cầu nói rõ, không trả nhầm “tài liệu không đề cập”.
+
+Câu hỏi thông thường không gọi tên MeetMate cũng được phân nguồn. Các khẳng định trong cuộc họp vẫn được đối chiếu tài liệu tự động. Tìm web theo chủ đề chỉ nhận phần hội thoại chưa được xử lý như câu hỏi riêng để tránh nghiên cứu trùng.
+
 ## Kiểm thử
 
 - `npm test`: unit test. Không cần mạng.

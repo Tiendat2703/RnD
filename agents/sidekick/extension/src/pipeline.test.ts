@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildLibrary } from './doccheck';
 import type { Chunk } from './docs/chunk';
 import type { ChatMessage } from './llm';
@@ -75,6 +75,122 @@ describe('createPipeline', () => {
     await flush();
     expect(events.at(-1)).toMatchObject({ kind: 'notice', level: 'error', message: 'Đối chiếu tài liệu: Blaze LLM lỗi HTTP 402' });
     expect(posts).toEqual([]);
+  });
+});
+
+describe('question source routing', () => {
+  function routingSetup(options: { docs?: boolean; web?: boolean; key?: boolean; route?: 'web' | 'docs' | 'clarify' } = {}) {
+    const events: PanelEvent[] = [];
+    const posts: string[][] = [];
+    const search = vi.fn(async (_query: string, _signal: AbortSignal) => [{ title: 'Official source', url: 'https://example.org/source', text: 'Verified information' }]);
+    const chat = vi.fn(async (messages: ChatMessage[]) => {
+      if (messages[0].content.includes('Phân loại NGUỒN')) {
+        return JSON.stringify({ source: options.route ?? 'web', query: 'latest question query' });
+      }
+      if (messages[0].content.includes('"items"')) {
+        return JSON.stringify({ items: [{ kind: 'answer', utterance: 'Phí bảo trì bao nhiêu?',
+          chunkId: chunk.id, quote: chunk.text, text: '12 triệu đồng mỗi tháng.' }] });
+      }
+      return JSON.stringify({ summary: 'Web answer', sources: [{ url: 'https://example.org/source', reason: 'Official source' }] });
+    });
+    const p = createPipeline({
+      chat, library: () => options.docs ? lib : null,
+      search: options.key === false ? null : search,
+      settings: () => ({ postToChat: true, webResearch: options.web !== false }),
+      emit: e => events.push(e), post: (_id, messages) => posts.push(messages),
+    });
+    return { p, events, posts, search, chat };
+  }
+
+  it.each([
+    'MeetMate ơi, hãy cho tôi biết Ngũ Hành Sơn nằm ở đâu?',
+    'Cho tôi biết Đại học Duy Tân nằm ở đâu.',
+    'MeetMate ơi, cách truy cập vào cloud như thế nào?',
+  ])('researches a public question immediately without documents: %s', async question => {
+    const s = routingSetup();
+    s.p.onFinal(question);
+    await flush();
+    expect(s.search).toHaveBeenCalledWith('latest question query', expect.any(AbortSignal));
+    expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'research', text: 'Web answer' } }]);
+    expect(s.posts).toHaveLength(1);
+    expect(s.chat).toHaveBeenCalledTimes(2); // routing and research, never document check
+    s.p.stop();
+  });
+
+  it('still uses the web for a public question when an unrelated document is loaded', async () => {
+    const s = routingSetup({ docs: true });
+    s.p.onFinal('MeetMate ơi, Đại học Duy Tân ở đâu?');
+    await flush();
+    expect(s.search).toHaveBeenCalledTimes(1);
+    expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'research' } }]);
+    s.p.stop();
+  });
+
+  it.each(['MeetMate ơi, phí bảo trì trong hợp đồng bao nhiêu?', 'Phí bảo trì bao nhiêu?'])(
+    'answers document questions with a citation and never searches private facts: %s', async question => {
+      const s = routingSetup({ docs: true, route: 'docs' });
+      s.p.onFinal(question);
+      await flush();
+      expect(s.search).not.toHaveBeenCalled();
+      expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: {
+        kind: 'answer', text: '12 triệu đồng mỗi tháng.', source: 'hop-dong.pdf, tr. 3',
+      } }]);
+      s.p.stop();
+    },
+  );
+
+  it('reports missing files only for a question routed to documents', async () => {
+    const s = routingSetup({ route: 'docs' });
+    s.p.onFinal('MeetMate ơi, tài liệu tôi tải lên ghi phí bảo trì bao nhiêu?');
+    await flush();
+    expect(s.search).not.toHaveBeenCalled();
+    expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: {
+      kind: 'not_in_doc', text: 'Chưa có tài liệu nào được tải lên MeetMate.',
+    } }]);
+    s.p.stop();
+  });
+
+  it.each([{ web: false }, { key: false }])('explains unavailable web research without falling back to documents: %j', async options => {
+    const s = routingSetup({ docs: true, ...options });
+    s.p.onFinal('MeetMate ơi, Ngũ Hành Sơn nằm ở đâu?');
+    await flush();
+    expect(s.search).not.toHaveBeenCalled();
+    expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
+    expect(s.events.at(-1)).toMatchObject({ kind: 'notice', message: expect.stringContaining('cần tìm trên web') });
+    s.p.stop();
+  });
+
+  it('asks for context instead of inventing a document miss', async () => {
+    const s = routingSetup({ route: 'clarify' });
+    s.p.onFinal('MeetMate ơi, cái này ở đâu?');
+    await flush();
+    expect(s.search).not.toHaveBeenCalled();
+    expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
+    expect(s.events.at(-1)).toMatchObject({ kind: 'notice', message: expect.stringContaining('nói rõ') });
+    s.p.stop();
+  });
+
+  it('handles a question following a standalone wake word through the same router', async () => {
+    const s = routingSetup();
+    s.p.onFinal('MeetMate ơi.');
+    s.p.onFinal('Ngũ Hành Sơn nằm ở đâu?');
+    await flush();
+    expect(s.search).toHaveBeenCalledTimes(1);
+    s.p.stop();
+  });
+
+  it('aborts web research when the pipeline stops and discards a late result', async () => {
+    const s = routingSetup();
+    let complete!: (sources: { title: string; url: string; text: string }[]) => void;
+    s.search.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+    s.p.onFinal('MeetMate ơi, Ngũ Hành Sơn ở đâu?');
+    await flush();
+    const signal = s.search.mock.calls[0]?.[1] as AbortSignal | undefined;
+    s.p.stop();
+    expect(signal?.aborted).toBe(true);
+    complete([{ title: 'Source', url: 'https://example.org/source', text: 'Late result' }]);
+    await flush();
+    expect(s.posts).toEqual([]);
   });
 });
 

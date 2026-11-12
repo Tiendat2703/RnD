@@ -5,7 +5,8 @@ import { detectWake } from './wake';
 
 const QUESTION = /\?|(?:^| )(bao nhieu|bao gio|bao lau|khi nao|ngay nao|thang nao|o dau|ai|the nao|tai sao|vi sao|la gi|co phai|dung khong|phai khong|chua|khong)(?: |$)/;
 
-export const isQuestion = (text: string) => text.includes('?') || QUESTION.test(fold(text));
+export const isQuestion = (text: string) => text.includes('?') || QUESTION.test(fold(text))
+  || /(?:^| )(cho (?:toi|minh|chung toi) biet|hay (?:tim|tra cuu|giai thich)|tim (?:giup|ho)|search|tra cuu)(?: |$)/.test(fold(text));
 
 /** Cheap local filter: skip "ok", "nghe rõ không" and the like; let the model judge the rest. */
 export function worthChecking(text: string): boolean {
@@ -43,7 +44,7 @@ export class DocAssistant {
   private readonly history: string[] = [];
   private pending: string[] = [];
   private autoBusy = false;
-  private readonly asks: { question: string; context: string[] }[] = [];
+  private readonly asks: { question: string; context: string[]; mode: DocCheckInput['mode'] }[] = [];
   private askBusy = false;
   private wakeAt: number | null = null;
   /** Report key → when it was first reported (answers and notes, by wording). */
@@ -56,6 +57,8 @@ export class DocAssistant {
   constructor(private readonly deps: {
     library: () => DocLibrary | null;
     check: (input: DocCheckInput, signal: AbortSignal) => Promise<Finding[]>;
+    /** Return true when a question was handled outside the document lane. */
+    routeQuestion?: (input: DocCheckInput, signal: AbortSignal) => Promise<boolean>;
     emit: (finding: Finding) => void;
     onError: (message: string) => void;
     now?: () => number;
@@ -63,27 +66,33 @@ export class DocAssistant {
     this.now = deps.now ?? Date.now;
   }
 
-  onLine(text: string): void {
-    if (this.stopped) return;
+  onLine(text: string): boolean {
+    if (this.stopped) return false;
     const wake = detectWake(text);
     if (wake) {
       if (wake.question.split(' ').length >= 2) this.ask(wake.question, this.recent());
       else this.wakeAt = this.now();
       this.remember(text);
-      return;
+      return true;
     }
     if (this.wakeAt !== null && this.now() - this.wakeAt <= WAKE_FOLLOWUP_MS) {
       this.wakeAt = null;
       // The bare "MeetMate ơi" line adds nothing to the question's context.
       this.ask(text, this.recent().slice(0, -1));
       this.remember(text);
-      return;
+      return true;
     }
     this.wakeAt = null;
+    if (this.deps.routeQuestion && isQuestion(text) && worthChecking(text)) {
+      this.ask(text, this.recent(), 'auto');
+      this.remember(text);
+      return true;
+    }
     this.remember(text);
-    if (!worthChecking(text) || !this.deps.library()) return;
+    if (!worthChecking(text) || !this.deps.library()) return false;
     this.pending.push(text);
     void this.pumpAuto();
+    return false;
   }
 
   stop(): void {
@@ -106,8 +115,8 @@ export class DocAssistant {
     return this.history.slice(Math.max(0, end - DOC_CONTEXT_LINES), end);
   }
 
-  private ask(question: string, context: string[]): void {
-    this.asks.push({ question, context });
+  private ask(question: string, context: string[], mode: DocCheckInput['mode'] = 'ask'): void {
+    this.asks.push({ question, context, mode });
     void this.pumpAsk();
   }
 
@@ -115,17 +124,25 @@ export class DocAssistant {
     if (this.askBusy || this.stopped) return;
     const next = this.asks.shift();
     if (!next) return;
-    const { question, context } = next;
+    const { question, context, mode } = next;
     this.askBusy = true;
-    const lib = this.deps.library();
+    const controller = new AbortController();
+    this.controllers.add(controller);
     try {
+      const input = { mode, context, lines: [question] };
+      if (this.deps.routeQuestion && await this.deps.routeQuestion(input, controller.signal)) return;
+      if (this.stopped || controller.signal.aborted) return;
+      const lib = this.deps.library();
       if (!lib) {
-        this.deps.emit({ kind: 'not_in_doc', mode: 'ask', utterance: question, quote: '', chunk: null, text: 'Chưa có tài liệu nào được tải lên MeetMate.' });
+        if (mode === 'ask') this.deps.emit({ kind: 'not_in_doc', mode: 'ask', utterance: question, quote: '', chunk: null, text: 'Chưa có tài liệu nào được tải lên MeetMate.' });
       } else {
-        const findings = await this.run({ mode: 'ask', context, lines: [question] });
-        for (const f of findings) this.deliver(f, false);
+        const findings = await this.run(input);
+        for (const f of findings) this.deliver(f, mode === 'auto');
       }
+    } catch (error) {
+      if (!isAbort(error) && !this.stopped) this.deps.onError(error instanceof Error ? error.message : String(error));
     } finally {
+      this.controllers.delete(controller);
       this.askBusy = false;
       void this.pumpAsk();
     }
