@@ -52,11 +52,11 @@ function checksFor(info: ExtInfo | null): Check[] {
       title: info?.mock
         ? "Extension đang ở chế độ thử — không cần khóa"
         : info?.keysSet
-          ? "Đã có khóa Blaze và Exa"
-          : "Nhập khóa Blaze và Exa trong popup",
+          ? "Đã có khóa Blaze"
+          : "Nhập khóa Blaze trong khung bên MeetMate",
       ok: !!info?.keysSet,
-      note: "Hai ô khóa nằm trong popup extension, không nằm ở đây. Khóa không đi qua web app.",
-      code: "MeetMate → popup",
+      note: "Ô khóa nằm trong phần Cài đặt của khung bên MeetMate, không nằm ở đây. Khóa Exa (research web) không bắt buộc. Khóa không đi qua web app.",
+      code: "MeetMate → khung bên → Cài đặt",
     },
     {
       id: "tab",
@@ -286,12 +286,12 @@ export function InstallExtensionDialog() {
               </span>
               <span className="instep__text">
                 <span className="instep__title">
-                  Trong tab Meet, bấm biểu tượng MeetMate rồi bấm “Bắt đầu”
+                  Trong tab Meet, bấm biểu tượng MeetMate trên thanh công cụ
                 </span>
                 <span className="instep__note">
                   Chrome chỉ cho phép ghi âm một tab sau khi bạn bấm vào biểu tượng extension, nên
-                  bước này không thể làm thay từ trang web. Khi bắt đầu, panel MeetMate hiện ngay
-                  trong trang Meet; hộp thoại này tự đóng.
+                  bước này không thể làm thay từ trang web. Bấm là MeetMate mở khung bên và bắt đầu
+                  nghe; panel MeetMate cũng hiện trong trang Meet và hộp thoại này tự đóng.
                 </span>
               </span>
             </li>

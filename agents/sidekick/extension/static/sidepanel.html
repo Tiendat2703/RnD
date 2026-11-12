@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MeetMate</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo" aria-hidden="true"></span><strong>MeetMate</strong></div>
+    <span id="pill" class="pill" data-state="idle">Chưa chạy</span>
+  </header>
+
+  <section class="control">
+    <button id="toggle" class="btn primary big" type="button">Bắt đầu nghe</button>
+    <p id="meta" class="meta"></p>
+    <p id="notice" class="notice" role="status" hidden></p>
+  </section>
+
+  <section id="live" class="live" hidden aria-live="polite">
+    <span class="live-dot" aria-hidden="true"></span>
+    <p><span id="live-final"></span> <span id="live-partial" class="partial"></span></p>
+  </section>
+
+  <section class="results">
+    <h2>Kết quả <span id="card-count" class="count"></span></h2>
+    <div id="cards" class="cards"></div>
+    <div id="cards-empty" class="empty">
+      <p>Khi có người nói khác với tài liệu hoặc hỏi về tài liệu, MeetMate báo ở đây và trong chat Meet.</p>
+      <p>Muốn hỏi trực tiếp, nói <strong>“MeetMate ơi, …”</strong> rồi đặt câu hỏi.</p>
+    </div>
+  </section>
+
+  <details id="transcript-box" class="box">
+    <summary>Transcript <span id="line-count" class="count"></span></summary>
+    <ol id="transcript" class="transcript"></ol>
+  </details>
+
+  <details id="docs-box" class="box">
+    <summary>Tài liệu <span id="doc-count" class="count"></span></summary>
+    <label id="drop" class="drop">
+      <input id="file" type="file" accept="application/pdf,.pdf" multiple>
+      <span class="drop-title">Thêm file PDF</span>
+      <span class="drop-hint">Kéo thả vào đây hoặc bấm để chọn. PDF phải có lớp chữ (không phải bản scan).</span>
+    </label>
+    <ul id="docs" class="docs"></ul>
+    <p id="docs-mode" class="hint"></p>
+  </details>
+
+  <details id="settings-box" class="box">
+    <summary>Cài đặt</summary>
+    <label class="field">
+      <span>Khóa API Blaze <em>(bắt buộc)</em></span>
+      <input id="blaze-key" type="password" autocomplete="off" spellcheck="false" placeholder="Dán khóa Blaze">
+    </label>
+    <label class="field">
+      <span>Khóa API Exa <em>(cho research web)</em></span>
+      <input id="exa-key" type="password" autocomplete="off" spellcheck="false" placeholder="Dán khóa Exa">
+    </label>
+    <label class="switch"><input id="post-chat" type="checkbox"> <span>Gửi kết quả vào chat Meet (mọi người đều thấy)</span></label>
+    <label class="switch"><input id="web-research" type="checkbox"> <span>Research web theo chủ đề cuộc họp (Exa)</span></label>
+    <p class="hint">Khóa chỉ lưu trong Chrome trên máy này. Tài liệu lưu trên máy; mỗi lần đối chiếu, nội dung tài liệu được gửi tới Blaze.</p>
+  </details>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

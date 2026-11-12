@@ -574,7 +574,6 @@ describe("meeting worker", () => {
     await worker.run(meeting.id);
     expect(exa.search.mock.calls.map(([query]) => query)).toEqual([
       "venue options",
-      "pilot examples",
     ]);
     expect(agents.analyze).toHaveBeenCalledTimes(2);
     expect(agents.analyze.mock.calls[1][0]).toMatchObject({
@@ -582,7 +581,6 @@ describe("meeting worker", () => {
       currentState: {
         researchResults: [
           { query: "venue options", sources: [source] },
-          { query: "pilot examples", sources: [source] },
         ],
       },
     });

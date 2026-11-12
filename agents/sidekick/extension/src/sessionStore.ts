@@ -98,7 +98,8 @@ async function readAll(): Promise<Store> {
   return r[SESSIONS_KEY] ?? {};
 }
 
-async function currentId(): Promise<string | null> {
+/** Id của phiên đang ghi; null = không có phiên nào mở. */
+export async function currentId(): Promise<string | null> {
   const r = (await chrome.storage.session.get(CURRENT_KEY)) as { [CURRENT_KEY]?: string };
   return r[CURRENT_KEY] ?? null;
 }

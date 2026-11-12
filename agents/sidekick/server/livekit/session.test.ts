@@ -5,13 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MeetingStore } from '../store';
 import { MeetingWorker } from '../worker';
 import { AmbiguousProvider } from '../providers/ambiguous';
-import { SidekickSession, type SessionOutput } from './session';
+import { SidekickSession, type SessionOutput, type SidekickSessionOptions } from './session';
 
 const directories: string[] = [];
 afterEach(() => {
   for (const path of directories.splice(0)) rmSync(path, { recursive: true, force: true });
 });
-function setup() {
+function setup(options: SidekickSessionOptions = { debounceMs: 0 }) {
   const path = mkdtempSync(join(tmpdir(), 'sidekick-livekit-test-'));
   directories.push(path);
   const store = new MeetingStore(path);
@@ -24,7 +24,7 @@ function setup() {
     store.save(meeting);
   }) };
   const publish = vi.fn(async (output: SessionOutput) => { outputs.push(output); });
-  const session = new SidekickSession(store, worker, publish);
+  const session = new SidekickSession(store, worker, publish, options);
   return { store, outputs, worker, publish, session };
 }
 describe('Sidekick LiveKit session', () => {
@@ -38,6 +38,31 @@ describe('Sidekick LiveKit session', () => {
     const b = setup();
     expect(b.session.snapshot().transcript).toHaveLength(0);
     expect(b.session.meetingId).not.toBe(a.session.meetingId);
+  });
+
+  it('coalesces transcript from multiple participants and preserves speaker timing', async () => {
+    const { session, worker } = setup({ debounceMs: 60_000, maxWaitMs: 60_000 });
+    await session.submit('alice', 'audio-1', 'Prepare a pilot proposal.', {
+      audio: true,
+      trackSid: 'track-a',
+      startedAtMs: 100,
+      endedAtMs: 900,
+    });
+    await session.submit('bob', 'audio-2', 'Add a budget comparison.', {
+      audio: true,
+      trackSid: 'track-b',
+      startedAtMs: 500,
+      endedAtMs: 1_200,
+    });
+
+    expect(worker.run).not.toHaveBeenCalled();
+    expect(session.snapshot().transcript).toMatchObject([
+      { participantIdentity: 'alice', sequence: 1, trackSid: 'track-a', startedAtMs: 100, endedAtMs: 900 },
+      { participantIdentity: 'bob', sequence: 2, trackSid: 'track-b', startedAtMs: 500, endedAtMs: 1_200 },
+    ]);
+
+    await session.flush();
+    expect(worker.run).toHaveBeenCalledTimes(1);
   });
 
   it('finalizes once after in-flight work, rejecting later input', async () => {
@@ -105,7 +130,7 @@ describe('Sidekick LiveKit session', () => {
     }));
     const search = vi.fn(async () => []);
     const worker = new MeetingWorker(store, { agents: { analyze }, exa: { search }, workspace: { save } });
-    const session = new SidekickSession(store, worker, async () => {});
+    const session = new SidekickSession(store, worker, async () => {}, { debounceMs: 0 });
     await session.submit('alice', 'one', 'Please prepare a pilot proposal.');
     await session.submit('alice', 'two', 'The pilot should last two weeks.');
     expect(analyze).toHaveBeenCalledTimes(2);
@@ -130,7 +155,7 @@ describe('Sidekick LiveKit session', () => {
       exa: { search: vi.fn(async () => []) },
       workspace: new AmbiguousProvider(''),
     });
-    const session = new SidekickSession(store, worker, async output => { outputs.push(output); });
+    const session = new SidekickSession(store, worker, async output => { outputs.push(output); }, { debounceMs: 0 });
 
     await session.submit('alice', 'one', 'Please prepare a pilot proposal.');
 

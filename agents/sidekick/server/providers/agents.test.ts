@@ -87,7 +87,7 @@ describe('managed Agents API provider', () => {
     });
     expect(JSON.parse(String(request[1]?.body))).toMatchObject({
       agent: {
-        model: 'gpt-6-astra',
+        model: 'gpt-5.6-luna',
         reasoning: { effort: 'low' },
         service_tier: 'fast',
         tools: [],

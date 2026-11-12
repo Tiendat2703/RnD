@@ -1,24 +1,19 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8" />
-<title>Quyền micro — MeetMate</title>
-<style>
-  html, body { margin: 0; min-height: 100%; }
-  body { background: var(--ground); display: grid; place-items: center; min-height: 100vh; padding: 24px; }
-  .sheet { width: min(420px, 100%); display: grid; gap: 16px; padding: 24px; border: 1px solid var(--hairline); border-radius: 32px; background: var(--canvas); }
-  .sheet h1 { margin: 0; font: 600 22px/28px var(--font-display); letter-spacing: -0.025em; }
-  .sheet p { margin: 0; }
-  [hidden] { display: none !important; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MeetMate · Quyền micro</title>
+  <link rel="stylesheet" href="sidepanel.css">
 </head>
-<body class="mm">
-<main class="sheet">
-  <span class="wordmark" style="justify-self: start">MeetMate</span>
-  <h1>Cho phép MeetMate dùng micro</h1>
-  <p>MeetMate nghe hai kênh: âm thanh của tab Meet và micro của bạn. Khi Chrome hỏi, hãy chọn Cho phép. Trang này tự đóng khi xong.</p>
-  <div id="result" role="status" aria-live="polite"></div>
-</main>
-<script src="mic-permission.js"></script>
+<body class="page">
+  <main class="permission">
+    <div class="brand"><span class="logo" aria-hidden="true"></span><strong>MeetMate</strong></div>
+    <h1>Cho phép MeetMate nghe giọng của bạn</h1>
+    <p>MeetMate cần micro để nhận dạng những gì bạn nói trong cuộc họp. Âm thanh chỉ được gửi tới Blaze để chuyển thành chữ, không được lưu lại.</p>
+    <p id="status" class="status-line" role="status"></p>
+    <button id="allow" class="btn primary" type="button">Cho phép micro</button>
+  </main>
+  <script src="mic-permission.js"></script>
 </body>
 </html>

@@ -1,136 +1,111 @@
-import type { ExtToWeb } from '../../../../lib/bridgeProtocol';
 import { ExaProvider } from '../../server/providers/exa';
 import { startCapture } from './audio';
-import { MAX_SOURCES } from './config';
-import { runMock } from './mock';
+import { buildLibrary, type DocLibrary } from './doccheck';
+import { listDocs } from './docs/store';
+import { LiveStt, type SttState } from './live-stt';
 import { blazeChat } from './llm';
-import type { Msg } from './messages';
-import { research } from './research';
-import { MeetingSession } from './session';
+import type { Msg, PanelEvent, RunState, Settings, StartReply } from './messages';
+import { createPipeline, type Pipeline } from './pipeline';
 import { BlazeStt } from './stt';
-import { detectTopic } from './topic';
 
-let teardown: (() => void) | null = null;
+// The offscreen page owns the meeting: audio capture, STT and the pipeline. It only has
+// chrome.runtime, so everything else goes through messages to the background.
+const emit = (event: PanelEvent) => void chrome.runtime.sendMessage({ type: 'mm.event', event } satisfies Msg).catch(() => undefined);
+const notice = (level: 'info' | 'error', message: string) => emit({ kind: 'notice', level, message });
 
-const status = (s: string) =>
-  void chrome.runtime.sendMessage({ type: 'meetmate.status', status: s } satisfies Msg);
-const emit = (event: ExtToWeb) =>
-  void chrome.runtime.sendMessage({ type: 'meetmate.event', event } satisfies Msg);
+async function loadLibrary(): Promise<DocLibrary | null> {
+  const chunks = (await listDocs()).flatMap(d => d.chunks);
+  return chunks.length ? buildLibrary(chunks) : null;
+}
 
-async function start(
-  streamId: string,
-  blazeApiKey: string,
-  exaApiKey: string,
-  prefs: { sources: number; autoPost: boolean },
-  mock: boolean,
-) {
-  teardown?.();
-  if (mock) {
-    // chế độ thử: không khóa, không ghi âm, không mạng, không gõ vào chat Meet
-    const stopMock = runMock(emit);
-    teardown = () => {
-      stopMock();
-      teardown = null;
-    };
-    status('Đang chạy');
-    return;
-  }
-  const startedAt = Date.now();
-  const maxSources = Math.max(1, Math.min(MAX_SOURCES, prefs.sources));
-  let lineSeq = 0;
+type Session = { stt: LiveStt; pipeline: Pipeline; stopAudio: () => void };
+let session: Session | null = null;
+let library: DocLibrary | null = null;
+let settings: Settings | null = null;
 
-  const chat = blazeChat(blazeApiKey);
-  const exa = new ExaProvider(exaApiKey);
-  const session = new MeetingSession({
-    detect: async (current, transcript, signal) => {
-      emit({ type: 'stage', stage: 'topic' });
-      const decision = await detectTopic(chat, current, transcript, signal);
-      // session chỉ nghiên cứu khi có chủ đề mới; ngoài trường hợp đó pipeline về nghỉ
-      const willResearch = !!decision?.topic && (current === null || decision.changed);
-      if (!willResearch) emit({ type: 'stage', stage: null });
-      return decision;
+const STATE: Record<SttState, RunState | null> = { connecting: 'starting', live: 'live', reconnecting: 'reconnecting', stopped: null };
+
+function stop(): void {
+  if (!session) return;
+  const { stt, pipeline, stopAudio } = session;
+  session = null;
+  stopAudio();
+  stt.stop(); // keeps reading the last finals for a second
+  setTimeout(() => pipeline.stop(), 1_200);
+}
+
+async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise<StartReply> {
+  stop();
+  settings = msg.settings;
+  library = await loadLibrary();
+  if (!library) notice('info', 'Chưa có tài liệu: MeetMate chỉ nghe và research web, chưa đối chiếu được.');
+  const chat = blazeChat(msg.blazeApiKey);
+  const exaKey = msg.exaApiKey;
+  const pipeline = createPipeline({
+    chat,
+    library: () => library,
+    search: exaKey ? (q, s) => new ExaProvider(exaKey).search(q, s) : null,
+    settings: () => settings!,
+    emit,
+    post: (cardId, messages) => void chrome.runtime.sendMessage({ type: 'mm.post', cardId, messages } satisfies Msg).catch(() => undefined),
+  });
+  if (settings.webResearch && !exaKey) notice('info', 'Chưa có khóa Exa: research web đang tắt.');
+
+  const stt = new LiveStt({
+    create: handlers => new BlazeStt({ apiKey: msg.blazeApiKey, ...handlers }),
+    onFinal: text => pipeline.onFinal(text),
+    onPartial: text => pipeline.onPartial(text),
+    onState: (state, detail) => {
+      const mapped = STATE[state];
+      if (mapped && session) emit({ kind: 'state', state: mapped, detail });
     },
-    research: async (topic, signal) => {
-      emit({ type: 'topic', topic });
-      emit({ type: 'stage', stage: 'searching' });
-      const result = await research(
-        topic,
-        {
-          search: async (q, s) => {
-            const found = await exa.search(q, s);
-            emit({ type: 'stage', stage: 'writing' });
-            return found;
-          },
-          chat,
-        },
-        signal,
-      );
-      if (!result) {
-        emit({ type: 'stage', stage: null });
-        return null;
-      }
-      const limited = { ...result, sources: result.sources.slice(0, maxSources) };
-      emit({ type: 'research', result: limited });
-      // tắt tự động gửi: kết quả hiện trên web nhưng không vào chat Meet
-      emit({ type: 'stage', stage: prefs.autoPost ? 'posting' : null });
-      return prefs.autoPost ? limited : null;
-    },
-    post: (text) =>
-      void chrome.runtime.sendMessage({ type: 'meetmate.post', text } satisfies Msg),
-    onError: (message) => {
-      status(message);
-      emit({ type: 'error', message });
+    onFatal: message => {
+      stop();
+      emit({ kind: 'state', state: 'error', detail: message });
     },
   });
-  const stt = new BlazeStt({
-    apiKey: blazeApiKey,
-    onFinal: (text) => {
-      emit({
-        type: 'line',
-        line: {
-          id: `l-${++lineSeq}`,
-          text,
-          atMs: Date.now() - startedAt,
-          // tab và micro đã trộn trước khi gửi STT nên không biết dòng này từ kênh nào
-          source: 'mixed',
-        },
-      });
-      session.onFinal(text);
-    },
-    onError: status,
-  });
+
   try {
-    await stt.connect();
-    const stopAudio = await startCapture(
-      streamId,
-      (f) => stt.sendFrame(f),
-      status,
-      () => {
-        // người dùng rời Meet hoặc đóng tab: kết thúc phiên
-        teardown?.();
-        emit({ type: 'ended', reason: 'meet-closed' });
+    await stt.start();
+    const stopAudio = await startCapture({
+      streamId: msg.streamId,
+      workletUrl: chrome.runtime.getURL('pcm-worklet.js'),
+      onFrame: frame => stt.sendFrame(frame),
+      onNotice: message => notice('info', message),
+      onEnded: () => {
+        stop();
+        emit({ kind: 'state', state: 'idle', detail: 'Tab Meet đã dừng phát âm thanh' });
       },
-    );
-    teardown = () => {
-      session.stop();
-      stt.close();
-      stopAudio();
-      teardown = null;
-    };
-    status('Đang chạy');
-  } catch (e) {
-    session.stop();
-    stt.close();
-    const message = e instanceof Error ? e.message : String(e);
-    status(message);
-    emit({ type: 'error', message });
+    });
+    session = { stt, pipeline, stopAudio };
+    emit({ kind: 'state', state: 'live' });
+    return { ok: true };
+  } catch (error) {
+    stt.stop();
+    pipeline.stop();
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: false, error: /Permission|NotAllowed/i.test(message) ? 'Chrome chưa cho phép ghi âm. Cấp quyền micro rồi bấm Bắt đầu lại.' : message };
   }
 }
 
-chrome.runtime.onMessage.addListener((msg: Msg) => {
-  if (msg.type === 'meetmate.offscreen.start') {
-    void start(msg.streamId, msg.blazeApiKey, msg.exaApiKey, msg.prefs, msg.mock);
-  } else if (msg.type === 'meetmate.offscreen.stop') {
-    teardown?.();
+chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
+  switch (msg.type) {
+    case 'mm.offscreen.start':
+      void start(msg).then(sendResponse);
+      return true;
+    case 'mm.offscreen.stop':
+      stop();
+      return false;
+    case 'mm.settings':
+      settings = msg.settings;
+      return false;
+    case 'mm.docs.changed':
+      void loadLibrary().then(lib => {
+        library = lib;
+        if (session) notice('info', `Đã cập nhật tài liệu cho cuộc họp (${lib?.chunks.length ?? 0} đoạn).`);
+      });
+      return false;
+    default:
+      return false;
   }
 });

@@ -22,7 +22,7 @@ export function fontFaceCss(base: string): string {
   ).join('\n');
 }
 
-/** Nạp phông vào tài liệu hiện tại (popup, trang quyền micro, hoặc trang Meet cho panel). */
+/** Nạp phông vào tài liệu hiện tại (trang quyền micro hoặc trang Meet cho panel). */
 export function installFonts(): void {
   if (document.getElementById('meetmate-fonts')) return;
   const style = document.createElement('style');

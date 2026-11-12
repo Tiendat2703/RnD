@@ -1,7 +1,7 @@
 // Panel MeetMate nằm ngay trong trang Google Meet (shadow DOM, không đụng CSS của
 // Meet). Đây là nơi người dùng theo dõi phiên. Nó nổi trên lưới video tối của Meet
 // nên luôn dùng theme tối; mọi thứ khác — token, hàng sáu bước, dải cảnh báo, giải
-// phẫu bài đăng — là cùng một bộ với popup và web console (docs/design/MEETMATE-DESIGN.md).
+// phẫu bài đăng — là cùng một bộ với web console (docs/design/MEETMATE-DESIGN.md).
 //
 // Nguồn được vẽ bằng `toChatPosts` của web (lib/formatChat.ts), nên thẻ ở đây và tin
 // thật gõ vào chat Meet không thể lệch nhau về chữ hay số ký tự.
@@ -40,8 +40,6 @@ interface State {
   sessionId: string | null;
   /** phiên còn mở, kể cả khi đang chạy kém */
   active: boolean;
-  /** chế độ thử: dữ liệu giả, nói rõ trên panel */
-  mock: boolean;
   cards: KnowledgeCard[];
   votes: Record<string, 'useful' | 'not-useful'>;
   visible: boolean;
@@ -61,7 +59,6 @@ const SHOWN_KINDS = ['claim', 'question', 'assumption'];
 const state: State = {
   sessionId: null,
   active: false,
-  mock: false,
   cards: [],
   votes: {},
   visible: false,
@@ -160,7 +157,7 @@ function renderCard(card: KnowledgeCard): HTMLElement {
       const b = el('button', 'ev-fb', label);
       b.type = 'button';
       b.setAttribute('aria-pressed', String(state.votes[card.id] === vote));
-      // bản mẫu: chỉ ghi nhận trong panel. Khi có backend, gửi `meetmate.feedback` cho background.
+      // bản mẫu: chỉ ghi nhận trong panel. Khi có backend, gửi `mm.feedback` cho background.
       b.addEventListener('click', () => {
         state.votes[card.id] = vote;
         render();
@@ -237,7 +234,6 @@ function render() {
   const pill = el('span', `pill${running ? ' pill--live' : ''}`);
   pill.textContent = running ? 'Đang nghe' : kind === 'idle' ? 'Đã dừng' : 'Chưa nghe';
   head.append(pill);
-  if (state.mock) head.append(el('span', 'pill pill--sample', 'Dữ liệu mẫu'));
   head.append(el('span', 'grow'));
   head.append(
     iconButton(state.collapsed ? 'expand' : 'minus', state.collapsed ? 'Mở rộng' : 'Thu gọn', () => {
@@ -304,7 +300,7 @@ function render() {
       stop.type = 'button';
       stop.append(icon('stop'), document.createTextNode('Dừng nghe'));
       stop.addEventListener('click', () => {
-        void chrome.runtime.sendMessage({ type: 'meetmate.stop' } satisfies Msg);
+        void chrome.runtime.sendMessage({ type: 'mm.stop' } satisfies Msg);
       });
       foot.append(stop);
       box.append(foot);
@@ -334,7 +330,6 @@ export function applyEvent(ev: ExtToWeb): void {
       }
       state.status = ev.status;
       state.active = ev.active ?? ev.running;
-      if (ev.mock !== undefined) state.mock = ev.mock;
       if (ev.sessionId !== null || ev.running) state.visible = true;
       if (ev.running) state.error = null;
       break;

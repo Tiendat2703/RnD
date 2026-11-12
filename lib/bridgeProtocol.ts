@@ -36,9 +36,9 @@ export type WebToExt =
 
 export interface ExtInfo {
   version: string;
-  /** đã nhập khóa Blaze và Exa trong popup (không gửi giá trị), hoặc đang ở chế độ thử */
+  /** đã nhập khóa Blaze trong khung bên extension (không gửi giá trị); Exa không bắt buộc */
   keysSet: boolean;
-  /** chế độ thử: dữ liệu giả, không khóa, không ghi âm, không gửi vào chat */
+  /** chế độ thử cũ của extension; bản hiện tại luôn trả false */
   mock?: boolean;
   /** số tab Google Meet đang ở trong một cuộc họp */
   meetTabs: number;
@@ -104,7 +104,7 @@ export interface Envelope<T> {
   payload: T;
 }
 
-/** Trạng thái chuỗi mà popup/background dùng; web so sánh với đúng các giá trị này. */
+/** Trạng thái chuỗi mà background gửi; web so sánh với đúng các giá trị này. */
 export const STATUS_RUNNING = "Đang chạy";
 export const STATUS_STARTING = "Đang khởi động…";
-export const STATUS_WAITING = "Đã nhận phiên — mở tab Meet, bấm biểu tượng MeetMate rồi Bắt đầu";
+export const STATUS_WAITING = "Đã nhận phiên — mở tab Meet rồi bấm biểu tượng MeetMate để bắt đầu";

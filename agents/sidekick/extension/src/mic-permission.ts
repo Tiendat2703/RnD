@@ -1,31 +1,25 @@
-// Xin quyền micro một lần cho extension, rồi tự đóng.
-import { installFonts } from './ui/fonts';
-import { icon } from './ui/icons';
-import theme from './ui/theme.css';
+// The offscreen page cannot show a permission prompt, so this visible page asks once; the grant
+// then holds for every page of the extension.
+const statusLine = document.getElementById('status')!;
+const button = document.getElementById('allow') as HTMLButtonElement;
 
-const style = document.createElement('style');
-style.textContent = theme;
-document.head.append(style);
-installFonts();
+async function ask(): Promise<void> {
+  button.disabled = true;
+  statusLine.textContent = 'Chrome đang hỏi quyền dùng micro…';
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    for (const track of stream.getTracks()) track.stop();
+    statusLine.textContent = 'Đã cấp quyền micro. Quay lại tab Meet và bấm Bắt đầu trong MeetMate.';
+    document.body.dataset.state = 'ok';
+    setTimeout(() => window.close(), 2_500);
+  } catch {
+    statusLine.textContent = 'Chưa có quyền micro. MeetMate vẫn nghe được người khác, nhưng không nghe được giọng của bạn. Bấm biểu tượng ổ khóa trên thanh địa chỉ để cho phép rồi thử lại.';
+    document.body.dataset.state = 'denied';
+    button.disabled = false;
+  }
+}
 
-const result = document.getElementById('result');
+button.addEventListener('click', () => void ask());
+void ask();
 
-navigator.mediaDevices
-  .getUserMedia({ audio: true })
-  .then((stream) => {
-    stream.getTracks().forEach((t) => t.stop());
-    window.close();
-  })
-  .catch(() => {
-    // vẫn chạy được, chỉ kém: MeetMate nghe được âm thanh tab Meet mà không có micro
-    if (!result) return;
-    const band = document.createElement('div');
-    band.className = 'band band--warn';
-    band.append(
-      icon('warn'),
-      document.createTextNode(
-        'Chưa có quyền micro. MeetMate vẫn nghe được âm thanh của người khác trong cuộc họp, nhưng không nghe được giọng bạn.',
-      ),
-    );
-    result.replaceChildren(band);
-  });
+export {};

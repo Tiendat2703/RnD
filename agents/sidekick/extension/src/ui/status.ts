@@ -1,7 +1,7 @@
 // Phân loại một dòng trạng thái thành loại dải hiển thị. Hợp đồng thiết kế tách hai
 // dải: vàng = đang chạy nhưng kém (không micro, không gõ được vào chat), đỏ = đường
 // bị chặn (thiếu khóa, hết credit, mất STT). Lẫn hai loại này là lỗi thiết kế, nên
-// phân loại nằm ở một chỗ để popup và panel không bao giờ lệch nhau.
+// phân loại nằm ở một chỗ để panel và web không bao giờ lệch nhau.
 import { STATUS_RUNNING, STATUS_STARTING, STATUS_WAITING } from '../../../../../lib/bridgeProtocol';
 
 export type StatusKind = 'idle' | 'busy' | 'live' | 'warn' | 'error' | 'info';

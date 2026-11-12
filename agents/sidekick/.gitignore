@@ -25,5 +25,6 @@ playwright-report/
 dist-agent/
 .ambi/
 
-# Chrome extension build output
+# MeetMate extension build and cached TTS audio
 dist-extension/
+extension/.cache/

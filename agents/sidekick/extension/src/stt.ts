@@ -11,79 +11,111 @@ export type SttSocket = {
   close(): void;
 };
 
-const OPEN = 1;
+type SttEvent = { type?: string; text?: string };
 
-export function blazeSttUrl(apiKey: string): string {
-  const q = new URLSearchParams({
-    model: BLAZE_STT_MODEL,
-    language: 'vi',
-    api_key: apiKey,
-  });
-  return `${BLAZE_STT_URL}?${q.toString()}`;
+/** A failure retrying cannot fix: bad key or billing. */
+export class SttFatalError extends Error {
+  readonly fatal = true;
+}
+export const isFatalSttError = (error: unknown): boolean => (error as { fatal?: boolean } | null)?.fatal === true;
+
+const OPEN = 1;
+const CONNECT_TIMEOUT_MS = 10_000;
+// Chrome dispatches no message once a socket is CLOSING, so finals still in flight need this grace.
+const CLOSE_GRACE_MS = 1_000;
+// A billing state arrives as its own message type instead of an `error`.
+const BILLING_TYPES = new Set(['insufficient-credits', 'invoice-not-paid', 'subscription-not-found', 'plan-upgrade-required']);
+
+export function blazeSttUrl(): string {
+  return BLAZE_STT_URL;
 }
 
+/**
+ * Blaze legacy realtime STT: send {token, language, model}, wait for
+ * successful-authentication then ready, stream PCM16 16 kHz mono, read partial/final.
+ */
 export class BlazeStt {
-  private socket: SttSocket | null = null;
+  private socket?: SttSocket;
+  private ready = false;
   private closing = false;
+  private errored = false;
 
-  constructor(
-    private opts: {
-      apiKey: string;
-      onFinal: (text: string) => void;
-      onError: (message: string) => void;
-      socketFactory?: (url: string) => SttSocket;
-    },
-  ) {}
+  constructor(private readonly opts: {
+    apiKey: string;
+    onFinal: (text: string) => void;
+    onPartial?: (text: string) => void;
+    /** fatal: retrying will not help (billing or authentication). */
+    onError: (message: string, fatal: boolean) => void;
+    socketFactory?: (url: string) => SttSocket;
+  }) {}
 
   connect(): Promise<void> {
-    const url = blazeSttUrl(this.opts.apiKey);
-    const socket = this.opts.socketFactory
-      ? this.opts.socketFactory(url)
-      : (new WebSocket(url) as unknown as SttSocket);
+    const factory = this.opts.socketFactory ?? (url => new WebSocket(url) as unknown as SttSocket);
+    const socket = factory(blazeSttUrl());
     socket.binaryType = 'arraybuffer';
     this.socket = socket;
-    return new Promise<void>((resolve, reject) => {
-      let ready = false;
-      socket.onmessage = (e) => {
-        if (typeof e.data !== 'string') return;
-        let msg: { type?: string; text?: string; error?: { message?: string } };
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const fail = (message: string, fatal = false) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        // The rejection carries the cause; the close that follows must not report it again.
+        this.errored = true;
+        socket.close();
+        reject(fatal ? new SttFatalError(message) : new Error(message));
+      };
+      const timer = setTimeout(() => fail('Blaze STT không phản hồi'), CONNECT_TIMEOUT_MS);
+
+      // The key travels in the first message, never in the URL.
+      socket.onopen = () => socket.send(JSON.stringify({ token: this.opts.apiKey, language: 'vi', model: BLAZE_STT_MODEL }));
+      socket.onmessage = ({ data }) => {
+        let event: SttEvent;
         try {
-          msg = JSON.parse(e.data);
+          event = JSON.parse(String(data)) as SttEvent;
         } catch {
           return;
         }
-        if (msg.type === 'session.created') {
-          ready = true;
+        const fault = event.type === 'error' || BILLING_TYPES.has(event.type ?? '');
+        if (!this.ready) {
+          if (event.type === 'successful-authentication') return;
+          // Before ready, an error is the handshake rejecting the key; that and billing never heal.
+          if (event.type !== 'ready') return fail(fault ? `Blaze STT: ${event.text || event.type}` : `Blaze STT trả về '${event.type}' trước 'ready'`, fault);
+          this.ready = true;
+          settled = true;
+          clearTimeout(timer);
           resolve();
-        } else if (msg.type === 'transcript.text.done') {
-          const text = (msg.text ?? '').trim();
+        } else if (event.type === 'final') {
+          const text = event.text?.trim();
           if (text) this.opts.onFinal(text);
-        } else if (msg.type === 'error') {
-          const m = `Blaze STT: ${msg.error?.message ?? 'lỗi không rõ'}`;
-          this.opts.onError(m);
-          if (!ready) reject(new Error(m));
+        } else if (event.type === 'partial') {
+          const text = event.text?.trim();
+          if (text) this.opts.onPartial?.(text);
+        } else if (fault) {
+          this.errored = true;
+          this.opts.onError(`Blaze STT: ${event.text || event.type}`, BILLING_TYPES.has(event.type ?? ''));
+          socket.close();
         }
       };
-      socket.onerror = () => {
-        if (!ready) reject(new Error('Mất kết nối Blaze STT'));
-      };
       socket.onclose = () => {
-        if (!this.closing) this.opts.onError('Mất kết nối Blaze STT');
-        if (!ready) reject(new Error('Mất kết nối Blaze STT'));
+        this.ready = false;
+        if (!settled) return fail('Mất kết nối Blaze STT');
+        // The server's own error message already explains the close; do not overwrite it.
+        if (!this.closing && !this.errored) this.opts.onError('Mất kết nối Blaze STT', false);
       };
     });
   }
 
   sendFrame(frame: Int16Array): void {
-    if (!this.socket || this.socket.readyState !== OPEN) return;
-    this.socket.send(frame.buffer);
+    if (!this.ready || this.closing || this.socket?.readyState !== OPEN) return;
+    // Int16Array is little-endian on every platform Chrome runs on, matching PCM s16le.
+    this.socket.send(frame.buffer.slice(frame.byteOffset, frame.byteOffset + frame.byteLength));
   }
 
+  /** The legacy protocol has no end message: closing the socket ends the session. */
   close(): void {
+    if (this.closing) return;
     this.closing = true;
-    if (this.socket?.readyState === OPEN) {
-      this.socket.send('{"type":"input_audio.done"}');
-    }
-    this.socket?.close();
+    setTimeout(() => this.socket?.close(), CLOSE_GRACE_MS);
   }
 }

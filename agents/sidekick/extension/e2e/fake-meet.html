@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Meet - abc-defg-hij</title></head>
+<body>
+  <!-- Stand-in for Google Meet's chat: the same aria-labels the content script looks for. -->
+  <button aria-label="Chat with everyone" id="open">Chat</button>
+  <aside id="panel" hidden>
+    <ol id="messages"></ol>
+    <textarea aria-label="Send a message" id="box"></textarea>
+    <button aria-label="Send a message" id="send" disabled>Send</button>
+  </aside>
+  <script>
+    const box = document.getElementById('box');
+    const send = document.getElementById('send');
+    document.getElementById('open').onclick = () => { document.getElementById('panel').hidden = false; };
+    box.addEventListener('input', () => { send.disabled = !box.value.trim(); });
+    send.onclick = () => {
+      const li = document.createElement('li');
+      li.textContent = box.value;
+      document.getElementById('messages').append(li);
+      box.value = '';
+      send.disabled = true;
+    };
+  </script>
+</body>
+</html>

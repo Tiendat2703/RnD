@@ -24,7 +24,7 @@ window.addEventListener('message', async (e) => {
   if (!ALLOWED.includes(data.payload.type)) return;
   try {
     const reply = (await chrome.runtime.sendMessage({
-      type: 'meetmate.web',
+      type: 'mm.web',
       msg: data.payload,
     } satisfies Msg)) as ExtToWeb | undefined;
     if (reply) toWeb(reply);
@@ -34,5 +34,5 @@ window.addEventListener('message', async (e) => {
 });
 
 chrome.runtime.onMessage.addListener((msg: Msg) => {
-  if (msg.type === 'meetmate.toweb') toWeb(msg.event);
+  if (msg.type === 'mm.toweb') toWeb(msg.event);
 });

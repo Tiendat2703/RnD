@@ -454,7 +454,7 @@ export function MeetingMonitor() {
                           pushToast(
                             v
                               ? "Tự động gửi đang bật."
-                              : "Tự động gửi đã tắt — kết quả chờ bạn bấm trong popup."
+                              : "Tự động gửi đã tắt — kết quả chỉ hiện trong khung bên MeetMate."
                           );
                         }}
                         label="Tự động gửi vào chat"

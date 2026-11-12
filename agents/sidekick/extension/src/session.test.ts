@@ -1,161 +1,106 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ResearchResult } from './research';
-import { MeetingSession } from './session';
-import type { TopicDecision } from './topic';
+import { ResearchSession } from './session';
+import type { Topic, TopicDecision } from './topic';
 
-const decision = (topic: string, changed = true): TopicDecision => ({
-  topic,
-  keywords: [],
-  query: `q ${topic}`,
-  changed,
-});
-const result = (topic: string): ResearchResult => ({
-  topic,
-  summary: 's',
-  sources: [{ title: 'T', url: `https://x/${topic}`, reason: 'r' }],
-});
+type Pending<T> = { resolve(v: T): void; reject(e: unknown): void; signal: AbortSignal; arg: unknown };
 
-/** Promise có thể resolve/reject bằng tay. */
-function deferred<T>() {
-  let resolve!: (v: T) => void;
-  let reject!: (e: unknown) => void;
-  const promise = new Promise<T>((res, rej) => ((resolve = res), (reject = rej)));
-  return { promise, resolve, reject };
-}
-const tick = () => new Promise((r) => setTimeout(r, 0));
-
-function setup(opts: {
-  detect?: (...a: never[]) => Promise<TopicDecision | null>;
-  research?: (topic: { topic: string }, signal: AbortSignal) => Promise<ResearchResult | null>;
-} = {}) {
-  let t = 0;
-  const detect = vi.fn(opts.detect ?? (async () => null));
-  const research = vi.fn(opts.research ?? (async () => null));
-  const post = vi.fn();
-  const onError = vi.fn();
-  const session = new MeetingSession({
-    detect: detect as never,
-    research: research as never,
-    post,
-    onError,
+function setup() {
+  const detects: Pending<TopicDecision | null>[] = [];
+  const researches: Pending<ResearchResult | null>[] = [];
+  const delivered: ResearchResult[] = [];
+  const errors: string[] = [];
+  let t = 20_000;
+  const s = new ResearchSession({
+    detect: (current, _transcript, signal) => new Promise((resolve, reject) => detects.push({ resolve, reject, signal, arg: current })),
+    research: (topic, signal) => new Promise((resolve, reject) => researches.push({ resolve, reject, signal, arg: topic })),
+    deliver: r => delivered.push(r),
+    onError: m => errors.push(m),
+    transcript: () => 'transcript',
     now: () => t,
   });
-  return {
-    session, detect, research, post, onError,
-    at: (ms: number) => void (t = ms),
-  };
+  return { s, detects, researches, delivered, errors, tick: (ms: number) => { t += ms; } };
 }
 
-describe('MeetingSession', () => {
-  it('calls detect only after 3 new sentences and the minimum gap', () => {
-    const s = setup();
-    s.at(1000); s.session.onFinal('một');
-    s.at(2000); s.session.onFinal('hai');
-    expect(s.detect).not.toHaveBeenCalled();
-    s.at(15_000); s.session.onFinal('ba');
-    expect(s.detect).toHaveBeenCalledTimes(1);
+const flush = () => new Promise(r => setTimeout(r, 0));
+const topic = (name: string, changed = true): TopicDecision => ({ topic: name, keywords: [], query: name, changed });
+const result = (name: string): ResearchResult => ({ topic: name, summary: '', sources: [{ title: 't', url: 'https://x', reason: 'r' }] });
+const lines = (s: ResearchSession, n: number) => { for (let i = 0; i < n; i++) s.onLine(); };
+
+describe('ResearchSession', () => {
+  it('checks the topic after enough new lines and a minimum gap', () => {
+    const r = setup();
+    lines(r.s, 2);
+    expect(r.detects).toHaveLength(0);
+    r.s.onLine();
+    expect(r.detects).toHaveLength(1);
   });
 
-  it('ignores duplicates when counting new sentences', () => {
-    const s = setup();
-    s.at(1000); s.session.onFinal('một');
-    s.at(2000); s.session.onFinal('Một');
-    s.at(15_000); s.session.onFinal('hai');
-    expect(s.detect).not.toHaveBeenCalled();
+  it('respects the minimum gap between checks', async () => {
+    const r = setup();
+    lines(r.s, 3);
+    r.detects[0].resolve(null);
+    await flush();
+    lines(r.s, 3);
+    expect(r.detects).toHaveLength(1);
+    r.tick(15_000);
+    r.s.onLine();
+    expect(r.detects).toHaveLength(2);
   });
 
-  it('aborts old research on a topic change and drops its late result', async () => {
-    const a = deferred<ResearchResult | null>();
-    const b = deferred<ResearchResult | null>();
-    const signals: AbortSignal[] = [];
-    const s = setup({
-      detect: vi.fn()
-        .mockResolvedValueOnce(decision('A'))
-        .mockResolvedValueOnce(decision('B')) as never,
-      research: (topic, signal) => {
-        signals.push(signal);
-        return topic.topic === 'A' ? a.promise : b.promise;
-      },
-    });
-    for (const [ms, w] of [[1, 'a'], [2, 'b'], [15_000, 'c']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    for (const [ms, w] of [[16_000, 'd'], [17_000, 'e'], [31_000, 'f']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    expect(signals[0].aborted).toBe(true);
-    a.resolve(result('A'));
-    b.resolve(result('B'));
-    await tick();
-    const texts = s.post.mock.calls.map((c) => String(c[0]));
-    expect(texts.some((t) => t.includes('https://x/A'))).toBe(false);
-    expect(texts.some((t) => t.includes('https://x/B'))).toBe(true);
+  it('cancels research for the old topic when the topic changes', async () => {
+    const r = setup();
+    lines(r.s, 3);
+    r.detects[0].resolve(topic('A'));
+    await flush();
+    r.tick(15_000);
+    lines(r.s, 3);
+    r.detects[1].resolve(topic('B'));
+    await flush();
+    expect(r.researches[0].signal.aborted).toBe(true);
+    r.researches[0].resolve(result('A'));
+    r.researches[1].resolve(result('B'));
+    await flush();
+    expect(r.delivered.map(d => d.topic)).toEqual(['B']);
   });
 
-  it('does not research again when the topic did not change', async () => {
-    const s = setup({
-      detect: vi.fn()
-        .mockResolvedValueOnce(decision('A'))
-        .mockResolvedValueOnce(decision('A', false)) as never,
-      research: async () => result('A'),
-    });
-    for (const [ms, w] of [[1, 'a'], [2, 'b'], [15_000, 'c']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    for (const [ms, w] of [[16_000, 'd'], [17_000, 'e'], [31_000, 'f']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    expect(s.detect).toHaveBeenCalledTimes(2);
-    expect(s.research).toHaveBeenCalledTimes(1);
+  it('does not research again when the topic is unchanged or empty', async () => {
+    const r = setup();
+    lines(r.s, 3);
+    r.detects[0].resolve(topic('A'));
+    await flush();
+    r.tick(15_000);
+    lines(r.s, 3);
+    r.detects[1].resolve(topic('A', false));
+    await flush();
+    r.tick(15_000);
+    lines(r.s, 3);
+    r.detects[2].resolve(topic('', true));
+    await flush();
+    expect(r.researches).toHaveLength(1);
   });
 
-  it('posts nothing for an empty topic', async () => {
-    const s = setup({ detect: async () => decision('') as never });
-    for (const [ms, w] of [[1, 'a'], [2, 'b'], [15_000, 'c']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    expect(s.research).not.toHaveBeenCalled();
-    expect(s.post).not.toHaveBeenCalled();
+  it('reports research errors instead of posting', async () => {
+    const r = setup();
+    lines(r.s, 3);
+    r.detects[0].resolve(topic('A'));
+    await flush();
+    r.researches[0].reject(new Error('Exa 429'));
+    await flush();
+    expect(r.errors).toEqual(['Exa 429']);
+    expect(r.delivered).toEqual([]);
   });
 
-  it('routes research errors to onError and never posts', async () => {
-    const s = setup({
-      detect: async () => decision('A') as never,
-      research: async () => {
-        throw new Error('Exa 429');
-      },
-    });
-    for (const [ms, w] of [[1, 'a'], [2, 'b'], [15_000, 'c']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    expect(s.onError).toHaveBeenCalledWith('Exa 429');
-    expect(s.post).not.toHaveBeenCalled();
-  });
-
-  it('aborts research and stops detecting after stop()', async () => {
-    const gate = deferred<ResearchResult | null>();
-    let signal!: AbortSignal;
-    const s = setup({
-      detect: async () => decision('A') as never,
-      research: (_t, sig) => ((signal = sig), gate.promise),
-    });
-    for (const [ms, w] of [[1, 'a'], [2, 'b'], [15_000, 'c']] as const) {
-      s.at(ms); s.session.onFinal(w);
-    }
-    await tick();
-    s.session.stop();
-    expect(signal.aborted).toBe(true);
-    gate.resolve(result('A'));
-    await tick();
-    expect(s.post).not.toHaveBeenCalled();
-    s.at(60_000);
-    for (const w of ['x', 'y', 'z']) s.session.onFinal(w);
-    expect(s.detect).toHaveBeenCalledTimes(1);
+  it('stop aborts running research and ignores later lines', async () => {
+    const r = setup();
+    lines(r.s, 3);
+    r.detects[0].resolve(topic('A'));
+    await flush();
+    r.s.stop();
+    expect(r.researches[0].signal.aborted).toBe(true);
+    r.tick(60_000);
+    lines(r.s, 5);
+    expect(r.detects).toHaveLength(1);
+    expect((r.researches[0].arg as Topic).topic).toBe('A');
   });
 });

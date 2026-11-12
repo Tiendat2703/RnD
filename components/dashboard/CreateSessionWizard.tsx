@@ -260,7 +260,7 @@ export function CreateSessionWizard() {
                   <span className="wrow__note">
                     {prefs.autoPost
                       ? "Kết quả tới chat mà bạn không phải bấm."
-                      : "Kết quả dừng ở popup cho tới khi bạn bấm Gửi."}
+                      : "Kết quả chỉ hiện trong khung bên MeetMate, không vào chat Meet."}
                   </span>
                 </span>
                 <Switch

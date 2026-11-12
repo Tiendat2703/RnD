@@ -11,10 +11,10 @@ import {
 } from '@livekit/rtc-node';
 
 // Uses the authenticated CLI; credentials and join tokens are never printed.
-// The default smoke check makes no provider calls. --work also exercises one
-// synthetic model turn and the meeting-record workspace save. --audio adds
-// OpenAI TTS -> LiveKit audio -> OpenAI STT -> Sidekick -> room text.
-// --noise confirms that background noise does not create Sidekick work.
+// The default smoke check validates dispatch and ingest status without provider calls.
+// --work checks that the external backend handoff is configured. --audio adds
+// OpenAI TTS -> LiveKit audio -> OpenAI STT -> final transcript.
+// --noise confirms that background noise does not create a final transcript.
 function resolveLiveKitCLI() {
   const override = process.env.LIVEKIT_CLI;
   if (override) return override;
@@ -138,131 +138,113 @@ const token = tokenResult.stdout.trim();
 if (!token || token.split('.').length !== 3) throw new Error('CLI did not return a valid token.');
 
 const room = new Room();
-room.registerTextStreamHandler('lk.chat', reader => {
-  // The work check validates structured sidekick.state output below. Drain the
-  // mirrored chat response so the RTC client does not report an unhandled topic.
-  void reader.readAll().catch(() => undefined);
-});
+let agentIdentity;
+let timer;
+let closeAudioTrack;
+const finalTranscripts = [];
 let resolveState;
 let rejectState;
 const stateReceived = new Promise((resolve, reject) => {
   resolveState = resolve;
   rejectState = reject;
 });
-let agentIdentity;
-let timer;
-let closeAudioTrack;
 room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
   void reader.readAll().then(text => {
     const output = JSON.parse(text);
-    if (output.type === 'state' && output.meeting?.phase === 'active') {
+    if (output.type === 'ingest.state' && output.ready) {
       agentIdentity = participant.identity;
       resolveState(output);
     }
   }).catch(rejectState);
 });
+room.registerTextStreamHandler('sidekick.transcript.final', reader => {
+  void reader.readAll().then(text => {
+    const event = JSON.parse(text);
+    if (event.type === 'transcript.final') finalTranscripts.push(event);
+  }).catch(() => undefined);
+});
 try {
-  timer = setTimeout(() => rejectState(new Error('Agent did not return state within 90 seconds.')), 90000);
+  timer = setTimeout(() => rejectState(new Error('Agent did not return ingest state within 90 seconds.')), 90_000);
   await room.connect(url, token, { autoSubscribe: false, dynacast: false });
   const state = await stateReceived;
   clearTimeout(timer);
-  const initialVersion = state.meeting.stateVersion;
-  room.unregisterTextStreamHandler('sidekick.state');
+
   const roundTrip = new Promise((resolve, reject) => {
-    timer = setTimeout(() => reject(new Error('State command timed out.')), 15000);
-    room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
+    timer = setTimeout(() => reject(new Error('Ingest state command timed out.')), 15_000);
+    const handler = (reader, participant) => {
       void reader.readAll().then(text => {
         const output = JSON.parse(text);
-        if (participant.identity === agentIdentity && output.type === 'state'
-          && output.meeting.id === state.meeting.id
-          && output.meeting.stateVersion === initialVersion) resolve(output);
+        if (participant.identity === agentIdentity && output.type === 'ingest.state'
+          && output.roomName === state.roomName) {
+          room.unregisterTextStreamHandler('sidekick.state');
+          resolve(output);
+        }
       }).catch(reject);
-    });
+    };
+    room.unregisterTextStreamHandler('sidekick.state');
+    room.registerTextStreamHandler('sidekick.state', handler);
   });
   await room.localParticipant.sendText(JSON.stringify({ type: 'state' }), {
     topic: 'sidekick.command', destinationIdentities: [agentIdentity],
   });
-  await roundTrip;
+  const currentState = await roundTrip;
   clearTimeout(timer);
-  const checks = ['dispatch', 'room join', 'state command round-trip'];
+
+  const checks = ['dispatch', 'room join', 'ingest state command round-trip'];
   let work;
   if (verifyNoise) {
-    room.unregisterTextStreamHandler('sidekick.state');
     closeAudioTrack = await publishSyntheticAudio(room, createSyntheticNoise());
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    const quietState = new Promise((resolve, reject) => {
-      timer = setTimeout(() => reject(new Error('Noise verification state timed out.')), 15000);
-      room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
-        void reader.readAll().then(text => {
-          const output = JSON.parse(text);
-          if (participant.identity === agentIdentity && output.type === 'state'
-            && output.meeting?.id === state.meeting.id) resolve(output);
-        }).catch(reject);
-      });
-    });
-    await room.localParticipant.sendText(JSON.stringify({ type: 'state' }), {
-      topic: 'sidekick.command', destinationIdentities: [agentIdentity],
-    });
-    const result = await quietState;
-    clearTimeout(timer);
-    const transcriptEntries = result.meeting.transcript?.length || 0;
+    await new Promise(resolve => setTimeout(resolve, 5_000));
     work = {
-      transcriptEntries,
-      processedRevision: result.meeting.processedRevision,
-      failure: transcriptEntries === 0 ? null : 'Background noise created a transcript.',
+      finalTranscripts: finalTranscripts.length,
+      failure: finalTranscripts.length ? 'Background noise created a final transcript.' : null,
     };
-    checks.push('LiveKit noise publish', 'no STT transcript', 'no Sidekick work');
+    checks.push('LiveKit noise publish', 'no final STT transcript');
     if (work.failure) process.exitCode = 1;
-  } else if (verifyWork || verifyAudio) {
-    room.unregisterTextStreamHandler('sidekick.state');
-    const resultReceived = new Promise((resolve, reject) => {
-      timer = setTimeout(() => reject(new Error('Synthetic work result timed out.')), 180000);
-      room.registerTextStreamHandler('sidekick.state', (reader, participant) => {
-        void reader.readAll().then(text => {
-          const output = JSON.parse(text);
-          if (participant.identity === agentIdentity && output.type === 'result'
-            && output.meeting?.id === state.meeting.id
-            && output.meeting.processedRevision > 0) resolve(output);
-        }).catch(reject);
-      });
+  } else if (verifyAudio) {
+    const transcriptReceived = new Promise((resolve, reject) => {
+      const startedAt = Date.now();
+      const poll = setInterval(() => {
+        const event = finalTranscripts.at(-1);
+        if (event) {
+          clearInterval(poll);
+          clearTimeout(timeout);
+          resolve(event);
+        } else if (Date.now() - startedAt > 90_000) {
+          clearInterval(poll);
+        }
+      }, 100);
+      const timeout = setTimeout(() => {
+        clearInterval(poll);
+        reject(new Error('Final STT transcript timed out.'));
+      }, 90_000);
     });
-    if (verifyAudio) {
-      const pcm = await createSyntheticSpeech();
-      closeAudioTrack = await publishSyntheticAudio(room, pcm);
-    } else {
-      await room.localParticipant.sendText(
-        'Synthetic verification only: summarize that the pilot lasts two weeks. Do not research or create additional artifacts.',
-        { topic: 'lk.chat', destinationIdentities: [agentIdentity] },
-      );
-    }
-    const result = await resultReceived;
-    clearTimeout(timer);
-    const failedDocument = result.meeting.documents?.find(document => document.saveStatus === 'failed');
-    const failure = result.meeting.error
-      || failedDocument?.error
-      || (result.meeting.recordSaveStatus === 'failed'
-        ? result.meeting.recordDocument?.error || 'Meeting record save failed.'
-        : undefined);
+    const pcm = await createSyntheticSpeech();
+    closeAudioTrack = await publishSyntheticAudio(room, pcm);
+    const event = await transcriptReceived;
+    const failure = /two weeks|2 weeks|hai tu?n|hai tuan/i.test(event.text)
+      ? null
+      : 'The STT transcript did not contain the expected two-week statement.';
     work = {
-      summaryProduced: Boolean(result.meeting.summary),
-      recordSaveStatus: result.meeting.recordSaveStatus,
-      failure: failure || null,
-      ...(verifyAudio ? {
-        transcript: result.meeting.transcript?.at(-1)?.text || null,
-      } : {}),
+      transcript: event.text,
+      participant: event.participant?.identity,
+      source: event.source,
+      backendConfigured: currentState.backend?.configured === true,
+      failure,
     };
-    if (verifyAudio) {
-      const transcript = result.meeting.transcript?.at(-1)?.text || '';
-      checks.push('LiveKit audio publish', 'OpenAI STT transcript', 'Sidekick model turn', 'meeting record save');
-      if (!/two weeks|2 weeks|hai tuần|hai tuan/i.test(transcript)) {
-        work.failure = work.failure || 'The STT transcript did not contain the expected two-week statement.';
-      }
-    } else {
-      checks.push('synthetic model turn', 'meeting record save');
-    }
+    checks.push('LiveKit audio publish', 'OpenAI STT final transcript', 'participant attribution');
     if (failure) process.exitCode = 1;
+  } else if (verifyWork) {
+    work = {
+      backendConfigured: currentState.backend?.configured === true,
+      failure: currentState.backend?.configured
+        ? null
+        : 'SIDEKICK_BACKEND_URL and SIDEKICK_BACKEND_TOKEN are not configured in the Cloud agent.',
+    };
+    checks.push('backend handoff configuration');
     if (work.failure) process.exitCode = 1;
   }
+
   console.log(JSON.stringify({
     success: process.exitCode !== 1,
     room: roomName,

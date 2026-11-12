@@ -140,7 +140,7 @@ export function ResearchPreferencesDialog() {
               <span className="wrow__note">
                 {prefs.autoPost
                   ? "MeetMate gõ luôn khi chủ đề xong — bạn không phải bấm."
-                  : "Kết quả dừng ở popup; bạn bấm mới vào chat Meet."}
+                  : "Kết quả chỉ hiện trong khung bên MeetMate, không vào chat Meet."}
               </span>
             </span>
             <Switch
@@ -172,7 +172,7 @@ export function ResearchPreferencesDialog() {
             <span className="wrow__text">
               <span className="wrow__label">Lưu bản ghi vào vùng làm việc</span>
               <span className="wrow__note">
-                Tắt thì phiên chỉ sống trong popup, tab này không còn gì để xem lại.
+                Tắt thì phiên chỉ sống trong khung bên MeetMate, tab này không còn gì để xem lại.
               </span>
             </span>
             <Switch
@@ -208,7 +208,7 @@ export function ResearchPreferencesDialog() {
               <div className="mm-band mm-band--warn">
                 <IconInfo className="mm-band__glyph" />
                 <span>
-                  Tự động gửi đang tắt: {capped} tin này nằm chờ trong popup tới khi bạn bấm Gửi.
+                  Tự động gửi đang tắt: {capped} tin này chỉ hiện trong khung bên MeetMate.
                 </span>
               </div>
             ) : null}

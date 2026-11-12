@@ -12,14 +12,22 @@ type TranscriptionEvent = {
   error?: { code?: string };
 };
 
+export type TranscriptionMetadata = {
+  trackSid?: string;
+  startedAtMs?: number;
+  endedAtMs?: number;
+};
+
 export type TranscriptEvent = {
   itemId: string;
   transcript: string;
+  metadata?: TranscriptionMetadata;
 };
 
 export type TranscriptDeltaEvent = {
   itemId: string;
   delta: string;
+  metadata?: TranscriptionMetadata;
 };
 
 export interface TranscriptionSocket {
@@ -65,6 +73,8 @@ export class RealtimeTranscriber {
   private socket?: TranscriptionSocket;
   private ready = false;
   private closed = false;
+  private pendingMetadata: TranscriptionMetadata[] = [];
+  private itemMetadata = new Map<string, TranscriptionMetadata>();
 
   constructor(options: RealtimeTranscriberOptions) {
     this.options = options;
@@ -105,7 +115,7 @@ export class RealtimeTranscriber {
         if (event.type === 'session.created') {
           const transcription: Record<string, unknown> = {
             model: 'gpt-live-transcribe',
-            delay: 'medium',
+            delay: 'low',
           };
           if (this.options.languages?.length) transcription.languages = this.options.languages;
           if (this.options.prompt) transcription.prompt = this.options.prompt;
@@ -139,9 +149,16 @@ export class RealtimeTranscriber {
         }
 
         const itemId = event.item_id?.trim();
+        if (event.type === 'input_audio_buffer.committed' && itemId) {
+          if (!this.itemMetadata.has(itemId)) {
+            const metadata = this.pendingMetadata.shift();
+            if (metadata) this.itemMetadata.set(itemId, metadata);
+          }
+          return;
+        }
         if (event.type === 'conversation.item.input_audio_transcription.delta'
           && itemId && typeof event.delta === 'string' && event.delta) {
-          void Promise.resolve(this.options.onDelta?.({ itemId, delta: event.delta }))
+          void Promise.resolve(this.options.onDelta?.({ itemId, delta: event.delta, metadata: this.metadataFor(itemId) }))
             .catch(() => this.reportError(new Error('Could not publish transcription progress.')));
           return;
         }
@@ -149,8 +166,10 @@ export class RealtimeTranscriber {
         if (event.type === 'conversation.item.input_audio_transcription.completed'
           && itemId && typeof event.transcript === 'string') {
           const transcript = event.transcript.trim();
+          const metadata = this.metadataFor(itemId);
+          this.itemMetadata.delete(itemId);
           if (!transcript) return;
-          void Promise.resolve(this.options.onTranscript({ itemId, transcript }))
+          void Promise.resolve(this.options.onTranscript({ itemId, transcript, metadata }))
             .catch(() => this.reportError(new Error('Could not process completed transcription.')));
           return;
         }
@@ -175,7 +194,7 @@ export class RealtimeTranscriber {
     });
   }
 
-  transcribe(frames: readonly Int16Array[]): void {
+  transcribe(frames: readonly Int16Array[], metadata: TranscriptionMetadata = {}): void {
     if (!this.ready || !this.socket) throw new Error('Transcription session is not ready.');
     let samples = 0;
     for (const frame of frames) samples += frame.length;
@@ -194,7 +213,17 @@ export class RealtimeTranscriber {
         audio: encodePcm16Le(chunk),
       }));
     }
+    this.pendingMetadata.push(metadata);
     this.socket.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+  }
+
+  private metadataFor(itemId: string): TranscriptionMetadata | undefined {
+    let metadata = this.itemMetadata.get(itemId);
+    if (!metadata) {
+      metadata = this.pendingMetadata.shift();
+      if (metadata) this.itemMetadata.set(itemId, metadata);
+    }
+    return metadata;
   }
 
   close(): void {

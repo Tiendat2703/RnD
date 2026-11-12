@@ -1,27 +1,51 @@
-# Sidekick on LiveKit Cloud
+# Sidekick LiveKit ingest worker (layer 1)
 
-The Cloud worker reuses MeetingWorker, AgentsProvider, ExaProvider and
-AmbiguousProvider. It accepts microphone audio or text in a LiveKit room, runs
-the existing meeting analysis/research/publication workflow, and returns public
-meeting state and verified artifact links. Explicit dispatch name: `sidekick`.
+This deployment is the realtime media boundary. It joins each dispatched room,
+subscribes to every non-agent microphone track, produces speaker-attributed
+transcripts with OpenAI `gpt-live-transcribe`, publishes transcripts to the
+room, and forwards each final segment to the application backend.
 
-The deployed audio path is STT-only:
+It does not run the meeting reasoning pipeline. Luna, Exa, workspace writes,
+and meeting-record persistence belong to layer 2.
 
-1. LiveKit delivers a participant microphone track to Sidekick.
-2. The worker resamples it to mono PCM16 at 24 kHz and uses local VAD to split
-   speech turns.
-3. OpenAI `gpt-live-transcribe` returns partial and final transcripts.
-4. Final transcripts enter the normal Sidekick `MeetingWorker` flow (GPT-6
-   Astra by default).
-5. Sidekick publishes the transcript through LiveKit transcription and returns
-   its result as text on `lk.chat` and structured state on `sidekick.state`.
+## Data flow
 
-The worker does not synthesize a spoken reply. It does not serve the React app,
-and the existing local Express routes still run their local worker.
+1. LiveKit dispatches `sidekick` to a room.
+2. The worker subscribes to each participant audio track independently.
+3. Local VAD splits speech turns and rejects obvious noise.
+4. `gpt-live-transcribe` produces partial and final text.
+5. Partial/final text is published through LiveKit transcription.
+6. A structured final event is published on `sidekick.transcript.final`.
+7. When configured, the same final event is posted to the backend at
+   `POST /v1/livekit/transcripts`.
 
-## Deploy
+The worker never mixes participant tracks before transcription. Participant
+identity and track SID therefore come from LiveKit rather than model-side
+speaker diarization.
 
-Node.js 24 and the LiveKit CLI are required.
+## Configuration
+
+Only `OPENAI_API_KEY` is required for transcript-only operation. Configure the
+backend handoff when layer 2 is available:
+
+```dotenv
+OPENAI_API_KEY=
+SIDEKICK_BACKEND_URL=https://api.example.com
+# Optional for this MVP. When set, the worker sends Authorization: Bearer.
+SIDEKICK_BACKEND_TOKEN=
+
+# Optional defaults
+# SIDEKICK_BACKEND_TIMEOUT_MS=5000
+# SIDEKICK_BACKEND_MAX_ATTEMPTS=4
+# SIDEKICK_BACKEND_CONCURRENCY=4
+# SIDEKICK_BACKEND_MAX_QUEUE=512
+```
+
+`SIDEKICK_BACKEND_URL` must use HTTPS. Plain HTTP is accepted only for
+`localhost` development. A URL with no path uses `/v1/livekit/transcripts`; a complete URL with a path, such as an n8n webhook, is used exactly as configured. The MVP can call the backend without a token. When a token is set, the worker includes it as a Bearer credential.
+Cloud automatically injects LiveKit connection credentials.
+
+## Build and deploy
 
 ```powershell
 npm ci
@@ -29,129 +53,65 @@ npm run check
 npm test
 npm run agent:build
 lk cloud auth
-lk --project demo agent create --region ap-south --secrets-file .env.local --ignore-empty-secrets
-```
-
-Target project URL: `wss://demo-m6ejx9q0.livekit.cloud`.
-Set OPENAI_API_KEY, EXA_API_KEY and AMBIGUOUS_API_KEY in the ignored
-`.env.local`. The existing OpenAI project must support the API/model already
-used by Sidekick as well as `gpt-live-transcribe`. Cloud automatically injects
-LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET. No self-hosted LiveKit
-core, Redis, public agent port or local Docker daemon is needed for Cloud
-builds.
-
-The Docker build includes only package files, server/shared source and the
-agent build script. Environment files and local meeting data are excluded.
-After creation, keep the generated `livekit.toml` for subsequent deployments:
-
-```powershell
 lk --project demo agent deploy
 lk --project demo agent status
-lk --project demo agent logs
-lk --project demo agent update-secrets --secrets-file .env.local --ignore-empty-secrets
 ```
 
-## Dispatch and verify
+For the first agent creation instead of an update:
 
 ```powershell
-lk --project demo dispatch create --agent-name sidekick --room my-meeting
+lk --project demo agent create --region ap-south --secrets-file .env.livekit --ignore-empty-secrets
+```
+
+Update the handoff configuration without putting secrets in Git:
+
+```powershell
+lk --project demo agent update-secrets --secrets-file .env.livekit --ignore-empty-secrets
+```
+
+Target project: `wss://demo-m6ejx9q0.livekit.cloud`.
+
+## Verification
+
+```powershell
 npm run verify:livekit
-```
-
-The verification script creates a uniquely named room, dispatches the deployed
-agent, verifies a state command round-trip, disconnects, and deletes only that
-test room. It makes no model, search or workspace calls. It reads auth through
-the CLI and never prints tokens. On Windows it automatically finds WinGet
-installations even when the terminal PATH is stale. LIVEKIT_CLI can override
-the executable path.
-
-After the smoke check passes, exercise one synthetic model turn and verify the
-meeting-record workspace save:
-
-```powershell
+npm run verify:livekit:audio
 npm run verify:livekit:work
 ```
 
-This second check uses the configured OpenAI and Ambiguous AI providers and can
-incur provider usage. It prints only pass/fail metadata and a sanitized provider
-failure message, never credentials, tokens, transcript content, or document
-content. Its uniquely named room is deleted when the check finishes.
-
-To verify the complete voice path, including a real LiveKit microphone track,
-OpenAI STT, Sidekick processing, and the meeting-record save, run:
-
-```powershell
-npm run verify:livekit:audio
-```
-
-This command uses OpenAI TTS to generate a clearly labeled Vietnamese test
-utterance, publishes the resulting 24 kHz PCM as a LiveKit microphone track,
-and asserts that the STT transcript preserves the expected two-week statement.
-It incurs OpenAI and Ambiguous AI usage and deletes its unique test room.
+- `verify:livekit` checks dispatch, room join, and ingest state.
+- `verify:livekit:audio` publishes labeled synthetic audio and requires a final
+  speaker-attributed transcript.
+- `verify:livekit:work` now checks that backend handoff secrets are configured;
+  it no longer invokes reasoning or workspace providers.
 
 ## Room protocol
 
-Use one dispatched Sidekick worker per meeting room. Anyone admitted to the
-room as a non-agent participant can contribute and close the meeting. Issue
-room tokens only to participants allowed to see and change that meeting.
-
 | Topic | Direction | Payload |
 | --- | --- | --- |
-| Microphone audio track | Client to agent | LiveKit audio; resampled to mono PCM16/24 kHz and transcribed after local VAD detects the end of speech |
-| lk.chat | Client to agent | Plain text contribution, at most 16,000 characters |
-| sidekick.transcript | Client to agent | Final human transcript text; send each contribution on one input topic only |
-| sidekick.command | Client to agent | JSON: `{"type":"state"}` or `{"type":"close"}` |
-| LiveKit transcription | Agent to room | Partial/final user transcript from `gpt-live-transcribe` |
-| sidekick.state | Agent to room | JSON: `{type, meeting, text?}`; internal provider IDs/snapshots omitted |
-| lk.chat | Agent to room | Result summary with confirmed workspace links |
-| sidekick.error | Agent to sender | Input/transport error message |
+| Microphone track | participant to worker | LiveKit audio, handled per participant/track |
+| `lk.chat` | participant to worker | Final typed contribution, maximum 16,000 characters |
+| `sidekick.transcript` | participant to worker | Final transcript supplied by another approved source |
+| LiveKit transcription | worker to room | Partial and final STT text |
+| `sidekick.transcript.final` | worker to room | The versioned final event also sent to layer 2 |
+| `sidekick.state` | worker to room | `ingest.state` readiness and backend queue status |
+| `sidekick.command` | participant to worker | `{"type":"state"}` or `{"type":"close"}` |
+| `sidekick.error` | worker to participant | Sanitized STT or delivery failure |
+| `sidekick.insight` | layer 2 to room | Research/analysis result for the frontend timeline |
 
-Text streams are deduplicated by sender identity and stream ID. Agents are
-ignored on input to avoid feedback loops. The worker subscribes only to audio
-tracks, not video. Each completed STT item is deduplicated by participant,
-track, and OpenAI item ID. A client forwarding its own transcript must send it
-as a human participant and should not also publish the same spoken contribution
-as text.
+The `close` command drains queued backend requests and returns current ingest
+state. Room shutdown also waits up to 10 seconds for queued deliveries.
 
-Send close and wait for a result with `meeting.phase === "ended"` before leaving
-when the final record is needed. Shutdown also attempts finalization, with a
-five-minute process shutdown allowance. An unused room closes without provider
-calls. Failed saves remain visible in meeting state.
+## Delivery behavior
 
-## Storage boundary
+Final events use a deterministic SHA-256 `eventId`. The same value is sent in
+the `Idempotency-Key` header. Layer 2 must enforce a unique constraint on this
+ID because network retries can deliver an event more than once.
 
-Each job has an isolated temporary MeetingStore. Meeting state is not durable
-across worker restarts, replacements or a second dispatch. LiveKit room data is
-not a persistent database. Successfully published documents remain in Ambiguous,
-but session continuity, deduplication and private merge state do not survive
-replacement. Do not blindly replay old contributions after a replacement:
-that can create duplicate artifacts. Durable resume requires an external store
-before relying on this deployment for long-lived or restart-safe meetings.
+The worker sends up to four requests concurrently, retries timeouts, HTTP 408,
+425, 429, and 5xx responses, and does not retry other 4xx responses. The queue
+is bounded. It is memory-only, so layer 2 must respond quickly with `202` after
+durable acceptance instead of running model work inside the request.
 
-## References
-
-- https://docs.livekit.io/agents/server/
-- https://docs.livekit.io/deploy/agents/quickstart/
-- https://docs.livekit.io/deploy/agents/secrets/
-
-## Deployment verification — 2026-09-26
-
-- Project: demo / demo-m6ejx9q0.
-- Agent ID: CA_3g2QkG7EcvX4.
-- Dispatch name verified in worker registration logs and a real job: sidekick.
-- Region: ap-south. Version: WYg2dTWhid5z. Cloud status: Running.
-- TypeScript check and agent build passed; 199 tests passed across 16 files.
-- Real Cloud verification passed: dispatch, room join, state command round-trip.
-- The verification room was disconnected and deletion requested by the script.
-- OPENAI_API_KEY, EXA_API_KEY, AMBIGUOUS_API_KEY and LIVEKIT_AGENT_NAME are
-  present in Cloud secrets. Direct Exa search and Ambiguous AI identity checks
-  succeeded.
-- A synthetic Cloud model turn produced a summary and saved its meeting record
-  successfully in Ambiguous AI. Dispatch, state round-trip, model work, and the
-  native workspace write now pass end to end.
-- The full Cloud audio test passed: a real LiveKit microphone track was received,
-  OpenAI returned a Vietnamese transcript preserving the statement
-  `kế hoạch thí điểm kéo dài hai tuần`, Sidekick processed it, returned room
-  text, and saved the meeting record.
-
-Dashboard: https://cloud.livekit.io/projects/d_demo-m6ejx9q0/agents/CA_3g2QkG7EcvX4
+See [layer 2 integration](backend-integration.md) for the complete request
+schema, endpoint behavior, insight publication, and rollout checklist.

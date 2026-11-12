@@ -25,6 +25,9 @@ export type StoredMeeting = Meeting & {
     { text: string; revision: number; speak?: boolean }
   >;
   receivedEventIds?: string[];
+  agentTranscriptCursor?: number;
+  researchQueryHistory?: string[];
+  lastResearchAt?: string;
 };
 export class MeetingStore {
   private meetings = new Map<string, StoredMeeting>();
@@ -88,6 +91,9 @@ export function publicMeeting(meeting: StoredMeeting): Meeting {
     pendingDraftSources,
     delegationResults,
     receivedEventIds,
+    agentTranscriptCursor,
+    researchQueryHistory,
+    lastResearchAt,
     ...value
   } = meeting;
   return value;
