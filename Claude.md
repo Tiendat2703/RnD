@@ -39,6 +39,8 @@ Nút "Chạy thử với dữ liệu mẫu" trên web vẫn có và được g�
 
 ## 3. Cấu trúc repo
 
+**Teacher:** bước chọn assistant trong `CreateSessionWizard.tsx` mở thêm phòng học tại `/dashboard/teacher`. Hợp đồng dùng chung ở `lib/teacher.ts`; API phòng, tải file, hội thoại và nguồn ở `agents/sidekick/meetmate-server/teacher*.ts`; web gọi qua `app/api/teacher/[...path]/route.ts`. Teacher có chat, tài liệu và học nhóm đồng bộ, chưa có giọng nói. Cần khóa Blaze ở backend và khóa Exa cho tìm web. Chi tiết phạm vi và cách kiểm tra: `docs/plans/teacher-study-rooms.md`.
+
 - `app/`, `components/`, `hooks/`, `lib/`, `mocks/`: web console Next.js 16, React 18, TypeScript, không Tailwind. CSS thường (`app/globals.css`, `app/dashboard/dashboard.css`).
 - `lib/types.ts`: hợp đồng dữ liệu web ↔ extension (`LIMITS`, `Topic`, `ResearchResult`…). Sửa hằng số ở đây, không sửa ở nơi dùng.
 - `agents/sidekick/`: code nhập từ dự án hackathon Sidekick (OpenAI/LiveKit/Exa/Ambiguous). Có `package.json` riêng. Phần `extension/` là code MeetMate (dùng lại `ExaProvider` và vitest ở đây): lõi của nhánh `main` (`pipeline.ts`, `live-stt.ts`, `doccheck.ts`, `assistant.ts`, `wake.ts`, `docs/`, `sidepanel.ts`, `extension/README.md`) cộng phần nối với web (`bridge.ts`, `sessionStore.ts`, `webEvents.ts`, `content/panel.ts`, `content/leave.ts`); `meetmate-server/` là backend MeetMate (Express, cổng 3001, chỉ loopback, lưu tệp JSON ở `.meetmate-data/`, LLM Blaze `openai/gpt-6-luna` như nhánh main, khóa `BLAZE_API_KEY` trong `agents/sidekick/.env.local`); phần còn lại của package là Sidekick gốc, không sửa trừ khi task nêu rõ.

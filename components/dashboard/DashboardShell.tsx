@@ -61,6 +61,7 @@ import { PlanCard } from "./PlanCard";
 import {
   IconCheck,
   IconFolder,
+  IconBook,
   IconLogo,
   IconMoon,
   IconPanel,
@@ -80,12 +81,14 @@ const NAV_GROUPS: {
     items: [
       { label: "Cuộc họp", href: "/dashboard/callSessions", icon: IconTranscript, count: true },
       { label: "Tài liệu", href: "/dashboard/documents", icon: IconFolder },
+      { label: "Phòng học Teacher", href: "/dashboard/teacher", icon: IconBook },
     ],
   },
 ];
 
 // topbar mang tên trang và một dòng mô tả — cột nội dung không có heading thứ hai
 const TITLES: Record<string, { title: string; note: string }> = {
+  "/dashboard/teacher": { title: 'Teacher', note: 'Giáo viên ảo, tài liệu của bạn và những buổi học cùng nhóm.' },
   "/dashboard/callSessions": {
     title: "Cuộc họp",
     note: "Mọi cuộc họp MeetMate đã nghe, số chủ đề và số nguồn đã gửi vào chat Meet.",
@@ -504,7 +507,7 @@ export function DashboardShell({
     return () => window.removeEventListener("keydown", onKey);
   }, [navOpen]);
 
-  const page = TITLES[pathname ?? ""] ?? { title: "MeetMate", note: "Vùng làm việc trợ lý cuộc họp." };
+  const page = TITLES[pathname ?? ""] ?? (pathname?.startsWith('/dashboard/teacher/') ? { title: 'Phòng học Teacher', note: 'Cùng học, đặt câu hỏi và luyện tập.' } : { title: "MeetMate", note: "Vùng làm việc trợ lý cuộc họp." });
 
   return (
     <DashboardContext.Provider
@@ -593,7 +596,7 @@ export function DashboardShell({
                       key={item.href}
                       href={item.href}
                       className="nav-item"
-                      aria-current={pathname === item.href ? "page" : undefined}
+                      aria-current={pathname === item.href || pathname?.startsWith(`${item.href}/`) ? "page" : undefined}
                       title={item.label}
                     >
                       <Icon />

@@ -7,16 +7,17 @@
 import type { SavedSession } from "./bridgeProtocol";
 import type { DocumentMeta, StoredDocument } from "./documents";
 import type { SavedSessionResponse } from "./report";
+import type { CreateTeacherRoom, TeacherAccess, TeacherAction, TeacherConfig, TeacherRoom, TeacherRoomSummary } from "./teacher";
 
 const BASE = (process.env.NEXT_PUBLIC_MEETMATE_API ?? "http://localhost:3001").replace(/\/$/, "");
 
 const OFFLINE =
   "Không kết nối được backend MeetMate. Chạy `npm run meetmate:server` trong agents/sidekick rồi thử lại.";
 
-async function call(path: string, init?: RequestInit): Promise<Response> {
+async function call(path: string, init?: RequestInit, base = BASE): Promise<Response> {
   let res: Response;
   try {
-    res = await fetch(`${BASE}/api${path}`, {
+    res = await fetch(`${base}/api${path}`, {
       ...init,
       headers: { "Content-Type": "application/json", ...init?.headers },
     });
@@ -82,3 +83,18 @@ export async function uploadTextDocument(doc: {
 export async function deleteDocument(id: string): Promise<void> {
   await json(await call(`/documents/${encodeURIComponent(id)}`, { method: "DELETE" }));
 }
+/** Teacher rooms use the same configured backend as meeting reports. */
+const teacherCall = (path: string, init?: RequestInit) => call(path, init, '');
+export const teacherApi = {
+  config: async () => json<TeacherConfig>(await teacherCall('/teacher/config')),
+  list: async () => json<TeacherRoomSummary[]>(await teacherCall('/teacher/rooms')),
+  create: async (body: CreateTeacherRoom) => json<TeacherAccess>(await teacherCall('/teacher/rooms', { method: 'POST', body: JSON.stringify(body) })),
+  info: async (id: string) => json<TeacherRoomSummary>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/info`)),
+  room: async (id: string, token: string) => json<TeacherRoom>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}`, { headers: { 'X-Teacher-Member': token } })),
+  join: async (id: string, name: string) => json<TeacherAccess>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/join`, { method: 'POST', body: JSON.stringify({ name }) })),
+  upload: async (id: string, token: string, file: File) => json<TeacherRoom>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/documents`, {
+    method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-Teacher-Member': token, 'X-File-Name': encodeURIComponent(file.name) }, body: file,
+  })),
+  message: async (id: string, token: string, body: { requestId: string; text: string; action: TeacherAction; documentId?: string }) =>
+    json<TeacherRoom>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/messages`, { method: 'POST', headers: { 'X-Teacher-Member': token }, body: JSON.stringify(body) })),
+};

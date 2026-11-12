@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DashboardShell } from "../../components/dashboard/DashboardShell";
 import "./dashboard.css";
+import "./teacher.css";
 
 // The three faces are declared in app/layout.tsx and their variables land on
 // <html>, so the console and the live surface at "/" read the same type. This

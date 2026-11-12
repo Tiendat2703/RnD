@@ -5,12 +5,15 @@ import { DOC_LIMITS } from '../../../lib/documents';
 import { buildDocument, cleanName, readPdf, type DocumentStore } from './documents';
 import { SESSION_ID, sessionSchema } from './schema';
 import { HttpError, type SessionService } from './service';
+import type { TeacherService } from './teacher';
+import { teacherRouter } from './teacher-routes';
 
 export interface AppOptions {
   service: SessionService;
   documents: DocumentStore;
   /** origin web được phép gọi, ví dụ http://localhost:3000 */
   allowedOrigins: string[];
+  teacher?: TeacherService;
 }
 
 type Handler = (req: Request, res: Response) => Promise<unknown>;
@@ -32,7 +35,7 @@ const textDocSchema = z.object({
   pages: z.array(z.string().max(2_000_000)).min(1).max(5_000),
 });
 
-export function createApp({ service, documents, allowedOrigins }: AppOptions) {
+export function createApp({ service, documents, allowedOrigins, teacher }: AppOptions) {
   const app = express();
   const allowed = new Set(allowedOrigins);
 
@@ -48,7 +51,7 @@ export function createApp({ service, documents, allowedOrigins }: AppOptions) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-File-Name');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Teacher-Member, X-File-Name');
     }
     if (req.method === 'OPTIONS') {
       res.sendStatus(204);
@@ -58,6 +61,7 @@ export function createApp({ service, documents, allowedOrigins }: AppOptions) {
   });
 
   app.use(express.json({ limit: '10mb' }));
+  if (teacher) app.use('/api/teacher', teacherRouter(teacher));
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
