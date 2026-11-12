@@ -217,13 +217,18 @@ export function InstallExtensionDialog() {
     pushToast("Đang phát lại cuộc họp mẫu — không có extension nào đang nghe.");
   };
 
+  // "Hủy phiên": bỏ đúng phiên đã gửi khỏi danh sách chờ trong extension
   const cancel = () => {
-    if (phase === "waiting") sendToExtension({ type: "session.stop" });
+    if (phase === "waiting") sendToExtension({ type: "session.stop", id: sessionRef.current ?? undefined });
     cancelInstall();
   };
 
+  // Đóng hộp thoại (X, Esc, bấm ra ngoài) không hủy gì: phiên đã gửi vẫn chờ trong mục
+  // "Phiên họp" của khung bên MeetMate và có thể bắt đầu sau.
+  const close = () => cancelInstall();
+
   return (
-    <ChromeDialog open onClose={cancel} ariaLabel="Bắt đầu MeetMate" className="conn">
+    <ChromeDialog open onClose={close} ariaLabel="Bắt đầu MeetMate" className="conn">
       <div className="conn__head">
         <div>
           <h2 className="dc-title">
@@ -235,7 +240,7 @@ export function InstallExtensionDialog() {
             {docCount ? `${docCount} tài liệu đối chiếu` : "không có tài liệu"}
           </p>
         </div>
-        <button className="icon-btn icon-btn--dark" aria-label="Đóng" onClick={cancel}>
+        <button className="icon-btn icon-btn--dark" aria-label="Đóng" onClick={close}>
           <IconX />
         </button>
       </div>
@@ -320,6 +325,11 @@ export function InstallExtensionDialog() {
                 <span className="instep__title">
                   Đã gửi “{draft.title}”{docCount ? ` kèm ${docCount} tài liệu` : ""} cho extension
                 </span>
+                <span className="instep__note">
+                  Phiên được chọn sẵn ở mục “Phiên họp” trong khung bên MeetMate. Có nhiều phiên thì
+                  chọn đúng mã này trước khi bắt đầu.
+                </span>
+                {sessionRef.current ? <code className="instep__code">Mã phiên: {sessionRef.current}</code> : null}
               </span>
             </li>
             <li className="instep">

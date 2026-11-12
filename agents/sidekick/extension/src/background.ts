@@ -6,10 +6,11 @@ import {
   type ExtToWeb,
   type SessionDraft,
 } from '../../../../lib/bridgeProtocol';
+import { deleteDraft, getDraftRecord, putDraft, type DraftRecord } from './drafts';
 import { storedDocsOf } from './docs/session';
 import { replaceDocs } from './docs/store';
 import { isMeetingUrl } from './meet-url';
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Msg, type PanelEvent, type PostReply, type Settings, type StartReply } from './messages';
+import { DEFAULT_SETTINGS, STORAGE_KEYS, type Msg, type PanelEvent, type PostReply, type SelectReply, type Settings, type StartReply } from './messages';
 import { currentId, deleteSession, finishCurrent, listSessions, markSynced, recordEvent, startSession } from './sessionStore';
 import { EMPTY_VIEW, reduce, startView, type View } from './view';
 import { webEventsOf, type WebContext } from './webEvents';
@@ -118,12 +119,13 @@ async function start(tabId: number, streamId: string | null): Promise<StartReply
   const stored = await chrome.storage.local.get([STORAGE_KEYS.blaze, STORAGE_KEYS.exa, STORAGE_KEYS.settings]);
   const blazeApiKey = String(stored[STORAGE_KEYS.blaze] ?? '').trim();
   if (!blazeApiKey) return { ok: false, error: 'Thiếu khóa Blaze. Nhập khóa trong phần Cài đặt.' };
-  const draft = await getDraft();
+  const record = await selectedRecord();
+  const draft = record?.draft ?? null;
   const saved: Settings = { ...DEFAULT_SETTINGS, ...(stored[STORAGE_KEYS.settings] as Partial<Settings> | undefined) };
   // A meeting prepared on the web console with auto-post off never posts to the Meet chat.
   const settings: Settings = draft && !draft.autoPost ? { ...saved, postToChat: false } : saved;
-  // Documents belong to the session the web prepared; a meeting started without one has none.
-  if (!draft) await setDocuments([]);
+  // The library is the chosen web session's documents; a new session (generated id) has none.
+  await setDocuments(record?.docs ?? []);
   await update(() => startView(tabId));
   await beginRecording(draft);
   try {
@@ -188,9 +190,40 @@ function post(cardId: string, messages: string[]): void {
 
 type EndReason = Extract<ExtToWeb, { type: 'ended' }>['reason'];
 
-async function getDraft(): Promise<SessionDraft | null> {
-  const r = await chrome.storage.session.get(STORAGE_KEYS.session);
-  return (r[STORAGE_KEYS.session] as SessionDraft | undefined) ?? null;
+async function selectedId(): Promise<string | null> {
+  const r = await chrome.storage.local.get(STORAGE_KEYS.selectedDraft);
+  return (r[STORAGE_KEYS.selectedDraft] as string | null | undefined) ?? null;
+}
+
+/** The web session chosen in the side panel for the next meeting (null = new, generated id). */
+async function selectedRecord(): Promise<DraftRecord | null> {
+  const id = await selectedId();
+  return id ? getDraftRecord(id) : null;
+}
+
+const getDraft = async (): Promise<SessionDraft | null> => (await selectedRecord())?.draft ?? null;
+
+const notifyDrafts = () => chrome.runtime.sendMessage({ type: 'mm.drafts.changed' } satisfies Msg).catch(() => undefined);
+
+/** Picks the web session the next meeting records and loads its documents as the library. */
+async function selectDraft(id: string | null): Promise<SelectReply> {
+  if (isRunning(await currentView())) return { ok: false, error: 'MeetMate đang nghe. Dừng phiên hiện tại rồi mới đổi phiên.' };
+  const record = id ? await getDraftRecord(id) : null;
+  if (id && !record) return { ok: false, error: 'Phiên này không còn trong extension. Gửi lại phiên từ web.' };
+  await chrome.storage.local.set({ [STORAGE_KEYS.selectedDraft]: record?.id ?? null });
+  await setDocuments(record?.docs ?? []);
+  await notifyDrafts();
+  return { ok: true };
+}
+
+/** Drops a web session from the list (recorded, or cancelled on the web). */
+async function discardDraft(id: string): Promise<void> {
+  await deleteDraft(id);
+  if ((await selectedId()) === id) {
+    await chrome.storage.local.set({ [STORAGE_KEYS.selectedDraft]: null });
+    if (!isRunning(await currentView())) await setDocuments([]);
+  }
+  await notifyDrafts();
 }
 
 async function getContext(): Promise<WebContext | null> {
@@ -213,12 +246,22 @@ async function beginRecording(draft: SessionDraft | null): Promise<void> {
 let ending: Promise<void> = Promise.resolve();
 function endRecording(reason: EndReason): Promise<void> {
   const next = ending.then(async () => {
-    if (!(await currentId())) return;
+    const id = await currentId();
+    if (!id) return;
     await finishCurrent();
     await chrome.storage.session.remove(WEB_CTX_KEY);
     await setStatus(STATUS_STOPPED);
     await emit({ type: 'ended', reason });
-    await chrome.storage.session.remove(STORAGE_KEYS.session);
+    const saved = (await listSessions()).find(x => x.id === id);
+    const empty = !!saved && !saved.lines.length && !saved.topics.length && !saved.cards?.length;
+    if (reason === 'error' && empty) {
+      // failed before hearing anything (no key, no mic…): drop the empty record and keep the web
+      // session selectable, so the user can fix the problem and start it again
+      await deleteSession(id);
+    } else {
+      // a web session records once: starting it again would overwrite what was saved
+      await discardDraft(id);
+    }
     if (reason === 'left' || reason === 'meet-closed') {
       await goToDashboard().catch(e => console.warn('[MeetMate] không chuyển hướng được', e));
     }
@@ -298,7 +341,7 @@ async function setDocuments(docs: Parameters<typeof replaceDocs>[0]): Promise<vo
   await chrome.runtime.sendMessage({ type: 'mm.docs.changed' } satisfies Msg).catch(() => undefined);
 }
 
-/** The draft kept in session storage: everything but the documents, which go to IndexedDB. */
+/** The draft as stored with its documents (drafts.ts); the documents are validated separately. */
 function cleanDraft(raw: SessionDraft): SessionDraft {
   return {
     id: String(raw.id).slice(0, 64),
@@ -358,13 +401,21 @@ async function handleWeb(web: Extract<Msg, { type: 'mm.web' }>['msg']): Promise<
   switch (web.type) {
     case 'ping':
       return { type: 'pong', info: await info() };
-    case 'session.prepare':
-      await setDocuments(storedDocsOf(web.session.documents));
-      await chrome.storage.session.set({ [STORAGE_KEYS.session]: cleanDraft(web.session) });
-      await setStatus(STATUS_WAITING);
+    case 'session.prepare': {
+      const draft = cleanDraft(web.session);
+      await putDraft({ id: draft.id, draft, docs: storedDocsOf(web.session.documents), preparedAt: Date.now() });
+      // the newest web session becomes the choice, unless a meeting is being recorded right now
+      if (isRunning(await currentView())) await notifyDrafts();
+      else {
+        await selectDraft(draft.id);
+        await setStatus(STATUS_WAITING);
+      }
       return undefined;
+    }
     case 'session.stop':
-      await stop('stopped');
+      if (await currentId()) await stop('stopped');
+      // nothing recording: the web cancelled a session it sent but never started
+      else if (web.id) await discardDraft(String(web.id));
       return undefined;
     case 'sessions.list':
       return { type: 'sessions', sessions: await listSessions() };
@@ -402,6 +453,9 @@ chrome.runtime.onMessage.addListener((msg: Msg, sender, sendResponse) => {
     case 'mm.left':
       if (sender.tab?.id !== undefined) void endFromMeet(sender.tab.id, 'left');
       return false;
+    case 'mm.selectDraft':
+      void selectDraft(msg.id).then(sendResponse, (e: unknown) => sendResponse({ ok: false, error: String(e) } satisfies SelectReply));
+      return true;
     default:
       return false;
   }

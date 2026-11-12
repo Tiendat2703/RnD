@@ -58,18 +58,24 @@ export type Msg =
   // background → content script in the Meet tab: an event for the in-page panel
   | { type: 'mm.panel'; event: ExtToWeb }
   // content script → background: the user left the call (end-call button or the "you left" screen)
-  | { type: 'mm.left' };
+  | { type: 'mm.left' }
+  // side panel → background: pick which web session the next meeting records (null = a new one
+  // with a generated id); reply SelectReply
+  | { type: 'mm.selectDraft'; id: string | null }
+  // background → side panel: the list of sessions sent by the web changed
+  | { type: 'mm.drafts.changed' };
 
 export type StartReply = { ok: true } | { ok: false; error: string };
 export type PostReply = { ok: true } | { ok: false; error: string };
+export type SelectReply = { ok: true } | { ok: false; error: string };
 
 export const STORAGE_KEYS = {
   blaze: 'blazeApiKey',
   exa: 'exaApiKey',
   settings: 'settings',
   view: 'view',
-  // session storage: the meeting the web console prepared (SessionDraft), until it ends
-  session: 'session',
+  // local storage: id of the web session the next meeting records (drafts.ts); absent/null = new session
+  selectedDraft: 'selectedDraftId',
   // session storage: the web console tab that last talked to the bridge
   webTab: 'webTabId',
   // local storage: that tab's origin (e.g. http://localhost:3000), for the after-meeting redirect

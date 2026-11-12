@@ -12,6 +12,15 @@
     <span id="pill" class="pill" data-state="idle">Chưa chạy</span>
   </header>
 
+  <section class="session" aria-labelledby="session-label">
+    <label class="field">
+      <span id="session-label">Phiên họp</span>
+      <select id="draft" aria-describedby="session-info"></select>
+    </label>
+    <p id="session-info" class="session-info"></p>
+    <p id="session-last" class="hint" hidden></p>
+  </section>
+
   <section class="control">
     <button id="toggle" class="btn primary big" type="button">Bắt đầu nghe</button>
     <p id="meta" class="meta"></p>

@@ -415,6 +415,12 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
         <div className="dp__scroll dash-scroll">
           <dl className="dp__kv">
             <div>
+              <dt>Mã phiên</dt>
+              <dd>
+                <code>{meeting.id}</code>
+              </dd>
+            </div>
+            <div>
               <dt>Loại cuộc họp</dt>
               <dd>{MEETING_KIND_LABEL[meeting.kind]}</dd>
             </div>

@@ -13,22 +13,28 @@ export type StoredDoc = {
 
 const DB = 'meetmate';
 const STORE = 'docs';
+/** Phiên web đã gửi sang (drafts.ts), mỗi phiên kèm tài liệu riêng. Có từ phiên bản 2 của DB. */
+export const DRAFTS_STORE = 'drafts';
 
-function open(): Promise<IDBDatabase> {
+export function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(STORE, { keyPath: 'id' });
+    const request = indexedDB.open(DB, 2);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(DRAFTS_STORE)) db.createObjectStore(DRAFTS_STORE, { keyPath: 'id' });
+    };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-async function run<T>(mode: IDBTransactionMode, body: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+export async function run<T>(mode: IDBTransactionMode, body: (store: IDBObjectStore) => IDBRequest<T>, name = STORE): Promise<T> {
   const db = await open();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const tx = db.transaction(STORE, mode);
-      const request = body(tx.objectStore(STORE));
+      const tx = db.transaction(name, mode);
+      const request = body(tx.objectStore(name));
       tx.oncomplete = () => resolve(request.result);
       tx.onerror = () => reject(tx.error);
       tx.onabort = () => reject(tx.error);

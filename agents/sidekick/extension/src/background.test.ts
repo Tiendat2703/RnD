@@ -5,6 +5,14 @@ import { newSession } from './sessionStore';
 // IndexedDB does not exist in the test runtime; the document library is checked through this mock.
 const replaceDocs = vi.fn(async (_docs: unknown[]) => undefined);
 vi.mock('./docs/store', () => ({ replaceDocs: (docs: unknown[]) => replaceDocs(docs) }));
+// Web sessions waiting to be recorded (drafts.ts, IndexedDB in the extension), kept in memory here.
+type Draft = { id: string; draft: { id: string; title: string }; docs: { id: string }[]; preparedAt: number };
+const draftStore = new Map<string, Draft>();
+vi.mock('./drafts', () => ({
+  getDraftRecord: async (id: string) => draftStore.get(id) ?? null,
+  putDraft: async (r: Draft) => void draftStore.set(r.id, r),
+  deleteDraft: async (id: string) => void draftStore.delete(id),
+}));
 
 type Store = Record<string, unknown>;
 
@@ -96,6 +104,7 @@ const SESSIONS = () => ({ sessions: { s1: newSession('s1', 'Họp tuần', 'khac
 beforeEach(() => {
   vi.useFakeTimers();
   replaceDocs.mockClear();
+  draftStore.clear();
 });
 afterEach(() => vi.useRealTimers());
 
@@ -221,23 +230,81 @@ describe('background: ghi phiên và cầu nối web', () => {
     expect(reply.info).toMatchObject({ keysSet: true, meetTabs: 1, running: true, sessionId: 's1' });
   });
 
-  it('session.prepare lưu phiên web gửi; markSynced đánh dấu phiên đã lưu backend', async () => {
+  it('markSynced đánh dấu phiên đã lưu backend', async () => {
     const ended = { ...newSession('s1', 'Họp tuần', 'khac', 1_000), endedAt: 9_000 };
     const t = await boot({ session: {}, local: { sessions: { s1: ended } } });
-    await t.send({ type: 'mm.web', msg: { type: 'session.prepare', session: { id: 'w1', title: 'Họp', kind: 'khac', sources: 9, autoPost: false } } }, 9);
-    expect(t.session.session).toEqual({ id: 'w1', title: 'Họp', kind: 'khac', sources: 4, autoPost: false });
-    expect(replaceDocs).toHaveBeenCalledWith([]); // phiên không có tài liệu: kho cũ không được giữ lại
     await t.send({ type: 'mm.web', msg: { type: 'sessions.markSynced', id: 's1', syncedAt: 10_000 } }, 9);
     expect(t.saved().syncedAt).toBe(10_000);
   });
+});
 
-  it('session.prepare thay kho tài liệu bằng tài liệu của phiên; tài liệu không nằm trong bản nháp', async () => {
+const DOCS = [{ id: 'dabc1', name: 'Hợp đồng.pdf', pageCount: 1, chunks: [{ id: 'dabc1#1', docId: 'dabc1', docName: 'Hợp đồng.pdf', page: 1, pageEnd: 1, text: 'Phí bảo trì 12.000.000 đồng.' }] }];
+const prepare = (id: string, documents: unknown[] = []) =>
+  ({ type: 'mm.web', msg: { type: 'session.prepare', session: { id, title: `Họp ${id}`, kind: 'khac', sources: 9, autoPost: false, documents } } });
+const runtimeSend = () => (globalThis as unknown as { chrome: { runtime: { sendMessage: ReturnType<typeof vi.fn> } } }).chrome.runtime.sendMessage;
+
+describe('background: chọn phiên web trong extension', () => {
+  it('session.prepare thêm phiên vào danh sách chờ, chọn nó và nạp đúng tài liệu của nó', async () => {
     const t = await boot({ session: {}, local: {} });
-    const documents = [{ id: 'dabc1', name: 'Hợp đồng.pdf', pageCount: 1, chunks: [{ id: 'dabc1#1', docId: 'dabc1', docName: 'Hợp đồng.pdf', page: 1, pageEnd: 1, text: 'Phí bảo trì 12.000.000 đồng.' }] }];
-    await t.send({ type: 'mm.web', msg: { type: 'session.prepare', session: { id: 'w1', title: 'Họp', kind: 'khac', sources: 4, autoPost: true, documents } } }, 9);
-    expect(replaceDocs).toHaveBeenCalledWith([expect.objectContaining({ id: 'dabc1', name: 'Hợp đồng.pdf', chunks: documents[0].chunks })]);
-    expect(t.session.session).not.toHaveProperty('documents');
-    const runtime = (globalThis as unknown as { chrome: { runtime: { sendMessage: ReturnType<typeof vi.fn> } } }).chrome.runtime;
-    expect(runtime.sendMessage).toHaveBeenCalledWith({ type: 'mm.docs.changed' });
+    await t.send(prepare('w1', DOCS), 9);
+    expect(draftStore.get('w1')).toMatchObject({ draft: { id: 'w1', title: 'Họp w1', kind: 'khac', sources: 4, autoPost: false } });
+    expect(draftStore.get('w1')!.draft).not.toHaveProperty('documents');
+    expect(t.local.selectedDraftId).toBe('w1');
+    expect(replaceDocs).toHaveBeenLastCalledWith([expect.objectContaining({ id: 'dabc1', chunks: DOCS[0].chunks })]);
+    expect(runtimeSend()).toHaveBeenCalledWith({ type: 'mm.docs.changed' });
+    expect(runtimeSend()).toHaveBeenCalledWith({ type: 'mm.drafts.changed' });
+  });
+
+  it('giữ nhiều phiên; đổi qua lại thì kho tài liệu đổi theo, "Phiên mới" thì kho rỗng', async () => {
+    const t = await boot({ session: {}, local: {} });
+    await t.send(prepare('w1', DOCS), 9);
+    await t.send(prepare('w2'), 9);
+    expect([...draftStore.keys()]).toEqual(['w1', 'w2']);
+    expect(t.local.selectedDraftId).toBe('w2');
+    expect(replaceDocs).toHaveBeenLastCalledWith([]);
+
+    expect(await t.send({ type: 'mm.selectDraft', id: 'w1' })).toEqual({ ok: true });
+    expect(replaceDocs).toHaveBeenLastCalledWith([expect.objectContaining({ id: 'dabc1' })]);
+    expect(await t.send({ type: 'mm.selectDraft', id: null })).toEqual({ ok: true });
+    expect(t.local.selectedDraftId).toBeNull();
+    expect(replaceDocs).toHaveBeenLastCalledWith([]);
+    expect(await t.send({ type: 'mm.selectDraft', id: 'gone' })).toMatchObject({ ok: false });
+  });
+
+  it('không đổi phiên khi đang nghe; phiên web gửi lúc đang nghe chỉ vào danh sách chờ', async () => {
+    const t = await boot({ session: LIVE, local: SESSIONS() });
+    await t.send(prepare('w9', DOCS), 9);
+    expect(draftStore.has('w9')).toBe(true);
+    expect(t.local.selectedDraftId).toBeUndefined();
+    expect(replaceDocs).not.toHaveBeenCalled();
+    expect(await t.send({ type: 'mm.selectDraft', id: 'w9' })).toMatchObject({ ok: false });
+  });
+
+  it('web hủy phiên chưa bắt đầu: bỏ đúng phiên đó khỏi danh sách', async () => {
+    const t = await boot({ session: {}, local: {} });
+    await t.send(prepare('w1', DOCS), 9);
+    await t.send({ type: 'mm.web', msg: { type: 'session.stop', id: 'w1' } }, 9);
+    expect(draftStore.has('w1')).toBe(false);
+    expect(t.local.selectedDraftId).toBeNull();
+    expect(replaceDocs).toHaveBeenLastCalledWith([]);
+  });
+
+  it('ghi xong một phiên web thì phiên đó rời danh sách chờ (ghi lại sẽ đè phiên đã lưu)', async () => {
+    draftStore.set('s1', { id: 's1', draft: { id: 's1', title: 'Họp tuần' }, docs: [], preparedAt: 1 });
+    const t = await boot({ session: LIVE, local: { ...SESSIONS(), selectedDraftId: 's1' } });
+    void t.send({ type: 'mm.stop' });
+    await settle();
+    expect(draftStore.has('s1')).toBe(false);
+    expect(t.local.selectedDraftId).toBeNull();
+  });
+
+  it('lỗi trước khi nghe được câu nào: bỏ bản ghi rỗng, giữ phiên web để bắt đầu lại', async () => {
+    draftStore.set('s1', { id: 's1', draft: { id: 's1', title: 'Họp tuần' }, docs: [], preparedAt: 1 });
+    const t = await boot({ session: LIVE, local: { ...SESSIONS(), selectedDraftId: 's1' } });
+    void t.send({ type: 'mm.event', event: { kind: 'state', state: 'error', detail: 'Blaze từ chối khóa' } });
+    await settle();
+    expect(t.saved()).toBeUndefined();
+    expect(draftStore.has('s1')).toBe(true);
+    expect(t.local.selectedDraftId).toBe('s1');
   });
 });

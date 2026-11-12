@@ -32,7 +32,8 @@ export interface SessionDraft {
 export type WebToExt =
   | { type: "ping" }
   | { type: "session.prepare"; session: SessionDraft }
-  | { type: "session.stop" }
+  /** dừng phiên đang nghe; không có phiên nào đang nghe thì bỏ phiên `id` đã gửi mà chưa bắt đầu */
+  | { type: "session.stop"; id?: string }
   /** xin toàn bộ phiên extension đã lưu (kể cả phiên diễn ra khi web không mở) */
   | { type: "sessions.list" }
   /** xóa một phiên đã lưu (khi người dùng xóa cuộc họp trên web) */

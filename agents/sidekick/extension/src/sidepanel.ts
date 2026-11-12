@@ -1,7 +1,11 @@
 import { FULL_DOC_MAX_CHARS } from './config';
+import { MEETING_KIND_LABEL } from '../../../../lib/types';
+import type { SavedSession } from '../../../../lib/bridgeProtocol';
 import { listDocs, type StoredDoc } from './docs/store';
+import { listDrafts, summaryOf, type DraftSummary } from './drafts';
+import { CURRENT_KEY, SESSIONS_KEY, listSessions } from './sessionStore';
 import { pickMeetingTab } from './meet-url';
-import { DEFAULT_SETTINGS, STORAGE_KEYS, type Card, type Msg, type Settings, type StartReply } from './messages';
+import { DEFAULT_SETTINGS, STORAGE_KEYS, type Card, type Msg, type SelectReply, type Settings, type StartReply } from './messages';
 import { EMPTY_VIEW, type View } from './view';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -11,6 +15,11 @@ const time = (at: number) => new Date(at).toLocaleTimeString('vi-VN', { hour: '2
 
 let view: View = EMPTY_VIEW;
 let docs: StoredDoc[] = [];
+// web sessions waiting to be recorded, the chosen one, the one being recorded, and the latest saved
+let drafts: DraftSummary[] = [];
+let selected: string | null = null;
+let recording: string | null = null;
+let lastSession: SavedSession | null = null;
 let settings: Settings = DEFAULT_SETTINGS;
 let hasBlazeKey = false;
 let partial = '';
@@ -106,7 +115,57 @@ function renderDocs(): void {
       : 'Tài liệu lớn: mỗi lần đối chiếu, MeetMate chọn khoảng 20 đoạn liên quan nhất.';
 }
 
+function renderSession(): void {
+  const box = document.querySelector<HTMLElement>('.session')!;
+  const select = $<HTMLSelectElement>('draft');
+  const info = $('session-info');
+  box.toggleAttribute('data-recording', !!recording);
+  if (recording) {
+    // the session being recorded is no longer a draft once it ends, so name it from the store
+    const name = lastSession?.id === recording ? lastSession.title : drafts.find(d => d.id === recording)?.title ?? 'Cuộc họp';
+    select.innerHTML = `<option>${esc(name)}</option>`;
+    select.disabled = true;
+    info.innerHTML = `Đang ghi phiên <code>${esc(recording)}</code>. Dừng nghe rồi mới đổi được phiên.`;
+  } else {
+    const options = drafts.map(d => `<option value="${esc(d.id)}">${esc(d.title)} · ${d.docCount} tài liệu · ${time(d.preparedAt)}</option>`);
+    options.push(`<option value="">Phiên mới (tự tạo mã khi bắt đầu)</option>`);
+    select.innerHTML = options.join('');
+    select.value = selected && drafts.some(d => d.id === selected) ? selected : '';
+    select.disabled = false;
+    const chosen = drafts.find(d => d.id === select.value);
+    info.innerHTML = chosen
+      ? `Từ web · ${esc(MEETING_KIND_LABEL[chosen.kind] ?? chosen.kind)} · mã <code>${esc(chosen.id)}</code>`
+        + (chosen.docCount ? `<br>Tài liệu: ${chosen.docNames.map(esc).join(', ')}` : '<br>Phiên này không có tài liệu.')
+      : drafts.length
+        ? 'Không dùng phiên nào từ web: bắt đầu nghe sẽ tạo phiên mới với mã <code>ext-…</code>, không có tài liệu. Phiên vẫn hiện trên web sau khi họp.'
+        : 'Chưa có phiên nào từ web. Tạo “Cuộc họp mới” trên web MeetMate rồi bấm “Gửi phiên cho MeetMate” để có tài liệu; nếu bắt đầu ngay, MeetMate tạo phiên mới với mã <code>ext-…</code>.';
+  }
+  const last = $('session-last');
+  const showLast = !!lastSession && lastSession.endedAt !== null && lastSession.id !== recording;
+  last.hidden = !showLast;
+  if (showLast && lastSession) {
+    last.innerHTML = `Phiên vừa ghi: ${esc(lastSession.title)} (<code>${esc(lastSession.id)}</code>) · ${lastSession.lines.length} câu · `
+      + (typeof lastSession.syncedAt === 'number' ? 'đã lưu lên backend' : 'chờ “Lưu phiên” trên web');
+  }
+}
+
+async function refreshSessions(): Promise<void> {
+  drafts = (await listDrafts()).map(summaryOf);
+  selected = ((await chrome.storage.local.get(STORAGE_KEYS.selectedDraft))[STORAGE_KEYS.selectedDraft] as string | null | undefined) ?? null;
+  recording = ((await chrome.storage.session.get(CURRENT_KEY))[CURRENT_KEY] as string | undefined) ?? null;
+  lastSession = (await listSessions())[0] ?? null;
+  renderSession();
+}
+
+async function choose(id: string | null): Promise<void> {
+  const reply = (await send({ type: 'mm.selectDraft', id })) as SelectReply | undefined;
+  if (!reply?.ok) say('error', reply?.error ?? 'Không đổi được phiên');
+  await refreshSessions();
+  await refreshDocs();
+}
+
 function render(): void {
+  renderSession();
   renderControl();
   renderCards();
   renderTranscript();
@@ -189,7 +248,9 @@ async function init(): Promise<void> {
   view = ((await chrome.storage.session.get(STORAGE_KEYS.view))[STORAGE_KEYS.view] as View | undefined) ?? EMPTY_VIEW;
   docs = await listDocs();
   ($('settings-box') as HTMLDetailsElement).open = !hasBlazeKey;
+  await refreshSessions();
   render();
+  $<HTMLSelectElement>('draft').addEventListener('change', e => void choose((e.target as HTMLSelectElement).value || null));
 
   bindKey('blaze-key', STORAGE_KEYS.blaze);
   bindKey('exa-key', STORAGE_KEYS.exa);
@@ -206,6 +267,9 @@ async function init(): Promise<void> {
       view = next;
       render();
     }
+    if ((area === 'local' && (changes[STORAGE_KEYS.selectedDraft] || changes[SESSIONS_KEY])) || (area === 'session' && changes[CURRENT_KEY])) {
+      void refreshSessions();
+    }
     if (area === 'local' && changes[STORAGE_KEYS.blaze]) {
       hasBlazeKey = Boolean(String(changes[STORAGE_KEYS.blaze].newValue ?? '').trim());
       renderControl();
@@ -214,6 +278,7 @@ async function init(): Promise<void> {
   chrome.runtime.onMessage.addListener((msg: Msg) => {
     // the web console sent a session with its documents; the background replaced the library
     if (msg.type === 'mm.docs.changed') void refreshDocs();
+    if (msg.type === 'mm.drafts.changed') void refreshSessions();
     if (msg.type === 'mm.event' && msg.event.kind === 'partial') {
       partial = msg.event.text;
       renderControl();
