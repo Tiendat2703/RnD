@@ -129,13 +129,16 @@ async function start(tabId: number, streamId: string | null): Promise<StartReply
   const settings: Settings = draft && (!draft.autoPost || draft.mode === 'presentation') ? { ...saved, postToChat: false } : saved;
   // The library is the chosen web session's documents; a new session (generated id) has none.
   await setDocuments(record?.docs ?? []);
-  await update(() => ({...startView(tabId), ...(draft?.mode==='presentation' ? {presentation:draft.presentation,presentationId:draft.id} : {})}));
+  await update(() => ({ ...startView(tabId), assistantType: draft?.assistantType ?? 'assistant',
+    ...(draft?.mode === 'presentation' ? { presentation: draft.presentation, presentationId: draft.id } : {}),
+  }));
   await beginRecording(draft);
   if(draft?.mode==='presentation') await sendToTab(tabId,{type:'mm.presentation.watch',active:true}).catch(()=>undefined);
   try {
     await ensureOffscreen();
     const reply = (await chrome.runtime.sendMessage({
       type: 'mm.offscreen.start', streamId, blazeApiKey, exaApiKey: String(stored[STORAGE_KEYS.exa] ?? '').trim(), settings, presentation:draft?.mode==='presentation'?draft.presentation:undefined, sessionId:draft?.id,
+      assistantType: draft?.assistantType ?? 'assistant', sessionTitle: draft?.title,
     } satisfies Msg)) as StartReply | undefined;
     if (!reply?.ok) throw new Error(reply?.error ?? 'Không mở được bộ ghi âm');
     return { ok: true };
@@ -242,7 +245,7 @@ async function getContext(): Promise<WebContext | null> {
 async function beginRecording(draft: SessionDraft | null): Promise<void> {
   researchCards.clear();
   // a session the web did not prepare is still recorded, with a default name
-  await startSession(draft?.id ?? `ext-${Date.now()}`, draft?.title ?? 'Cuộc họp Google Meet', draft?.kind ?? 'khac');
+  await startSession(draft?.id ?? `ext-${Date.now()}`, draft?.title ?? 'Cuộc họp Google Meet', draft?.kind ?? 'khac', draft?.assistantType);
   if(draft?.mode==='presentation' && draft.presentation) await emit({type:'presentation',id:draft.id,snapshot:draft.presentation});
   await chrome.storage.session.set({ [WEB_CTX_KEY]: { startedAt: Date.now(), maxSources: draft?.sources ?? 4 } satisfies WebContext });
   await setStatus(STATUS_STARTING);
@@ -344,6 +347,7 @@ async function info(): Promise<ExtInfo> {
     presentation:true,
     // Exa is optional: without it MeetMate still transcribes and checks documents
     keysSet: !!String(stored[STORAGE_KEYS.blaze] ?? '').trim(),
+    supportsTeacher: true,
     mock: false,
     meetTabs: tabs.filter(t => isMeetingUrl(t.url)).length,
     running: isRunning(await currentView()),
@@ -367,6 +371,7 @@ function cleanDraft(raw: SessionDraft): SessionDraft {
     id: String(raw.id).slice(0, 64),
     title: String(raw.title).slice(0, 120),
     kind: raw.kind,
+    assistantType: raw.assistantType === 'teacher' ? 'teacher' : 'assistant',
     sources: Math.max(1, Math.min(4, Number(raw.sources) || 4)),
     autoPost: raw.mode === 'presentation' ? false : raw.autoPost !== false,
     ...(raw.mode === 'presentation' ? { mode:'presentation' as const, presentation:parsePresentation(raw.presentation) } : {}),

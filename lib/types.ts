@@ -38,6 +38,7 @@ export type LineSource = AudioSource | "mixed";
 export type MeetingKind = "san-pham" | "nghien-cuu" | "dao-tao" | "ban-le" | "khac";
 
 export type MeetingStatus = "live" | "ready" | "ended";
+export type AssistantType = 'assistant' | 'teacher';
 
 export interface MeetingLine {
   id: string;
@@ -76,6 +77,7 @@ export interface PostedMessage {
 
 /** Một phiên họp đã kết thúc hoặc đang chạy, nhìn từ web console. */
 export interface MeetingRecord {
+  assistantType?: AssistantType;
   id: string;
   title: string;
   kind: MeetingKind;

@@ -6,6 +6,7 @@ import type { Card, PanelEvent, RunState } from './messages';
 export type View = {
   presentation?: PresentationSnapshot;
   presentationId?: string;
+  assistantType?: import('../../../../lib/types').AssistantType;
   state: RunState;
   detail?: string;
   tabId?: number;

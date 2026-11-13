@@ -9,7 +9,7 @@ import type { PresentationSnapshot, PresentationAction } from './presentation';
 // Không có khóa API nào đi qua đây. `keysSet` chỉ là boolean.
 import type { SessionDocument } from "./documents";
 import type { KnowledgeCard } from "./evidence";
-import type { LineSource, MeetingKind, PipelineStage, ResearchResult, Topic } from "./types";
+import type { AssistantType, LineSource, MeetingKind, PipelineStage, ResearchResult, Topic } from "./types";
 
 /** Giá trị trường `source` của envelope, để lọc message không phải của MeetMate. */
 export const BRIDGE_WEB = "meetmate-web";
@@ -19,6 +19,7 @@ export const BRIDGE_EXT = "meetmate-ext";
 export interface SessionDraft {
   mode?: 'assistant' | 'presentation';
   presentation?: PresentationSnapshot;
+  assistantType?: AssistantType;
   id: string;
   title: string;
   kind: MeetingKind;
@@ -49,6 +50,7 @@ export type WebToExt =
 
 export interface ExtInfo {
   presentation?: boolean;
+  supportsTeacher?: boolean;
   version: string;
   /** đã nhập khóa Blaze trong khung bên extension (không gửi giá trị); Exa không bắt buộc */
   keysSet: boolean;
@@ -81,6 +83,7 @@ export interface SavedTopic {
 export interface SavedSession {
   mode?: 'assistant' | 'presentation';
   presentation?: PresentationSnapshot;
+  assistantType?: AssistantType;
   id: string;
   title: string;
   kind: MeetingKind;

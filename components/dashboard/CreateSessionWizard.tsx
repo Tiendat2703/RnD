@@ -2,15 +2,11 @@
 
 // components/dashboard/CreateSessionWizard.tsx — hộp thoại "Cuộc họp mới".
 //
-// Chọn Assistant để tiếp tục luồng Google Meet, hoặc Teacher để tạo phòng học
-// trên web. Hai loại phiên dùng chung cửa tạo mới nhưng có cấu hình riêng.
+// Assistant, Teacher và Thuyết trình tạo phiên, chọn tài liệu và chạy qua extension.
 import { PresentationSetup } from './PresentationSetup';
 import type { PresentationSnapshot } from '../../lib/presentation';
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { teacherApi } from "../../lib/backendApi";
-import { rememberTeacherAccess } from "../../lib/teacherAccess";
 import { cn } from "../../lib/utils";
 import {
   LANGUAGES,
@@ -32,7 +28,6 @@ import {
 const KINDS = Object.keys(MEETING_KIND_LABEL) as MeetingKind[];
 
 export function CreateSessionWizard() {
-  const router = useRouter();
   const {
     wizard,
     closeWizard,
@@ -53,13 +48,8 @@ export function CreateSessionWizard() {
   const [step, setStep] = useState(0);
   const [assistant, setAssistant] = useState<'assistant' | 'teacher' | 'presentation'>('assistant');
   const [presentation,setPresentation]=useState<PresentationSnapshot|null>(null);
-  const [subject, setSubject] = useState('');
-  const [level, setLevel] = useState('Cơ bản');
-  const [goal, setGoal] = useState('');
-  const [name, setName] = useState('');
-  const [studyMode, setStudyMode] = useState<'solo' | 'group'>('solo');
-  const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+  const [subject, setSubject] = useState('');
   const [kind, setKind] = useState<MeetingKind>("san-pham");
   const [title, setTitle] = useState("");
   const [docIds, setDocIds] = useState<string[]>([]);
@@ -72,8 +62,9 @@ export function CreateSessionWizard() {
   if (wizard.open && !lastOpen.current) {
     lastOpen.current = true;
     setStep(editing ? 1 : 0);
-    setAssistant('assistant'); setPresentation(null);
-    setSubject(''); setGoal(''); setName(''); setLevel('Cơ bản'); setStudyMode('solo'); setCreateError('');
+    setAssistant(editing?.assistantType ?? 'assistant');
+    setPresentation(null); setCreateError('');
+    setSubject('');
     setKind(wizard.kind ?? editing?.kind ?? "san-pham");
     setTitle(editing?.title ?? "");
     setDocIds([]);
@@ -83,26 +74,12 @@ export function CreateSessionWizard() {
   const nextLabel = useMemo(() => {
     if (editing) return "Lưu thay đổi";
     if (step === 0) return 'Tiếp tục';
-    if (assistant === 'teacher') return creating ? 'Đang tạo phòng…' : 'Tạo phòng học';
     return step === 1 ? "Tiếp" : "Bắt đầu MeetMate";
-  }, [editing, step, assistant, creating]);
+  }, [editing, step]);
 
   if (!wizard.open) return null;
 
-  const finish = async () => {
-    if (creating) return;
-    if (!editing && assistant === 'teacher') {
-      if (!subject.trim() || !name.trim()) { setCreateError('Hãy nhập môn học và tên của bạn.'); return; }
-      setCreating(true); setCreateError('');
-      try {
-        const access = await teacherApi.create({ title: title.trim() || `Học ${subject.trim()}`.slice(0, 160), subject: subject.trim(), goal: goal.trim(), level, mode: studyMode, name: name.trim() });
-        rememberTeacherAccess(access.room.id, access.memberToken);
-        closeWizard();
-        router.push(`/dashboard/teacher/${access.room.id}`);
-      } catch (error) { setCreateError(error instanceof Error ? error.message : 'Không tạo được phòng học.'); }
-      finally { setCreating(false); }
-      return;
-    }
+  const finish = () => {
     if (editing) {
       updateMeeting(editing.id, { title: title.trim() || editing.title, kind });
       pushToast("Đã cập nhật cuộc họp.");
@@ -113,8 +90,9 @@ export function CreateSessionWizard() {
     requestInstall({
       mode:assistant==='presentation'?'presentation':'assistant',
       ...(assistant==='presentation' && presentation ? {presentation} : {}),
-      title: title.trim() || `${MEETING_KIND_LABEL[kind]} · ${meetings.length + 1}`,
-      kind,
+      title: title.trim() || (assistant === 'teacher' ? subject.trim() || `Buổi học Teacher · ${meetings.length + 1}` : `${MEETING_KIND_LABEL[kind]} · ${meetings.length + 1}`),
+      kind: assistant === 'teacher' ? 'dao-tao' : kind,
+      assistantType: assistant === 'teacher' ? 'teacher' : 'assistant',
       // tài liệu đã bị xóa khỏi thư viện trong lúc wizard mở thì không gửi
       documentIds: docIds.filter((id) => documents.some((d) => d.id === id)),
     });
@@ -151,7 +129,7 @@ export function CreateSessionWizard() {
             <li className={cn("stepper__step", step === 1 && "stepper__step--active")}>
               <span className="stepper__dot">{editing ? 1 : 2}</span> Thông tin
             </li>
-            {editing || assistant === 'teacher' ? null : (
+            {editing ? null : (
               <>
                 <li className={cn("stepper__link", step === 2 && "stepper__link--done")} aria-hidden />
                 <li className={cn("stepper__step", step === 2 && "stepper__step--active")}>
@@ -168,7 +146,7 @@ export function CreateSessionWizard() {
           <p className="wiz__note">
             <IconInfo />
             <span>
-              {assistant === 'teacher' ? 'Teacher hoạt động ngay trên web. Hỏi bằng micro hoặc chat, tải tài liệu và mời nhóm vào cùng phòng. Teacher trả lời bằng chữ.' : 'Assistant nghe cuộc họp từ extension Chrome. Gọi “trợ lý” để tra tài liệu hoặc tìm web.'}
+              {assistant === 'teacher' ? 'Teacher nghe trong Google Meet bằng extension như Assistant. Gọi “trợ lý” để giảng bài, giải thích, ra hoặc giải bài tập. Kết quả hiện ở khung bên và chat Meet.' : 'Assistant nghe cuộc họp từ extension Chrome. Gọi “trợ lý” để tra tài liệu hoặc tìm web.'}
             </span>
           </p>
         </aside>
@@ -198,41 +176,23 @@ export function CreateSessionWizard() {
                   <span className="assistant-choice__tag">HỌC TẬP</span>
                   <strong>Teacher</strong>
                   <span>Giáo viên ảo giúp hiểu bài, giảng từ slide và Word, tìm tài liệu, ra và giải bài tập.</span>
-                  <small>Phòng học trên web · Cá nhân hoặc nhóm</small>
+                  <small>Google Meet · Extension Chrome</small>
                 </button>
               </div>
             </div>
-          ) : step === 1 && assistant === 'teacher' && !editing ? (
-            <div className="wiz__body" key="teacher-info">
-              <p className="wiz__eyebrow">Thiết lập buổi học với Teacher</p>
-              <div className="field"><label className="field__label" htmlFor="teacher-title">Tên phòng học <span className="field__optional">(Không bắt buộc)</span></label>
-                <input id="teacher-title" className="input" value={title} maxLength={160} onChange={e => setTitle(e.target.value)} placeholder="vd. Cùng ôn xác suất cuối kỳ" /></div>
-              <div className="teacher-form-grid">
-                <div className="field"><label className="field__label" htmlFor="teacher-subject">Môn học / chủ đề</label>
-                  <input id="teacher-subject" className="input" value={subject} maxLength={160} onChange={e => setSubject(e.target.value)} placeholder="vd. Xác suất thống kê" required /></div>
-                <div className="field"><label className="field__label" htmlFor="teacher-level">Trình độ</label>
-                  <select id="teacher-level" className="select" value={level} onChange={e => setLevel(e.target.value)}>
-                    {['Cơ bản', 'Trung cấp', 'Nâng cao', 'Phổ thông', 'Đại học'].map(value => <option key={value}>{value}</option>)}
-                  </select></div>
-              </div>
-              <div className="field"><label className="field__label" htmlFor="teacher-goal">Bạn muốn đạt được điều gì?</label>
-                <textarea id="teacher-goal" className="input" rows={2} maxLength={1200} value={goal} onChange={e => setGoal(e.target.value)} placeholder="vd. Hiểu phân phối chuẩn và tự giải được bài tập" /></div>
-              <div className="field"><label className="field__label" htmlFor="teacher-name">Tên của bạn</label>
-                <input id="teacher-name" className="input" maxLength={60} value={name} onChange={e => setName(e.target.value)} placeholder="Tên hiển thị trong phòng học" required /></div>
-              <Segmented<'solo' | 'group'> ariaLabel="Hình thức học" options={[{ id: 'solo', label: 'Học cá nhân' }, { id: 'group', label: 'Học theo nhóm' }]} value={studyMode} onChange={setStudyMode} />
-              <p className="field__hint">Sau khi tạo phòng, bạn có thể tải PDF, slide PPTX, Word DOCX hoặc văn bản. {studyMode === 'group' ? 'Mời bạn bè bằng liên kết để cùng xem tài liệu và trao đổi với Teacher.' : 'Phòng cá nhân chỉ mở bằng trình duyệt đã tạo phòng.'}</p>
-              {createError && <p className="teacher-error" role="alert">{createError}</p>}
-            </div>
           ) : step === 1 ? (
             <div className="wiz__body" key="step-1">
-              <p className="wiz__eyebrow">Loại cuộc họp</p>
+              {assistant === 'teacher' ? <div className="field">
+                <label className="field__label" htmlFor="teacher-subject">Môn học / chủ đề <span className="field__optional">(Không bắt buộc)</span></label>
+                <input id="teacher-subject" className="input" value={subject} maxLength={120} onChange={e => setSubject(e.target.value)} placeholder="vd. Lập trình hướng đối tượng" />
+              </div> : <><p className="wiz__eyebrow">Loại cuộc họp</p>
               <Segmented<MeetingKind>
                 ariaLabel="Loại cuộc họp"
                 compact
                 options={KINDS.map((k) => ({ id: k, label: MEETING_KIND_LABEL[k] }))}
                 value={kind}
                 onChange={setKind}
-              />
+              /></>}
 
               <div className="field">
                 <label className="field__label" htmlFor="wiz-title">
@@ -400,12 +360,12 @@ export function CreateSessionWizard() {
                 Hủy
               </button>
             ) : (
-              <button className="btn btn--secondary" disabled={creating} onClick={() => setStep(step - 1)}>
+              <button className="btn btn--secondary" onClick={() => setStep(step - 1)}>
                 Quay lại
               </button>
             )}
             {step < 2 ? (
-              <button className="btn btn--ink" disabled={creating} onClick={editing || (step === 1 && assistant === 'teacher') ? finish : () => setStep(step + 1)}>
+              <button className="btn btn--ink" onClick={editing ? finish : () => setStep(step + 1)}>
                 {nextLabel}
               </button>
             ) : (

@@ -63,8 +63,11 @@ function attribute(tag: string, name: string): string {
   return tag.match(new RegExp(`(?:^|\\s)${name}=["']([^"']+)["']`))?.[1] ?? '';
 }
 
-export async function parseTeacherFile(name: string, data: Buffer): Promise<{ format: string; sections: TeacherSection[] }> {
-  if (!data.length || data.length > TEACHER_LIMITS.fileBytes) throw new HttpError(400, 'Mỗi tệp cần có nội dung và không quá 10 MB.');
+export async function parseTeacherFile(name: string, data: Buffer, limits: { bytes?: number; chars?: number } = {}): Promise<{ format: string; sections: TeacherSection[] }> {
+  const maxBytes = limits.bytes ?? TEACHER_LIMITS.fileBytes;
+  const maxChars = limits.chars ?? TEACHER_LIMITS.documentChars;
+  if (!data.length) throw new HttpError(400, 'Không nhận được nội dung tệp. Hãy chọn lại file rồi thử tải lên.');
+  if (data.length > maxBytes) throw new HttpError(413, `File có dung lượng ${(data.length / 1024 / 1024).toFixed(1)} MB, vượt giới hạn ${maxBytes / 1024 / 1024} MB.`);
   const format = name.split('.').pop()?.toLowerCase() ?? '';
   let sections: TeacherSection[] = [];
   try {
@@ -100,7 +103,7 @@ export async function parseTeacherFile(name: string, data: Buffer): Promise<{ fo
           const content = await page.getTextContent();
           const text = content.items.map(item => 'str' in item ? item.str + (item.hasEOL ? '\n' : ' ') : '').join('').trim();
           chars += text.length;
-          if (chars > TEACHER_LIMITS.documentChars) throw new Error('Tài liệu quá dài. Hãy chia PDF thành các chương nhỏ hơn.');
+          if (chars > maxChars) throw new Error(`Tài liệu có quá nhiều chữ (tối đa ${maxChars.toLocaleString('vi-VN')} ký tự), không phải vượt dung lượng file. Hãy chia theo chương.`);
           sections.push({ locator: `Trang ${i}`, text });
         }
       } finally { await task.destroy(); }
@@ -109,8 +112,8 @@ export async function parseTeacherFile(name: string, data: Buffer): Promise<{ fo
     }
     sections = sections.filter(section => section.text.trim());
     if (!sections.length) throw new Error('Tệp không có chữ để đọc. Với tài liệu scan hoặc slide chỉ có hình, hãy thêm lớp chữ hoặc tải bản có văn bản.');
-    if (sections.reduce((sum, section) => sum + section.text.length, 0) > TEACHER_LIMITS.documentChars) {
-      throw new Error('Tài liệu quá dài (tối đa 80.000 ký tự). Hãy chia thành các chương.');
+    if (sections.reduce((sum, section) => sum + section.text.length, 0) > maxChars) {
+      throw new Error(`Tài liệu có quá nhiều chữ (tối đa ${maxChars.toLocaleString('vi-VN')} ký tự), không phải vượt dung lượng file. Hãy chia theo chương.`);
     }
     return { format: format.toUpperCase(), sections };
   } catch (error) {

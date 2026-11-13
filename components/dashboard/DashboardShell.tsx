@@ -22,7 +22,7 @@ import {
   listDocuments,
   retryReport as retryReportApi,
   saveSessionToBackend,
-  uploadPdf,
+  uploadDocumentFile,
   uploadTextDocument,
 } from "../../lib/backendApi";
 import type { DocumentMeta } from "../../lib/documents";
@@ -61,7 +61,6 @@ import { PlanCard } from "./PlanCard";
 import {
   IconCheck,
   IconFolder,
-  IconBook,
   IconLogo,
   IconMoon,
   IconPanel,
@@ -81,14 +80,12 @@ const NAV_GROUPS: {
     items: [
       { label: "Cuộc họp", href: "/dashboard/callSessions", icon: IconTranscript, count: true },
       { label: "Tài liệu", href: "/dashboard/documents", icon: IconFolder },
-      { label: "Phòng học Teacher", href: "/dashboard/teacher", icon: IconBook },
     ],
   },
 ];
 
 // topbar mang tên trang và một dòng mô tả — cột nội dung không có heading thứ hai
 const TITLES: Record<string, { title: string; note: string }> = {
-  "/dashboard/teacher": { title: 'Teacher', note: 'Giáo viên ảo, tài liệu của bạn và những buổi học cùng nhóm.' },
   "/dashboard/callSessions": {
     title: "Cuộc họp",
     note: "Mọi cuộc họp MeetMate đã nghe, số chủ đề và số nguồn đã gửi vào chat Meet.",
@@ -247,7 +244,7 @@ export function DashboardShell({
   }, [refreshDocuments]);
 
   const addDocument = useCallback(async (doc: NewDocument) => {
-    const meta = doc instanceof File ? await uploadPdf(doc) : await uploadTextDocument(doc);
+    const meta = doc instanceof File ? await uploadDocumentFile(doc) : await uploadTextDocument(doc);
     setDocuments((prev) => [meta, ...prev.filter((d) => d.id !== meta.id)]);
     setDocsError(null);
     return meta;
@@ -367,6 +364,7 @@ export function DashboardShell({
         const rec: MeetingRecord = {
           id: s.id,
           title: s.title,
+          assistantType: s.assistantType,
           kind: s.kind,
           startedAt: new Date(s.startedAt).toISOString().slice(0, 19),
           durationSec: Math.max(0, Math.round(((s.endedAt ?? Date.now()) - s.startedAt) / 1000)),

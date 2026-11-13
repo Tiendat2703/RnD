@@ -17,6 +17,17 @@ describe('blazeChat', () => {
     const body = JSON.parse(String(request?.init.body));
     expect(body.model).toBe(BLAZE_LLM_MODEL);
     expect(body.messages).toEqual([{ role: 'user', content: 'Chào' }]);
+    expect(body.response_format).toBeUndefined();
+  });
+
+  it('requests JSON output only when the caller opts in', async () => {
+    let body: Record<string, unknown> = {};
+    const fetcher = (async (_url: string, init: RequestInit) => {
+      body = JSON.parse(String(init.body));
+      return new Response(JSON.stringify({ choices: [{ message: { content: '{"text":"Bài học"}' } }] }));
+    }) as unknown as typeof fetch;
+    await blazeChat('key', fetcher)([{ role: 'user', content: 'Trả JSON' }], new AbortController().signal, { json: true });
+    expect(body.response_format).toEqual({ type: 'json_object' });
   });
 
   it('throws with the HTTP status on failure', async () => {

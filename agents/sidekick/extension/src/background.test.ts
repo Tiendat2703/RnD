@@ -56,6 +56,7 @@ async function boot(opts: { session?: Store; local?: Store; webTabUrl?: string; 
       sendMessage: vi.fn(async () => undefined),
       getContexts: async () => [],
       getManifest: () => ({ version: '0.3.0' }),
+      getURL: (path: string) => `chrome-extension://test/${path}`,
     },
     sidePanel: { setPanelBehavior: async () => undefined, open: async () => undefined },
     action: { onClicked: { addListener() {} } },
@@ -246,6 +247,17 @@ const prepare = (id: string, documents: unknown[] = []) =>
 const runtimeSend = () => (globalThis as unknown as { chrome: { runtime: { sendMessage: ReturnType<typeof vi.fn> } } }).chrome.runtime.sendMessage;
 
 describe('background: chọn phiên web trong extension', () => {
+  it('preserves Teacher from the prepared draft through recording and offscreen startup', async () => {
+    const t = await boot({ session: {}, local: { blazeApiKey: 'test-key' } });
+    const message = prepare('teacher-1', DOCS);
+    Object.assign(message.msg.session, { assistantType: 'teacher' });
+    await t.send(message, 9);
+    expect(draftStore.get('teacher-1')).toMatchObject({ draft: { assistantType: 'teacher' } });
+    runtimeSend().mockImplementation(async (msg: { type: string }) => msg.type === 'mm.offscreen.start' ? { ok: true } : undefined);
+    expect(await t.send({ type: 'mm.start', tabId: 7, streamId: null })).toEqual({ ok: true });
+    expect(runtimeSend()).toHaveBeenCalledWith(expect.objectContaining({ type: 'mm.offscreen.start', assistantType: 'teacher' }));
+    expect((t.local.sessions as Record<string, SavedSession>)['teacher-1'].assistantType).toBe('teacher');
+  });
   it('session.prepare thêm phiên vào danh sách chờ, chọn nó và nạp đúng tài liệu của nó', async () => {
     const t = await boot({ session: {}, local: {} });
     await t.send(prepare('w1', DOCS), 9);

@@ -29,6 +29,7 @@ export const sessionSchema = z.object({
   presentation: z.unknown().transform((value, ctx) => {
     try { return parsePresentation(value); } catch { ctx.addIssue({code:'custom',message:'Checklist không hợp lệ.'}); return z.NEVER; }
   }).optional(),
+  assistantType: z.enum(['assistant', 'teacher']).optional(),
   id: z.string().regex(SESSION_ID),
   title: text(200),
   kind: z.enum(['san-pham', 'nghien-cuu', 'dao-tao', 'ban-le', 'khac']),

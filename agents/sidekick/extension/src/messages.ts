@@ -7,7 +7,7 @@ export type { ExtToWeb, SessionDraft, WebToExt };
 export type Settings = { postToChat: boolean; webResearch: boolean; autoCheck: boolean };
 export const DEFAULT_SETTINGS: Settings = { postToChat: true, webResearch: true, autoCheck: true };
 
-export type CardKind = 'contradiction' | 'partial' | 'supported' | 'answer' | 'not_in_doc' | 'research';
+export type CardKind = 'contradiction' | 'partial' | 'supported' | 'answer' | 'not_in_doc' | 'research' | 'lesson';
 export type ChatStatus = 'pending' | 'sent' | 'failed' | 'off';
 export type Card = {
   id: string;
@@ -49,7 +49,7 @@ export type Msg =
   | { type: 'mm.start'; tabId: number; streamId: string | null }
   | { type: 'mm.stop' }
   // background → offscreen; reply StartReply
-  | { type: 'mm.offscreen.start'; streamId: string | null; blazeApiKey: string; exaApiKey: string; settings: Settings; presentation?: PresentationSnapshot; sessionId?: string }
+  | { type: 'mm.offscreen.start'; streamId: string | null; blazeApiKey: string; exaApiKey: string; settings: Settings; presentation?: PresentationSnapshot; sessionId?: string; assistantType?: SessionDraft['assistantType']; sessionTitle?: string }
   | { type: 'mm.presentation.action'; id: string; revision: string; action: PresentationAction }
   | { type: 'mm.offscreen.stop' }
   | { type: 'mm.settings'; settings: Settings }

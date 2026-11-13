@@ -9,6 +9,7 @@ import { SESSION_ID, sessionSchema } from './schema';
 import { HttpError, type SessionService } from './service';
 import type { TeacherService } from './teacher';
 import { teacherRouter } from './teacher-routes';
+import { parseTeacherFile } from './teacher-files';
 import type { TeacherVoiceService } from './teacher-voice';
 
 export interface AppOptions {
@@ -98,6 +99,22 @@ export function createApp({ service, documents, allowedOrigins, teacher, teacher
   app.get('/api/documents', route(() => documents.list()));
 
   app.get('/api/documents/:id', route((req) => documents.get(String(req.params.id ?? ''))));
+  app.post('/api/documents/office', express.raw({ type: 'application/octet-stream', limit: DOC_LIMITS.maxPdfBytes }), route(async req => {
+    if (!Buffer.isBuffer(req.body) || !req.body.length) throw new HttpError(400, 'Không nhận được nội dung tệp. Hãy chọn lại file.');
+    let name: string;
+    try { name = cleanName(decodeURIComponent(req.header('X-File-Name') ?? '')); }
+    catch { throw new HttpError(400, 'Tên tệp không hợp lệ.'); }
+    if (!/\.(docx|pptx)$/i.test(name)) throw new HttpError(400, 'Hỗ trợ Word DOCX và slide PPTX. Với DOC/PPT cũ, hãy lưu lại bằng định dạng mới.');
+    const parsed = await parseTeacherFile(name, req.body, { bytes: DOC_LIMITS.maxPdfBytes, chars: DOC_LIMITS.maxSessionChars });
+    // Empty slides are omitted by extraction; retain their positions for accurate citations.
+    const pages: string[] = [];
+    for (const section of parsed.sections) {
+      const page = Number(section.locator.match(/(\d+)$/)?.[1] ?? pages.length + 1);
+      while (pages.length < page) pages.push('');
+      pages[page - 1] = section.text;
+    }
+    return documents.save(buildDocument(name, parsed.format as 'DOCX' | 'PPTX', req.body.length, pages));
+  }));
 
   // PDF gửi nguyên byte (không multipart); tên file nằm ở header, đã encodeURIComponent.
   app.post(

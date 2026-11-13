@@ -13,7 +13,9 @@ npm run extension:build
 2. Vào một cuộc họp Google Meet, bấm biểu tượng MeetMate trên thanh công cụ để mở side panel.
 3. Trong **Cài đặt**, nhập khóa Blaze (bắt buộc) và khóa Exa (nếu muốn research web).
 4. Tài liệu không còn tải lên ở side panel. Chạy web console và backend MeetMate (`npm run dev` ở thư mục gốc, `npm run meetmate:server` ở `agents/sidekick`), thêm PDF ở trang **Tài liệu** của web, chọn tài liệu khi tạo **Cuộc họp mới** rồi bấm **Gửi phiên cho MeetMate**. Extension thay kho tài liệu bằng đúng tài liệu của phiên đó; mục **Tài liệu** trong side panel chỉ để xem. Bắt đầu nghe mà không có phiên từ web thì cuộc họp không có tài liệu.
-5. Bấm **Bắt đầu nghe**. Lần đầu Chrome sẽ hỏi quyền micro. Nên đeo tai nghe khi dùng.
+5. Trong tab Meet, bấm **biểu tượng MeetMate trên thanh công cụ** để bắt đầu nghe. Lần đầu Chrome sẽ hỏi quyền micro. Nên đeo tai nghe khi dùng.
+
+**Teacher (từ bản 0.4.0).** Chọn **Teacher** khi tạo phiên trên web, chọn PDF/DOCX/PPTX trong thư viện rồi gửi phiên vào extension như Assistant. Không có phòng học web riêng. Gọi “trợ lý” để giảng bài, giải thích, ra/giải bài tập hoặc tìm tài liệu. Kết quả hiện trong khung bên và chat Meet theo tùy chọn tự gửi; bài dài được chia thành nhiều tin. Teacher dùng cùng khóa Blaze/Exa và micro với Assistant, không tự đối chiếu nhận định và chưa phát âm thanh. Sau khi build bản mới, Reload extension ở `chrome://extensions` và tải lại tab web/Meet.
 
 Để tìm kiếm, nói **"Trợ lý ơi, …"** rồi đặt câu hỏi. Chỉ từ khóa **"trợ lý"** mới kích hoạt xử lý; gọi "MeetMate ơi" không kích hoạt nữa. Nếu nói riêng "Trợ lý ơi", câu tiếp theo trong vòng 10 giây được dùng làm câu hỏi. Mỗi lần gọi chỉ xử lý một câu hỏi; muốn hỏi tiếp phải gọi lại từ khóa.
 

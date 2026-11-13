@@ -41,7 +41,7 @@ Nút "Chạy thử với dữ liệu mẫu" trên web vẫn có và được g�
 
 ## 3. Cấu trúc repo
 
-**Teacher:** bước chọn assistant trong `CreateSessionWizard.tsx` mở thêm phòng học tại `/dashboard/teacher`. Hợp đồng dùng chung ở `lib/teacher.ts`; API phòng, tải file, hội thoại và nguồn ở `agents/sidekick/meetmate-server/teacher*.ts`; web gọi qua `app/api/teacher/[...path]/route.ts`. Teacher có micro nhận giọng nói, chat, tài liệu và học nhóm đồng bộ; trả lời bằng chữ, chưa có phát âm thanh. Micro dùng Blaze STT như Assistant, chỉ gửi câu hỏi khi gọi “trợ lý”; chức năng được chọn theo yêu cầu học tập. Cần khóa Blaze ở backend và khóa Exa cho tìm web. Chi tiết phạm vi và cách kiểm tra: `docs/plans/teacher-study-rooms.md`.
+**Teacher:** chọn Teacher trong `CreateSessionWizard.tsx` tạo phiên Google Meet qua extension như Assistant; không còn mục Teacher riêng ở sidebar, không hỏi trình độ, mục tiêu hoặc hình thức học. `assistantType` được truyền xuyên bridge, bản ghi phiên và offscreen. `extension/src/teacher-pipeline.ts` dùng chung micro/STT, chỉ xử lý yêu cầu khi gọi “trợ lý” để giảng, giải thích, ra/giải bài tập hoặc tìm tài liệu; kết quả hiện ở extension và chat Meet. Khóa Blaze/Exa dùng cấu hình của extension. Tài liệu PDF/DOCX/PPTX tải qua `/api/documents/*` cùng origin, đọc ở backend, tối đa 40 MB/file. URL `/dashboard/teacher` cũ chuyển về cuộc họp; API và dữ liệu phòng cũ vẫn giữ. Chi tiết: `docs/plans/teacher-study-rooms.md`.
 
 - `app/`, `components/`, `hooks/`, `lib/`, `mocks/`: web console Next.js 16, React 18, TypeScript, không Tailwind. CSS thường (`app/globals.css`, `app/dashboard/dashboard.css`).
 - `lib/types.ts`: hợp đồng dữ liệu web ↔ extension (`LIMITS`, `Topic`, `ResearchResult`…). Sửa hằng số ở đây, không sửa ở nơi dùng.

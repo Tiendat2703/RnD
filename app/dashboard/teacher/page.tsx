@@ -1,3 +1,3 @@
-import { TeacherRooms } from '../../../components/dashboard/TeacherRooms';
+import { redirect } from 'next/navigation';
 
-export default function TeacherPage() { return <TeacherRooms />; }
+export default function TeacherPage() { redirect('/dashboard/callSessions'); }

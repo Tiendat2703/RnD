@@ -260,7 +260,7 @@ export function SessionList() {
                 <div className="session-card__pills">
                   <span className="pill pill--type">
                     {KIND_ICON[m.kind]}
-                    {MEETING_KIND_LABEL[m.kind]}
+                    {m.assistantType === 'teacher' ? 'Teacher · ' : ''}{MEETING_KIND_LABEL[m.kind]}
                   </span>
                   {m.topicCount > 0 ? <span className="pill pill--type">{m.topicCount} chủ đề</span> : null}
                   {hasLines(m) ? (
@@ -344,7 +344,7 @@ export function SessionList() {
                       </button>
                     </td>
                     <td>
-                      <span className="pill pill--type">{MEETING_KIND_LABEL[m.kind]}</span>
+                      <span className="pill pill--type">{m.assistantType === 'teacher' ? 'Teacher · ' : ''}{MEETING_KIND_LABEL[m.kind]}</span>
                     </td>
                     <td>
                       <StatusPill status={m.status} />

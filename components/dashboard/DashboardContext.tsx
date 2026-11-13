@@ -76,6 +76,7 @@ export interface EndCounts {
 export interface PendingMeeting {
   mode?: 'assistant' | 'presentation';
   presentation?: PresentationSnapshot;
+  assistantType?: import('../../lib/types').AssistantType;
   title: string;
   kind: MeetingKind;
   /** tài liệu đối chiếu đã chọn trong wizard; nội dung được gửi cho extension kèm phiên */

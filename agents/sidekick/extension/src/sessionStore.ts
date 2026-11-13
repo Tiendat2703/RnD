@@ -17,8 +17,9 @@ export function newSession(
   title: string,
   kind: MeetingKind,
   now: number,
+  assistantType?: SavedSession['assistantType'],
 ): SavedSession {
-  return { id, title, kind, startedAt: now, endedAt: null, lines: [], topics: [], cards: [], syncedAt: null };
+  return { id, title, kind, ...(assistantType ? { assistantType } : {}), startedAt: now, endedAt: null, lines: [], topics: [], cards: [], syncedAt: null };
 }
 
 /** Phiên được phép dọn: đã kết thúc và backend đã xác nhận lưu. */
@@ -125,10 +126,10 @@ const serial = <T>(fn: () => Promise<T>): Promise<T> => {
   return next;
 };
 
-export function startSession(id: string, title: string, kind: MeetingKind): Promise<void> {
+export function startSession(id: string, title: string, kind: MeetingKind, assistantType?: SavedSession['assistantType']): Promise<void> {
   return serial(async () => {
     const all = await readAll();
-    all[id] = newSession(id, title, kind, Date.now());
+    all[id] = newSession(id, title, kind, Date.now(), assistantType);
     await chrome.storage.local.set({ [SESSIONS_KEY]: prune(all) });
     await chrome.storage.session.set({ [CURRENT_KEY]: id });
   });

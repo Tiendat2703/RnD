@@ -51,12 +51,12 @@ export async function retryReport(id: string): Promise<SavedSessionResponse> {
 }
 
 export async function listDocuments(): Promise<DocumentMeta[]> {
-  return json(await call("/documents"));
+  return json(await call("/documents", undefined, ''));
 }
 
 /** Tài liệu kèm toàn bộ đoạn: thứ được gửi sang extension khi bắt đầu cuộc họp. */
 export async function getDocument(id: string): Promise<StoredDocument> {
-  return json(await call(`/documents/${encodeURIComponent(id)}`));
+  return json(await call(`/documents/${encodeURIComponent(id)}`, undefined, ''));
 }
 
 /** PDF gửi nguyên byte; backend đọc lớp chữ và chia đoạn theo trang. */
@@ -66,7 +66,7 @@ export async function uploadPdf(file: File): Promise<DocumentMeta> {
       method: "POST",
       headers: { "Content-Type": "application/pdf", "X-File-Name": encodeURIComponent(file.name) },
       body: file,
-    }),
+    }, ''),
   );
 }
 
@@ -77,11 +77,15 @@ export async function uploadTextDocument(doc: {
   size: number;
   pages: string[];
 }): Promise<DocumentMeta> {
-  return json(await call("/documents/text", { method: "POST", body: JSON.stringify(doc) }));
+  return json(await call("/documents/text", { method: "POST", body: JSON.stringify(doc) }, ''));
 }
 
 export async function deleteDocument(id: string): Promise<void> {
-  await json(await call(`/documents/${encodeURIComponent(id)}`, { method: "DELETE" }));
+  await json(await call(`/documents/${encodeURIComponent(id)}`, { method: "DELETE" }, ''));
+}
+export async function uploadDocumentFile(file: File): Promise<DocumentMeta> {
+  if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') return uploadPdf(file);
+  return json(await call('/documents/office', { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', 'X-File-Name': encodeURIComponent(file.name) }, body: file }, ''));
 }
 /** Teacher rooms use the same configured backend as meeting reports. */
 const teacherCall = (path: string, init?: RequestInit) => call(path, init, '');

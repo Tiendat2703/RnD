@@ -1,14 +1,17 @@
 import { BLAZE_LLM_MODEL, BLAZE_LLM_URL } from './config';
 
 export type ChatMessage = { role: 'system' | 'user'; content: string };
-export type Chat = (messages: ChatMessage[], signal: AbortSignal) => Promise<string>;
+export type ChatOptions = { json?: boolean };
+export type Chat = (messages: ChatMessage[], signal: AbortSignal, options?: ChatOptions) => Promise<string>;
 
 export function blazeChat(apiKey: string, fetcher: typeof fetch = globalThis.fetch.bind(globalThis)): Chat {
-  return async (messages, signal) => {
+  return async (messages, signal, options) => {
     const response = await fetcher(BLAZE_LLM_URL, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: BLAZE_LLM_MODEL, messages, temperature: 0.2 }),
+      body: JSON.stringify({ model: BLAZE_LLM_MODEL, messages, temperature: 0.2,
+        ...(options?.json ? { response_format: { type: 'json_object' } } : {}),
+      }),
       signal,
     });
     if (!response.ok) throw new Error(`Blaze LLM lỗi HTTP ${response.status}`);

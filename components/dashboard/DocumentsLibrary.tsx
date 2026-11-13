@@ -3,10 +3,9 @@
 // components/dashboard/DocumentsLibrary.tsx — thư viện tài liệu đối chiếu.
 //
 // Tài liệu lưu ở backend MeetMate (agents/sidekick/meetmate-server). PDF gửi nguyên file, backend
-// đọc lớp chữ và chia đoạn theo trang; .docx và văn bản dán được đọc trên trình duyệt rồi gửi
-// các trang chữ. Khi tạo cuộc họp, người dùng chọn tài liệu; nội dung đi kèm phiên sang extension.
+// đọc lớp chữ và chia đoạn theo trang; DOCX/PPTX cũng được đọc ở backend, văn bản dán gửi
+// dưới dạng trang chữ. Khi tạo cuộc họp, người dùng chọn tài liệu để gửi cùng phiên sang extension.
 import { useRef, useState } from "react";
-import { parseDocx, type ParsedDoc } from "../../lib/docxText";
 import { DOC_LIMITS } from "../../lib/documents";
 import { useDashboard } from "./DashboardContext";
 import { Dialog } from "./Dialog";
@@ -14,12 +13,11 @@ import { IconFolder, IconInfo, IconPlus, IconTrash, IconX } from "./icons";
 
 const DAY = new Intl.DateTimeFormat("vi-VN", { day: "numeric", month: "short", year: "numeric" });
 const isPdf = (f: File) => /\.pdf$/i.test(f.name) || f.type === "application/pdf";
-const isDocx = (f: File) => /\.docx$/i.test(f.name);
 const sizeLabel = (bytes: number) =>
   bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
-/** File đã chọn trong hộp thoại: PDF chưa đọc (backend đọc), hoặc .docx đã đọc trên máy. */
-type Picked = { kind: "pdf"; file: File } | { kind: "docx"; file: File; parsed: ParsedDoc };
+/** File đã chọn trong hộp thoại; backend đọc và chia đoạn sau khi tải lên. */
+type Picked = { file: File };
 
 export function DocumentsLibrary() {
   const { pushToast, documents, docsLoaded, docsError, refreshDocuments, addDocument, removeDocument } = useDashboard();
@@ -28,7 +26,6 @@ export function DocumentsLibrary() {
   const [body, setBody] = useState("");
   const [picked, setPicked] = useState<Picked | null>(null);
   const [fileError, setFileError] = useState("");
-  const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -52,32 +49,20 @@ export function DocumentsLibrary() {
     if (!file) return;
     setFileError("");
     setPicked(null);
-    if (isPdf(file)) {
-      if (file.size > DOC_LIMITS.maxPdfBytes) {
-        setFileError(`${file.name}: file lớn hơn 40 MB.`);
-        return;
-      }
-      setPicked({ kind: "pdf", file });
-      setTitle((t) => t.trim() || file.name.replace(/\.pdf$/i, ""));
+    if (!isPdf(file) && !/\.(docx|pptx)$/i.test(file.name)) {
+      setFileError("Hỗ trợ PDF có lớp chữ, Word DOCX và slide PPTX.");
       return;
     }
-    if (!isDocx(file)) {
-      setFileError("Chỉ đọc được file PDF (có lớp chữ) và .docx.");
+    if (file.size > DOC_LIMITS.maxPdfBytes) {
+      setFileError(`${file.name}: ${(file.size / 1024 / 1024).toFixed(1)} MB, vượt giới hạn ${DOC_LIMITS.maxPdfBytes / 1024 / 1024} MB.`);
       return;
     }
-    setReading(true);
-    try {
-      const parsed = await parseDocx(file);
-      setPicked({ kind: "docx", file, parsed });
-      setTitle((t) => t.trim() || file.name.replace(/\.docx$/i, ""));
-    } catch (e) {
-      setFileError(e instanceof Error ? e.message : "Không đọc được file này.");
-    } finally {
-      setReading(false);
-    }
+    if (!file.size) { setFileError('Tệp đang trống. Hãy chọn lại file có nội dung.'); return; }
+    setPicked({ file });
+    setTitle(t => t.trim() || file.name.replace(/\.(pdf|docx|pptx)$/i, ''));
   };
 
-  const canSave = !saving && !reading && title.trim() !== "" && (picked !== null || body.trim() !== "");
+  const canSave = !saving && title.trim() !== "" && (picked !== null || body.trim() !== "");
 
   const save = async () => {
     if (!canSave) return;
@@ -86,17 +71,10 @@ export function DocumentsLibrary() {
     setFileError("");
     try {
       let meta;
-      if (picked?.kind === "pdf") {
-        // backend lấy tên từ file: đổi tên file theo ô "Tên tài liệu"
-        const fileName = /\.pdf$/i.test(name) ? name : `${name}.pdf`;
-        meta = await addDocument(new File([picked.file], fileName, { type: "application/pdf" }));
-      } else if (picked?.kind === "docx") {
-        meta = await addDocument({
-          name,
-          format: "DOCX",
-          size: picked.file.size,
-          pages: [picked.parsed.paragraphs.map((p) => p.text).join("\n")],
-        });
+      if (picked) {
+        const suffix = picked.file.name.match(/\.[^.]+$/)?.[0] ?? '.pdf';
+        const fileName = name.toLowerCase().endsWith(suffix.toLowerCase()) ? name : name + suffix;
+        meta = await addDocument(new File([picked.file], fileName, { type: picked.file.type }));
       } else {
         meta = await addDocument({ name, format: "TEXT", size: new Blob([body]).size, pages: [body.trim()] });
       }
@@ -196,7 +174,7 @@ export function DocumentsLibrary() {
         open={addOpen}
         onClose={close}
         title="Thêm tài liệu"
-        description="Tải lên file PDF (có lớp chữ) hoặc .docx. Backend MeetMate trên máy này đọc và chia tài liệu thành các đoạn có số trang để trích dẫn."
+        description="Tải PDF có lớp chữ, Word DOCX hoặc slide PPTX. Tài liệu được đọc và lưu để chọn cho phiên Assistant hoặc Teacher."
         footer={
           <>
             <button className="btn btn--ghost" onClick={close} disabled={saving}>
@@ -211,9 +189,9 @@ export function DocumentsLibrary() {
         <input
           ref={fileRef}
           type="file"
-          accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".pdf,application/pdf,.docx,.pptx"
           className="visually-hidden"
-          aria-label="Chọn file PDF hoặc .docx"
+          aria-label="Chọn file PDF, Word hoặc slide"
           onChange={(e) => {
             void pickFile(e.target.files?.[0]);
             e.target.value = "";
@@ -236,9 +214,7 @@ export function DocumentsLibrary() {
             <div className="dropzone__done">
               <strong>{picked.file.name}</strong>
               <span>
-                {picked.kind === "pdf"
-                  ? `PDF, ${sizeLabel(picked.file.size)}. Backend đọc lớp chữ khi bạn bấm Lưu.`
-                  : `Đã đọc ${picked.parsed.paragraphs.length} đoạn văn, khoảng ${picked.parsed.wordCount.toLocaleString("vi-VN")} từ.`}
+                {sizeLabel(picked.file.size)}. Nội dung sẽ được đọc khi bạn bấm Lưu.
               </span>
               <button type="button" className="btn btn--ghost btn--sm" disabled={saving} onClick={() => setPicked(null)}>
                 <IconX />
@@ -247,11 +223,11 @@ export function DocumentsLibrary() {
             </div>
           ) : (
             <>
-              <p>{reading ? "Đang đọc file…" : "Kéo file PDF hoặc .docx vào đây"}</p>
-              <button type="button" className="btn btn--outline btn--sm" disabled={reading} onClick={() => fileRef.current?.click()}>
+              <p>Kéo PDF, Word DOCX hoặc slide PPTX vào đây</p>
+              <button type="button" className="btn btn--outline btn--sm" onClick={() => fileRef.current?.click()}>
                 Chọn file
               </button>
-              <small>PDF tối đa 40 MB, .docx tối đa 10 MB. PDF scan (không có lớp chữ) chưa đọc được.</small>
+              <small>Tối đa {DOC_LIMITS.maxPdfBytes / 1024 / 1024} MB mỗi tệp. PDF scan và hình trong slide chưa có OCR.</small>
             </>
           )}
         </div>

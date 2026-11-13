@@ -127,6 +127,7 @@ export function InstallExtensionDialog() {
     const record: MeetingRecord = {
       id,
       title: installFor.title,
+      assistantType: installFor.assistantType,
       kind: installFor.kind,
       startedAt: new Date().toISOString().slice(0, 19),
       durationSec: 0,
@@ -164,6 +165,10 @@ export function InstallExtensionDialog() {
 
   const sendSession = async () => {
     if(draft.mode==='presentation' && !info?.presentation){setSendError('Cần extension MeetMate 0.4.0 trở lên. Reload extension và tải lại trang web.');return;}
+    if (draft.assistantType === 'teacher' && !info?.supportsTeacher) {
+      setSendError('Extension hiện tại chưa hỗ trợ Teacher. Vào chrome://extensions, nạp lại MeetMate bản 0.4.1 trở lên rồi tải lại trang này và tab Google Meet.');
+      return;
+    }
     setSending(true);
     setSendError("");
     let documents: SessionDocument[];
@@ -190,6 +195,7 @@ export function InstallExtensionDialog() {
       session: {
         id,
         title: draft.title,
+        assistantType: draft.assistantType,
         kind: draft.kind,
         sources: prefs.sources,
         mode:draft.mode, presentation:draft.presentation,
@@ -207,6 +213,7 @@ export function InstallExtensionDialog() {
     const record: MeetingRecord = {
       id: `m-${Date.now()}`,
       title: draft.title,
+      assistantType: draft.assistantType,
       kind: draft.kind,
       startedAt: new Date().toISOString().slice(0, 19),
       durationSec: 0,
@@ -306,7 +313,7 @@ export function InstallExtensionDialog() {
             >
               Quay lại
             </button>
-            <button className="btn btn--dark-ghost" onClick={startDemo}>
+            <button className="btn btn--dark-ghost" onClick={startDemo} hidden={draft.assistantType === 'teacher'}>
               Chạy thử với dữ liệu mẫu
             </button>
             <button className="btn btn--light" onClick={() => void sendSession()} disabled={!allDone || sending}>

@@ -15,6 +15,7 @@ export type Pipeline = {
   verify(text: string): void;
   stop(): void;
 };
+export type PipelineDeps = Parameters<typeof createPipeline>[0];
 
 /**
  * The meeting brain, shared by the extension's offscreen page and the Node meeting simulation:

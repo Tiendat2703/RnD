@@ -8,6 +8,7 @@ import { LiveStt, type SttState } from './live-stt';
 import { blazeChat } from './llm';
 import type { Msg, PanelEvent, RunState, Settings, StartReply } from './messages';
 import { createPipeline, type Pipeline } from './pipeline';
+import { createTeacherPipeline } from './teacher-pipeline';
 import { BlazeStt } from './stt';
 
 // The offscreen page owns the meeting: audio capture, STT and the pipeline. It only has
@@ -41,11 +42,12 @@ async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise
   stop();
   settings = msg.settings;
   library = await loadLibrary();
-  if (!library) notice('info', 'Chưa có tài liệu: MeetMate chỉ nghe và research web, chưa đối chiếu được.');
+  if (!library) notice('info', msg.assistantType === 'teacher' ? 'Teacher chưa có tài liệu trong phiên. Bạn vẫn có thể hỏi kiến thức chung; hãy thêm slide hoặc giáo trình từ web để học theo file.' : 'Chưa có tài liệu: MeetMate chỉ nghe và research web, chưa đối chiếu được.');
   const chat = blazeChat(msg.blazeApiKey);
   const exaKey = msg.exaApiKey;
   const presentation = msg.presentation && msg.sessionId ? createPresentationPipeline({id:msg.sessionId,snapshot:msg.presentation,chat,emit}) : undefined;
-  const pipeline = presentation ?? createPipeline({
+  const pipeline = presentation ?? (msg.assistantType === 'teacher' ? createTeacherPipeline : createPipeline)({
+    sessionTitle: msg.sessionTitle,
     chat,
     library: () => library,
     search: exaKey

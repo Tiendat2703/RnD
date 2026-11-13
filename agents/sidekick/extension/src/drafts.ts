@@ -14,7 +14,7 @@ export type DraftRecord = {
 };
 
 /** Thông tin hiển thị một phiên chờ, không kèm nội dung tài liệu. */
-export type DraftSummary = { id: string; title: string; kind: SessionDraft['kind']; docCount: number; docNames: string[]; preparedAt: number };
+export type DraftSummary = { id: string; title: string; kind: SessionDraft['kind']; mode?: SessionDraft['mode']; assistantType?: SessionDraft['assistantType']; docCount: number; docNames: string[]; preparedAt: number };
 
 /** Giữ tối đa chừng này phiên chờ; phiên cũ nhất bị bỏ trước. */
 export const MAX_DRAFTS = 10;
@@ -23,6 +23,8 @@ export const summaryOf = (r: DraftRecord): DraftSummary => ({
   id: r.id,
   title: r.draft.title,
   kind: r.draft.kind,
+  ...(r.draft.mode ? { mode: r.draft.mode } : {}),
+  ...(r.draft.assistantType ? { assistantType: r.draft.assistantType } : {}),
   docCount: r.docs.length,
   docNames: r.docs.map(d => d.name),
   preparedAt: r.preparedAt,

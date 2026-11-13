@@ -15,7 +15,7 @@ export interface DocumentChunk {
   text: string;
 }
 
-export type DocumentFormat = "PDF" | "DOCX" | "TEXT";
+export type DocumentFormat = "PDF" | "DOCX" | "PPTX" | "TEXT";
 
 /** Thông tin hiển thị trong thư viện, không kèm nội dung. */
 export interface DocumentMeta {

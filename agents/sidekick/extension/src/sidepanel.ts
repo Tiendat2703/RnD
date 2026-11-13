@@ -38,6 +38,7 @@ const STATE_LABEL: Record<View['state'], string> = {
   idle: 'Chưa chạy', starting: 'Đang kết nối', live: 'Đang nghe', reconnecting: 'Đang kết nối lại', error: 'Lỗi',
 };
 const KIND_LABEL: Record<Card['kind'], string> = {
+  lesson: 'Teacher · Bài học',
   contradiction: 'Mâu thuẫn với tài liệu', partial: 'Khớp một phần', supported: 'Khớp tài liệu',
   answer: 'Trả lời từ tài liệu', not_in_doc: 'Tài liệu không có', research: 'Nguồn tham khảo',
 };
@@ -60,8 +61,7 @@ function renderControl(): void {
   const toggle = $<HTMLButtonElement>('toggle');
   toggle.textContent = running() ? 'Dừng' : 'Bắt đầu nghe';
   toggle.className = running() ? 'btn big stop' : 'btn primary big';
-  const parts = [elapsed(), `${docs.length} tài liệu`, settings.postToChat ? 'gửi vào chat' : 'không gửi chat', `v${chrome.runtime.getManifest().version}`].filter(Boolean);
-  if(view.presentation) parts.splice(2,1,'Thuyết trình · chỉ micro · không gửi chat');
+  const parts = [view.presentation ? 'Thuyết trình' : view.assistantType === 'teacher' ? 'Teacher' : 'Assistant', elapsed(), `${docs.length} tài liệu`, view.presentation ? 'chỉ micro · không gửi chat' : settings.postToChat ? 'gửi vào chat' : 'không gửi chat', `v${chrome.runtime.getManifest().version}`].filter(Boolean);
   $('meta').textContent = running() ? parts.join(' · ')
     : `${parts.join(' · ')} — mẹo: bấm biểu tượng MeetMate trên thanh công cụ khi đang ở tab Meet để bắt đầu nghe ngay`;
 
@@ -186,14 +186,14 @@ function renderSession(): void {
     select.disabled = true;
     info.innerHTML = `Đang ghi phiên <code>${esc(recording)}</code>. Dừng nghe rồi mới đổi được phiên.`;
   } else {
-    const options = drafts.map(d => `<option value="${esc(d.id)}">${esc(d.title)} · ${d.docCount} tài liệu · ${time(d.preparedAt)}</option>`);
+    const options = drafts.map(d => `<option value="${esc(d.id)}">${d.mode === 'presentation' ? 'Thuyết trình' : d.assistantType === 'teacher' ? 'Teacher' : 'Assistant'} · ${esc(d.title)} · ${d.docCount} tài liệu · ${time(d.preparedAt)}</option>`);
     options.push(`<option value="">Phiên mới (tự tạo mã khi bắt đầu)</option>`);
     select.innerHTML = options.join('');
     select.value = selected && drafts.some(d => d.id === selected) ? selected : '';
     select.disabled = false;
     const chosen = drafts.find(d => d.id === select.value);
     info.innerHTML = chosen
-      ? `Từ web · ${esc(MEETING_KIND_LABEL[chosen.kind] ?? chosen.kind)} · mã <code>${esc(chosen.id)}</code>`
+      ? `Từ web · ${chosen.mode === 'presentation' ? 'Thuyết trình' : chosen.assistantType === 'teacher' ? 'Teacher' : 'Assistant'} · ${esc(MEETING_KIND_LABEL[chosen.kind] ?? chosen.kind)} · mã <code>${esc(chosen.id)}</code>`
         + (chosen.docCount ? `<br>Tài liệu: ${chosen.docNames.map(esc).join(', ')}` : '<br>Phiên này không có tài liệu.')
       : drafts.length
         ? 'Không dùng phiên nào từ web: bắt đầu nghe sẽ tạo phiên mới với mã <code>ext-…</code>, không có tài liệu. Phiên vẫn hiện trên web sau khi họp.'

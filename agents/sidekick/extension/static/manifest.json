@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MeetMate",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Nghe cuộc họp Google Meet, tìm trong tài liệu hoặc web khi gọi trợ lý và lưu phiên cho web console MeetMate.",
   "minimum_chrome_version": "116",
   "permissions": ["tabCapture", "offscreen", "storage", "sidePanel", "scripting"],
