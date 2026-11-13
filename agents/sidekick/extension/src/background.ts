@@ -7,8 +7,8 @@ import {
   type SessionDraft,
 } from '../../../../lib/bridgeProtocol';
 import { deleteDraft, getDraftRecord, putDraft, type DraftRecord } from './drafts';
-import { storedDocsOf } from './docs/session';
-import { replaceDocs } from './docs/store';
+import { mergeDocs, storedDocsOf } from './docs/session';
+import { listDocs, replaceDocs } from './docs/store';
 import { isMeetingUrl } from './meet-url';
 import { DEFAULT_SETTINGS, STORAGE_KEYS, type Msg, type PanelEvent, type PostReply, type SelectReply, type Settings, type StartReply } from './messages';
 import { currentId, deleteSession, finishCurrent, listSessions, markSynced, recordEvent, startSession } from './sessionStore';
@@ -397,6 +397,31 @@ async function endFromMeet(tabId: number, reason: 'left' | 'meet-closed'): Promi
   }
 }
 
+/**
+ * The web adds documents to a session that is being recorded (they join the library the pipeline
+ * reads, effective for the next question) or that is still waiting in the list (they join its own
+ * documents, loaded when it is chosen or started).
+ */
+async function addDocuments(id: string, incoming: ReturnType<typeof storedDocsOf>): Promise<ExtToWeb> {
+  const fail = (error: string): ExtToWeb => ({ type: 'documents.added', id, ok: false, error });
+  if (!incoming.length) return fail('Không có tài liệu hợp lệ để thêm.');
+  if (isRunning(await currentView())) {
+    if ((await currentId()) !== id) return fail('MeetMate đang nghe một phiên khác. Mở đúng phiên đang diễn ra để thêm tài liệu.');
+    const { docs, added } = mergeDocs(await listDocs(), incoming);
+    if (added) await setDocuments(docs);
+    return { type: 'documents.added', id, ok: true, added, total: docs.length };
+  }
+  const record = await getDraftRecord(id);
+  if (!record) return fail('Phiên này không còn trong extension (đã kết thúc hoặc đã bị hủy).');
+  const { docs, added } = mergeDocs(record.docs, incoming);
+  if (added) {
+    await putDraft({ ...record, docs });
+    if ((await selectedId()) === id) await setDocuments(docs);
+    await notifyDrafts();
+  }
+  return { type: 'documents.added', id, ok: true, added, total: docs.length };
+}
+
 async function handleWeb(web: Extract<Msg, { type: 'mm.web' }>['msg']): Promise<ExtToWeb | undefined> {
   switch (web.type) {
     case 'ping':
@@ -417,6 +442,8 @@ async function handleWeb(web: Extract<Msg, { type: 'mm.web' }>['msg']): Promise<
       // nothing recording: the web cancelled a session it sent but never started
       else if (web.id) await discardDraft(String(web.id));
       return undefined;
+    case 'session.addDocuments':
+      return addDocuments(String(web.id), storedDocsOf(web.documents));
     case 'sessions.list':
       return { type: 'sessions', sessions: await listSessions() };
     case 'sessions.delete':

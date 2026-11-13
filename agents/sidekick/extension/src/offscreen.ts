@@ -1,5 +1,6 @@
 import { ExaProvider } from '../../server/providers/exa';
 import { startCapture } from './audio';
+import { RESEARCH_MAX_SOURCES, RESEARCH_SOURCE_CHARS } from './config';
 import { buildLibrary, type DocLibrary } from './doccheck';
 import { listDocs } from './docs/store';
 import { LiveStt, type SttState } from './live-stt';
@@ -44,7 +45,9 @@ async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise
   const pipeline = createPipeline({
     chat,
     library: () => library,
-    search: exaKey ? (q, s) => new ExaProvider(exaKey).search(q, s) : null,
+    search: exaKey
+      ? (q, s) => new ExaProvider(exaKey, undefined, { numResults: RESEARCH_MAX_SOURCES, maxCharacters: RESEARCH_SOURCE_CHARS }).search(q, s)
+      : null,
     settings: () => settings!,
     emit,
     post: (cardId, messages) => void chrome.runtime.sendMessage({ type: 'mm.post', cardId, messages } satisfies Msg).catch(() => undefined),

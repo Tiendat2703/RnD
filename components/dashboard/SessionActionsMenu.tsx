@@ -10,16 +10,18 @@
 // trong dialog, theo đúng quy tắc đã ghi ở docs/design/MEETMATE-DESIGN.md.
 import { useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
-import { IconInfo, IconMore, IconPencil, IconTrash } from "./icons";
+import { IconFolder, IconInfo, IconMore, IconPencil, IconTrash } from "./icons";
 
 interface Props {
   onDetails: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  /** chỉ có với cuộc họp đang diễn ra */
+  onAddDocs?: () => void;
   label?: string;
 }
 
-export function SessionActionsMenu({ onDetails, onEdit, onDelete, label }: Props) {
+export function SessionActionsMenu({ onDetails, onEdit, onDelete, onAddDocs, label }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -63,6 +65,12 @@ export function SessionActionsMenu({ onDetails, onEdit, onDelete, label }: Props
             <IconInfo />
             Chi tiết
           </button>
+          {onAddDocs ? (
+            <button className="menu__item" role="menuitem" onClick={run(onAddDocs)}>
+              <IconFolder />
+              Thêm tài liệu
+            </button>
+          ) : null}
           <button className="menu__item" role="menuitem" onClick={run(onEdit)}>
             <IconPencil />
             Sửa cuộc họp

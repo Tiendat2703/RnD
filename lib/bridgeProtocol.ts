@@ -34,6 +34,8 @@ export type WebToExt =
   | { type: "session.prepare"; session: SessionDraft }
   /** dừng phiên đang nghe; không có phiên nào đang nghe thì bỏ phiên `id` đã gửi mà chưa bắt đầu */
   | { type: "session.stop"; id?: string }
+  /** thêm tài liệu vào phiên đã gửi hoặc đang nghe (`id`); extension gộp vào kho của phiên đó và trả `documents.added` */
+  | { type: "session.addDocuments"; id: string; documents: SessionDocument[] }
   /** xin toàn bộ phiên extension đã lưu (kể cả phiên diễn ra khi web không mở) */
   | { type: "sessions.list" }
   /** xóa một phiên đã lưu (khi người dùng xóa cuộc họp trên web) */
@@ -93,6 +95,8 @@ export interface SavedSession {
 export type ExtToWeb =
   | { type: "sessions"; sessions: SavedSession[] }
   | { type: "pong"; info: ExtInfo }
+  /** kết quả `session.addDocuments`: `added` = số tài liệu mới vào kho, `total` = tổng tài liệu của phiên sau đó */
+  | { type: "documents.added"; id: string; ok: boolean; added?: number; total?: number; error?: string }
   /** `running` = chạy khỏe; `active` = phiên còn mở dù đang chạy kém (vd. không có micro) */
   | { type: "status"; status: string; running: boolean; active?: boolean; mock?: boolean; sessionId: string | null }
   | { type: "line"; line: BridgeLine }

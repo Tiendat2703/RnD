@@ -9,6 +9,8 @@ import { EMPTY_VIEW, reduce } from './view';
 const chunk: Chunk = { id: 'hd#4', docId: 'hd', docName: 'hop-dong.pdf', page: 3, pageEnd: 3, text: 'phí bảo trì hệ thống là 12.000.000 đồng mỗi tháng' };
 const lib = buildLibrary([chunk]);
 const flush = () => new Promise(r => setTimeout(r, 0));
+/** the last event other than request progress (which always ends a request) */
+const lastOf = (events: PanelEvent[]) => events.filter(e => e.kind !== 'progress').at(-1);
 
 function setup(settings: Settings = DEFAULT_SETTINGS, reply = '{"items":[]}') {
   const events: PanelEvent[] = [];
@@ -61,7 +63,7 @@ describe('createPipeline', () => {
     });
     p.onFinal('Trợ lý ơi, đội mình có mấy người?');
     await flush();
-    expect(events.at(-1)).toMatchObject({ kind: 'notice', level: 'error', message: 'Đối chiếu tài liệu: Blaze LLM lỗi HTTP 402' });
+    expect(lastOf(events)).toMatchObject({ kind: 'notice', level: 'error', message: 'Đối chiếu tài liệu: Blaze LLM lỗi HTTP 402' });
     expect(posts).toEqual([]);
   });
 });
@@ -162,7 +164,7 @@ describe('question source routing', () => {
     await flush();
     expect(s.search).not.toHaveBeenCalled();
     expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
-    expect(s.events.at(-1)).toMatchObject({ kind: 'notice', message: expect.stringContaining('cần tìm trên web') });
+    expect(lastOf(s.events)).toMatchObject({ kind: 'notice', message: expect.stringContaining('cần tìm trên web') });
     s.p.stop();
   });
 
@@ -172,7 +174,7 @@ describe('question source routing', () => {
     await flush();
     expect(s.search).not.toHaveBeenCalled();
     expect(s.events.filter(e => e.kind === 'card')).toEqual([]);
-    expect(s.events.at(-1)).toMatchObject({ kind: 'notice', message: expect.stringContaining('nói rõ') });
+    expect(lastOf(s.events)).toMatchObject({ kind: 'notice', message: expect.stringContaining('nói rõ') });
     s.p.stop();
   });
 
@@ -211,5 +213,72 @@ describe('reduce', () => {
     expect(v.transcript).toEqual([{ text: 'xin chào', at: 1 }]);
     expect(v.cards.map(c => `${c.id}:${c.chat}`)).toEqual(['b:pending', 'a:failed']);
     expect(v.cards[1].chatError).toBe('Không thấy khung chat');
+  });
+});
+
+describe('keyword requests feel fast', () => {
+  const progressOf = (events: PanelEvent[]) => events.flatMap(e => (e.kind === 'progress' ? [e.step] : []));
+
+  it('checks documents while routing, so a document answer needs no second round trip', async () => {
+    const order: string[] = [];
+    let routed!: (raw: string) => void;
+    const chat = vi.fn((messages: ChatMessage[]) => {
+      if (messages[0].content.includes('Phân loại NGUỒN')) {
+        order.push('route');
+        return new Promise<string>(resolve => { routed = resolve; });
+      }
+      order.push('docs');
+      return Promise.resolve(JSON.stringify({ items: [{ kind: 'answer', utterance: 'phí', chunkId: chunk.id, quote: chunk.text, text: '12 triệu.' }] }));
+    });
+    const events: PanelEvent[] = [];
+    const p = createPipeline({
+      chat, library: () => lib, search: null, settings: () => DEFAULT_SETTINGS,
+      emit: e => events.push(e), post: () => undefined,
+    });
+    p.onFinal('Trợ lý ơi, phí bảo trì bao nhiêu?');
+    await flush();
+    expect([...order].sort()).toEqual(['docs', 'route']); // both started before routing answered
+    routed('{"source":"docs","query":""}');
+    await flush();
+    expect(chat).toHaveBeenCalledTimes(2);
+    expect(events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'answer', text: '12 triệu.' } }]);
+    expect(progressOf(events)).toEqual(['route', 'docs', null]);
+  });
+
+  it('cancels the early document check when the question goes to the web, and shows each step', async () => {
+    const signals: AbortSignal[] = [];
+    const chat = vi.fn((messages: ChatMessage[], signal: AbortSignal) => {
+      if (messages[0].content.includes('Phân loại NGUỒN')) return Promise.resolve('{"source":"web","query":"Ngũ Hành Sơn"}');
+      if (messages[0].content.includes('"items"')) {
+        signals.push(signal);
+        return new Promise<string>(() => undefined); // never answers: must not hold the request up
+      }
+      return Promise.resolve('{"summary":"Ở Đà Nẵng.","sources":[{"url":"https://a.vn","reason":"Chính thức"}]}');
+    });
+    const search = vi.fn(async () => [1, 2, 3, 4, 5].map(i => ({ title: `T${i}`, url: i === 1 ? 'https://a.vn' : `https://x${i}.vn`, text: 'x'.repeat(4000) })));
+    const events: PanelEvent[] = [];
+    const p = createPipeline({
+      chat, library: () => lib, search, settings: () => DEFAULT_SETTINGS,
+      emit: e => events.push(e), post: () => undefined,
+    });
+    p.onFinal('Trợ lý ơi, Ngũ Hành Sơn ở đâu?');
+    await flush();
+    await flush();
+    expect(signals[0].aborted).toBe(true);
+    expect(events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'research', text: 'Ở Đà Nẵng.' } }]);
+    expect(progressOf(events)).toEqual(['route', 'web', 'writing', null]);
+    // the summary reads at most 3 sources of 1 500 characters
+    const prompt = chat.mock.calls.at(-1)![0][1].content;
+    expect(prompt).not.toContain('https://x4.vn');
+    expect(prompt.match(/x{1500}/g)).toHaveLength(3);
+    expect(prompt).not.toMatch(/x{1501}/);
+  });
+
+  it('keeps the request clock across steps and clears it when done', () => {
+    let v = reduce(EMPTY_VIEW, { kind: 'progress', step: 'route', question: 'q' }, 10);
+    v = reduce(v, { kind: 'progress', step: 'docs', question: 'q' }, 20);
+    expect(v.progress).toEqual({ step: 'docs', question: 'q', at: 10 });
+    v = reduce(v, { kind: 'progress', step: null, question: 'q' }, 30);
+    expect(v.progress).toBeNull();
   });
 });

@@ -25,4 +25,12 @@ describe('webEvents', () => {
     expect(webEventsOf({ kind: 'notice', level: 'info', message: 'i' }, ctx, () => 'l')).toEqual([]);
     expect(webEventsOf({ kind: 'notice', level: 'error', message: 'e' }, ctx, () => 'l')).toEqual([{ type: 'error', message: 'e' }]);
   });
+
+  it('tiến trình câu hỏi "trợ lý" thành hàng sáu bước của panel và web', () => {
+    const id = () => 'l';
+    expect(webEventsOf({ kind: 'progress', step: 'route', question: 'q' }, ctx, id)).toEqual([{ type: 'stage', stage: 'searching' }]);
+    expect(webEventsOf({ kind: 'progress', step: 'web', question: 'q' }, ctx, id)).toEqual([{ type: 'stage', stage: 'searching' }]);
+    expect(webEventsOf({ kind: 'progress', step: 'writing', question: 'q' }, ctx, id)).toEqual([{ type: 'stage', stage: 'writing' }]);
+    expect(webEventsOf({ kind: 'progress', step: null, question: 'q' }, ctx, id)).toEqual([{ type: 'stage', stage: null }]);
+  });
 });

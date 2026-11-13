@@ -4,6 +4,8 @@ export class ExaProvider {
     private apiKey = process.env.EXA_API_KEY,
     // search() calls this as a method; browser fetch requires the global receiver.
     private fetcher: typeof fetch = globalThis.fetch.bind(globalThis),
+    // MeetMate asks for fewer, shorter results to answer faster; Sidekick keeps the defaults.
+    private opts: { numResults: number; maxCharacters: number } = { numResults: 4, maxCharacters: 4500 },
   ) {}
   async search(query: string, signal?: AbortSignal): Promise<Source[]> {
     if (!this.apiKey)
@@ -14,8 +16,8 @@ export class ExaProvider {
       body: JSON.stringify({
         query,
         type: 'auto',
-        numResults: 4,
-        contents: { text: { maxCharacters: 4500 } },
+        numResults: this.opts.numResults,
+        contents: { text: { maxCharacters: this.opts.maxCharacters } },
       }),
       signal: signal
         ? AbortSignal.any([signal, AbortSignal.timeout(30000)])
@@ -37,7 +39,7 @@ export class ExaProvider {
         url: item.url,
         text: (
           item.text || 'No extract available; open the source to verify.'
-        ).slice(0, 4500),
+        ).slice(0, this.opts.maxCharacters),
       }));
   }
 }

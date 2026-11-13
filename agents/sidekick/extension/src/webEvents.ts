@@ -71,6 +71,9 @@ export function webEventsOf(event: PanelEvent, ctx: WebContext, lineId: () => st
     }
     case 'notice':
       return event.level === 'error' ? [{ type: 'error', message: event.message }] : [];
+    case 'progress':
+      // the six-step row: looking things up, then writing the web summary; done = back to listening
+      return [{ type: 'stage', stage: event.step === null ? null : event.step === 'writing' ? 'writing' : 'searching' }];
     default:
       return [];
   }

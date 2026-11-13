@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DOC_LIMITS } from '../../../../../lib/documents';
-import { storedDocsOf } from './session';
+import { mergeDocs, storedDocsOf } from './session';
 
 const chunk = (docId: string, n: number, text = 'Ngân sách 200 triệu.') => ({ id: `${docId}#${n}`, docId: 'x', docName: 'x', page: n, pageEnd: n, text });
 const doc = (id: string, chunks = [chunk(id, 1), chunk(id, 2)]) => ({ id, name: `${id}.pdf`, pageCount: 2, chunks });
@@ -26,5 +26,19 @@ describe('storedDocsOf', () => {
     const big = 'a'.repeat(DOC_LIMITS.maxSessionChars - 10);
     const docs = storedDocsOf([doc('dbig1', [chunk('dbig1', 1, big)]), doc('dabc1')]);
     expect(docs.map(d => d.id)).toEqual(['dbig1']);
+  });
+});
+
+describe('mergeDocs', () => {
+  const [a, b] = storedDocsOf([doc('dabc1'), doc('dxyz2')]);
+  it('thêm tài liệu mới, bỏ qua tài liệu trùng id', () => {
+    expect(mergeDocs([a], [a, b])).toEqual({ docs: [a, b], added: 1 });
+    expect(mergeDocs([a, b], [b])).toEqual({ docs: [a, b], added: 0 });
+  });
+  it('giữ giới hạn số tài liệu và tổng ký tự của phiên', () => {
+    const full = storedDocsOf(Array.from({ length: DOC_LIMITS.maxPerSession }, (_, i) => doc(`dabc${i}`)));
+    expect(mergeDocs(full, [b]).added).toBe(0);
+    const big = storedDocsOf([doc('dbig1', [chunk('dbig1', 1, 'a'.repeat(DOC_LIMITS.maxSessionChars - 10))])]);
+    expect(mergeDocs(big, [b]).added).toBe(0);
   });
 });

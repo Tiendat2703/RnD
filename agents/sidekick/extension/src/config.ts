@@ -35,3 +35,6 @@ export const REPORT_TTL_MS = 10 * 60_000;
 export const DOC_CONTEXT_LINES = 4;
 // "Trợ lý" said alone: only the next line within this window is the question.
 export const WAKE_FOLLOWUP_MS = 10_000;
+// Web answers: fewer, shorter sources make Exa reply faster and the LLM read and write less.
+export const RESEARCH_MAX_SOURCES = 3;
+export const RESEARCH_SOURCE_CHARS = 1_500;

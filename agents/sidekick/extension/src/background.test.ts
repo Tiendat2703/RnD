@@ -3,8 +3,9 @@ import type { SavedSession } from '../../../../lib/bridgeProtocol';
 import { newSession } from './sessionStore';
 
 // IndexedDB does not exist in the test runtime; the document library is checked through this mock.
-const replaceDocs = vi.fn(async (_docs: unknown[]) => undefined);
-vi.mock('./docs/store', () => ({ replaceDocs: (docs: unknown[]) => replaceDocs(docs) }));
+let library: { id: string; chars: number }[] = [];
+const replaceDocs = vi.fn(async (docs: unknown[]) => void (library = docs as typeof library));
+vi.mock('./docs/store', () => ({ replaceDocs: (docs: unknown[]) => replaceDocs(docs), listDocs: async () => library }));
 // Web sessions waiting to be recorded (drafts.ts, IndexedDB in the extension), kept in memory here.
 type Draft = { id: string; draft: { id: string; title: string }; docs: { id: string }[]; preparedAt: number };
 const draftStore = new Map<string, Draft>();
@@ -104,6 +105,7 @@ const SESSIONS = () => ({ sessions: { s1: newSession('s1', 'Họp tuần', 'khac
 beforeEach(() => {
   vi.useFakeTimers();
   replaceDocs.mockClear();
+  library = [];
   draftStore.clear();
 });
 afterEach(() => vi.useRealTimers());
@@ -306,5 +308,51 @@ describe('background: chọn phiên web trong extension', () => {
     expect(t.saved()).toBeUndefined();
     expect(draftStore.has('s1')).toBe(true);
     expect(t.local.selectedDraftId).toBe('s1');
+  });
+});
+
+const add = (id: string, documents: unknown[]) => ({ type: 'mm.web', msg: { type: 'session.addDocuments', id, documents } });
+const DOC2 = [{ id: 'dxyz2', name: 'Bảng giá.pdf', pageCount: 1, chunks: [{ id: 'dxyz2#1', docId: 'dxyz2', docName: 'Bảng giá.pdf', page: 1, pageEnd: 1, text: 'Gói Pro 500.000 đồng.' }] }];
+
+describe('background: thêm tài liệu vào phiên', () => {
+  it('phiên đang nghe: gộp vào kho pipeline đang đọc, báo cho offscreen và trả xác nhận', async () => {
+    library = [{ id: 'dabc1', chars: 10 }];
+    const t = await boot({ session: LIVE, local: SESSIONS() });
+    const reply = await t.send(add('s1', DOC2), 9);
+    expect(reply).toEqual({ type: 'documents.added', id: 's1', ok: true, added: 1, total: 2 });
+    expect(replaceDocs).toHaveBeenLastCalledWith([{ id: 'dabc1', chars: 10 }, expect.objectContaining({ id: 'dxyz2' })]);
+    expect(runtimeSend()).toHaveBeenCalledWith({ type: 'mm.docs.changed' });
+  });
+
+  it('gửi lại tài liệu đã có thì không nhân đôi', async () => {
+    const t = await boot({ session: LIVE, local: SESSIONS() });
+    await t.send(add('s1', DOC2), 9);
+    replaceDocs.mockClear();
+    expect(await t.send(add('s1', DOC2), 9)).toEqual({ type: 'documents.added', id: 's1', ok: true, added: 0, total: 1 });
+    expect(replaceDocs).not.toHaveBeenCalled();
+  });
+
+  it('không thêm vào phiên khác khi đang nghe một phiên', async () => {
+    const t = await boot({ session: LIVE, local: SESSIONS() });
+    expect(await t.send(add('w7', DOC2), 9)).toMatchObject({ type: 'documents.added', id: 'w7', ok: false });
+    expect(replaceDocs).not.toHaveBeenCalled();
+  });
+
+  it('phiên còn chờ: tài liệu vào bản ghi riêng của phiên, và vào kho nếu phiên đang được chọn', async () => {
+    const t = await boot({ session: {}, local: {} });
+    await t.send(prepare('w1', DOCS), 9);
+    await t.send(prepare('w2'), 9);
+    expect(await t.send(add('w1', DOC2), 9)).toEqual({ type: 'documents.added', id: 'w1', ok: true, added: 1, total: 2 });
+    expect(draftStore.get('w1')!.docs.map((d) => d.id)).toEqual(['dabc1', 'dxyz2']);
+    expect(replaceDocs).toHaveBeenLastCalledWith([]); // w2 đang được chọn, kho không đổi
+    await t.send({ type: 'mm.selectDraft', id: 'w1' });
+    expect(replaceDocs).toHaveBeenLastCalledWith([expect.objectContaining({ id: 'dabc1' }), expect.objectContaining({ id: 'dxyz2' })]);
+  });
+
+  it('phiên không còn trong extension, hoặc dữ liệu rỗng/hỏng: báo lỗi, không đổi gì', async () => {
+    const t = await boot({ session: {}, local: {} });
+    expect(await t.send(add('gone', DOC2), 9)).toMatchObject({ ok: false });
+    await t.send(prepare('w1'), 9);
+    expect(await t.send(add('w1', [{ id: '../x', chunks: [] }]), 9)).toMatchObject({ ok: false });
   });
 });

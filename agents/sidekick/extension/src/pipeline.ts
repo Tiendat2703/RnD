@@ -67,9 +67,12 @@ export function createPipeline(deps: {
         if (input.mode === 'ask') notice('Câu hỏi này cần tìm trên web. Hãy bật Research web và thêm khóa Exa trong cài đặt.');
         return true;
       }
+      const question = input.lines.join(' ');
+      deps.emit({ kind: 'progress', step: 'web', question });
       try {
-        const result = await research({ topic: input.lines.join(' '), query: route.query, keywords: [] }, {
+        const result = await research({ topic: question, query: route.query, keywords: [] }, {
           search: deps.search, chat: deps.chat,
+          onSearched: () => deps.emit({ kind: 'progress', step: 'writing', question }),
         }, signal);
         if (signal.aborted) return true;
         if (result) onResearch(result);
@@ -85,6 +88,7 @@ export function createPipeline(deps: {
     },
     emit: onFinding,
     onError: message => error(`Đối chiếu tài liệu: ${message}`),
+    progress: (step, question) => deps.emit({ kind: 'progress', step, question }),
     now,
   });
 

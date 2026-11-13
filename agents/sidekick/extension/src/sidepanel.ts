@@ -1,3 +1,4 @@
+import type { AskStep } from './assistant';
 import { FULL_DOC_MAX_CHARS } from './config';
 import { MEETING_KIND_LABEL } from '../../../../lib/types';
 import type { SavedSession } from '../../../../lib/bridgeProtocol';
@@ -24,6 +25,13 @@ let settings: Settings = DEFAULT_SETTINGS;
 let hasBlazeKey = false;
 let partial = '';
 let localNotice: { level: 'info' | 'error'; message: string } | null = null;
+
+const STEP_LABEL: Record<AskStep, string> = {
+  route: 'Đã nghe câu hỏi, đang tra tài liệu và chọn nguồn…',
+  docs: 'Đang tra tài liệu…',
+  web: 'Đang tìm trên web…',
+  writing: 'Đã có nguồn, đang viết câu trả lời…',
+};
 
 const STATE_LABEL: Record<View['state'], string> = {
   idle: 'Chưa chạy', starting: 'Đang kết nối', live: 'Đang nghe', reconnecting: 'Đang kết nối lại', error: 'Lỗi',
@@ -64,6 +72,15 @@ function renderControl(): void {
   if (shown) {
     notice.dataset.level = shown.level;
     notice.textContent = shown.message;
+  }
+
+  const working = running() ? view.progress : null;
+  $('working').hidden = !working;
+  if (working) {
+    const secs = Math.max(0, Math.floor((Date.now() - working.at) / 1000));
+    const q = working.question.length > 80 ? `${working.question.slice(0, 79)}…` : working.question;
+    $('working-step').textContent = `${STEP_LABEL[working.step]}${secs >= 1 ? ` · ${secs} giây` : ''}`;
+    $('working-q').textContent = q ? `“${q}”` : '';
   }
 
   const last = view.transcript.at(-1);

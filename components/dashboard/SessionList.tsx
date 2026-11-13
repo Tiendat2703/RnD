@@ -23,6 +23,7 @@ import {
   type MeetingRecord,
 } from "../../lib/dashboardData";
 import { useDashboard } from "./DashboardContext";
+import { AddDocumentsDialog } from "./AddDocumentsDialog";
 import { Dialog } from "./Dialog";
 import { SessionActionsMenu } from "./SessionActionsMenu";
 import {
@@ -105,6 +106,7 @@ export function SessionList() {
   const [sort, setSort] = useState<Sort>("newest");
   const [view, setView] = useState<View>("card");
   const [deleteOf, setDeleteOf] = useState<MeetingRecord | null>(null);
+  const [addDocsOf, setAddDocsOf] = useState<MeetingRecord | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("meetmate-view");
@@ -147,6 +149,7 @@ export function SessionList() {
     onDetails: () => openDetail(m),
     onEdit: () => openWizard(m.id),
     onDelete: () => setDeleteOf(m),
+    onAddDocs: m.status === "live" ? () => setAddDocsOf(m) : undefined,
   });
 
   /** phiên này có bản ghi thật trong vùng làm việc hay không */
@@ -380,6 +383,8 @@ export function SessionList() {
           </table>
         </div>
       )}
+
+      <AddDocumentsDialog meeting={addDocsOf} onClose={() => setAddDocsOf(null)} />
 
       <Dialog
         open={deleteOf !== null}

@@ -26,6 +26,8 @@ export type Card = {
   repeat?: boolean;
 };
 
+import type { AskStep } from './assistant';
+
 export type RunState = 'idle' | 'starting' | 'live' | 'reconnecting' | 'error';
 export type PanelEvent =
   | { kind: 'state'; state: RunState; detail?: string }
@@ -33,7 +35,9 @@ export type PanelEvent =
   | { kind: 'final'; text: string; at: number }
   | { kind: 'card'; card: Card }
   | { kind: 'chat'; cardId: string; status: ChatStatus; detail?: string }
-  | { kind: 'notice'; level: 'info' | 'error'; message: string };
+  | { kind: 'notice'; level: 'info' | 'error'; message: string }
+  /** a "trợ lý" request is being handled (step), or has finished (null) */
+  | { kind: 'progress'; step: AskStep | null; question: string };
 
 export type Msg =
   // side panel → background; reply StartReply. streamId null = microphone only (automated tests,

@@ -103,6 +103,9 @@ test('records the meeting and answers keyword-invoked questions in the Meet chat
   // Keyword requests: one answered from the plan, one explicitly asks about missing file content.
   await expect.poll(async () => (await chat.allTextContents()).join('\n'), { timeout: 60_000, intervals: [2_000] })
     .toMatch(/ZaloPay[\s\S]*Tài liệu không đề cập/);
+  // The last two requests come at the end of the recording: wait for their answers too.
+  await expect.poll(async () => (await chat.allTextContents()).join('\n'), { timeout: 60_000, intervals: [2_000] })
+    .toMatch(/12\.000\.000[\s\S]*React Native/);
 
   const messages = await chat.allTextContents();
   console.log(`Meet chat (${messages.length}):\n${messages.map(m => `  ${m.replace(/\n/g, ' ⏎ ')}`).join('\n')}`);

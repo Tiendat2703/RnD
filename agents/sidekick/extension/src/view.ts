@@ -1,3 +1,4 @@
+import type { AskStep } from './assistant';
 import type { Card, PanelEvent, RunState } from './messages';
 
 /** What the side panel shows; the background keeps it in chrome.storage.session. */
@@ -9,6 +10,8 @@ export type View = {
   transcript: { text: string; at: number }[];
   cards: Card[];
   notice?: { level: 'info' | 'error'; message: string; at: number };
+  /** the "trợ lý" request MeetMate is working on right now */
+  progress?: { step: AskStep; question: string; at: number } | null;
 };
 
 export const EMPTY_VIEW: View = { state: 'idle', transcript: [], cards: [] };
@@ -18,7 +21,7 @@ const MAX_CARDS = 100;
 export function reduce(view: View, event: PanelEvent, now = Date.now()): View {
   switch (event.kind) {
     case 'state':
-      return { ...view, state: event.state, detail: event.detail };
+      return { ...view, state: event.state, detail: event.detail, progress: event.state === 'live' || event.state === 'reconnecting' ? view.progress : null };
     case 'final':
       return { ...view, transcript: [...view.transcript, { text: event.text, at: event.at }].slice(-MAX_LINES) };
     case 'card':
@@ -30,6 +33,14 @@ export function reduce(view: View, event: PanelEvent, now = Date.now()): View {
       };
     case 'notice':
       return { ...view, notice: { level: event.level, message: event.message, at: now } };
+    case 'progress':
+      return {
+        ...view,
+        // the clock keeps running across steps of one request
+        progress: event.step
+          ? { step: event.step, question: event.question, at: view.progress?.question === event.question ? view.progress.at : now }
+          : null,
+      };
     case 'partial':
       return view; // live only; never persisted
   }

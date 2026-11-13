@@ -40,3 +40,21 @@ export function storedDocsOf(raw: unknown, now = Date.now()): StoredDoc[] {
   }
   return out;
 }
+
+/**
+ * Thêm tài liệu mới vào kho đang có của một phiên. Tài liệu trùng id thì bỏ qua (web gửi lại cùng
+ * tài liệu không nhân đôi); vượt giới hạn số tài liệu hoặc tổng ký tự của phiên thì bỏ phần thừa.
+ */
+export function mergeDocs(existing: StoredDoc[], incoming: StoredDoc[]): { docs: StoredDoc[]; added: number } {
+  const docs = [...existing];
+  let total = docs.reduce((n, d) => n + d.chars, 0);
+  let added = 0;
+  for (const d of incoming) {
+    if (docs.some(o => o.id === d.id)) continue;
+    if (docs.length >= DOC_LIMITS.maxPerSession || total + d.chars > DOC_LIMITS.maxSessionChars) continue;
+    total += d.chars;
+    docs.push(d);
+    added++;
+  }
+  return { docs, added };
+}

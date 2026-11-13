@@ -1,5 +1,5 @@
 import type { Source } from '../../shared/types';
-import { CHAT_PREFIX, MEET_CHAT_MAX_CHARS } from './config';
+import { CHAT_PREFIX, MEET_CHAT_MAX_CHARS, RESEARCH_MAX_SOURCES, RESEARCH_SOURCE_CHARS } from './config';
 import { extractJson, type Chat } from './llm';
 import type { Topic } from './topic';
 
@@ -10,8 +10,8 @@ export type Search = (query: string, signal: AbortSignal) => Promise<Source[]>;
 const SYSTEM = 'Bạn là trợ lý nghiên cứu cho một cuộc họp. Chỉ dùng các nguồn được cung cấp, không thêm nguồn khác. '
   + 'Ưu tiên theo độ tin cậy: tài liệu chính thức > nghiên cứu hoặc benchmark độc lập > văn bản pháp luật > báo uy tín > blog. '
   + 'Không kết luận thay nhóm. Chỉ trả về JSON: {"summary": string, "sources": [{"url": string, "reason": string}]}. '
-  + 'summary tối đa 300 ký tự tiếng Việt, tóm tắt thông tin các nguồn đưa ra. '
-  + 'reason tối đa 200 ký tự tiếng Việt, giải thích vì sao nguồn này đáng tin và liên quan.';
+  + 'summary tối đa 250 ký tự tiếng Việt, trả lời thẳng câu hỏi bằng thông tin các nguồn đưa ra. '
+  + 'reason tối đa 100 ký tự tiếng Việt, nói ngắn vì sao nguồn này đáng tin và liên quan.';
 
 /** Trust boundary: only URLs Exa actually returned reach the chat; titles also come from Exa, not the LLM. */
 export function parseResearch(raw: string, allowed: Source[], topic: string): ResearchResult | null {
@@ -30,13 +30,14 @@ export function parseResearch(raw: string, allowed: Source[], topic: string): Re
 
 export async function research(
   topic: Topic,
-  deps: { search: Search; chat: Chat },
+  deps: { search: Search; chat: Chat; onSearched?: () => void },
   signal: AbortSignal,
 ): Promise<ResearchResult | null> {
-  const found = await deps.search(topic.query, signal);
+  const found = (await deps.search(topic.query, signal)).slice(0, RESEARCH_MAX_SOURCES);
   if (!found.length) return null;
+  deps.onSearched?.();
   const listing = found
-    .map((source, i) => `[${i + 1}] ${source.title}\n${source.url}\n${source.text.slice(0, 1_500)}`)
+    .map((source, i) => `[${i + 1}] ${source.title}\n${source.url}\n${source.text.slice(0, RESEARCH_SOURCE_CHARS)}`)
     .join('\n\n');
   const reply = await deps.chat([
     { role: 'system', content: SYSTEM },
