@@ -84,20 +84,23 @@
 .dash .teacher-avatar { width: 28px; height: 28px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--hairline); border-radius: 50%; background: var(--surface-subtle); font-size: 12px; }
 .dash .teacher-avatar--ai { width: 38px; height: 38px; background: var(--mm-provenance-tint); color: var(--mm-provenance-ink); border-color: transparent; }
 .dash .teacher-avatar--ai svg { width: 20px; height: 20px; }
-.dash .teacher-classroom { border: 1px solid var(--hairline); background: var(--canvas); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; min-height: 420px; height: min(calc(100dvh - 310px), 980px); }
-.dash .teacher-classroom__head { display: flex; align-items: center; gap: 12px; padding: 18px 24px; border-bottom: 1px solid var(--hairline); }
+.dash .teacher-classroom { border: 1px solid var(--hairline); background: var(--canvas); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; min-height: 680px; height: min(calc(100dvh - 160px), 1100px); }
+.dash .teacher-classroom--welcome { height: auto; min-height: 0; }
+.dash .teacher-classroom__head { display: flex; flex-shrink: 0; align-items: center; gap: 12px; padding: 20px 28px; border-bottom: 1px solid var(--hairline); }
 .dash .teacher-classroom__head strong { font: 600 18px/1.4 var(--font-display); }
 .dash .teacher-classroom__head small { display: block; font-size: 11px; color: var(--muted-ink); margin-top: 2px; }
 .dash .teacher-chat-label { margin-left: auto; font-size: 10px; color: var(--muted-ink); }
-.dash .teacher-messages { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 24px; }
-.dash .teacher-welcome { margin: 24px auto 36px; max-width: 600px; }
-.dash .teacher-welcome h3 { font: 600 30px/1.3 var(--font-display); letter-spacing: -.03em; margin: 12px 0; }
-.dash .teacher-welcome > p { color: var(--muted-ink); font-size: 14px; line-height: 1.9; }
-.dash .teacher-welcome > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
-.dash .teacher-welcome button { display: grid; gap: 8px; padding: 18px 12px; border: 1px solid var(--hairline); border-radius: 12px; background: var(--surface-subtle); text-align: left; color: var(--ink); cursor: pointer; }
+.dash .teacher-messages { flex: 1; min-height: 320px; overflow-y: auto; overscroll-behavior: contain; padding: 28px; }
+.dash .teacher-classroom--welcome .teacher-messages { flex: none; overflow: visible; padding: 40px 36px; }
+.dash .teacher-welcome { margin: 8px auto 12px; width: 100%; max-width: 760px; }
+.dash .teacher-welcome > .teacher-eyebrow { font-size: 13px; letter-spacing: .08em; }
+.dash .teacher-welcome h3 { font: 600 clamp(30px, 2.8vw, 42px)/1.25 var(--font-display); letter-spacing: -.035em; margin: 16px 0 20px; }
+.dash .teacher-welcome > p { color: var(--muted-ink); font-size: 16px; line-height: 1.85; max-width: 58ch; }
+.dash .teacher-welcome > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 32px; }
+.dash .teacher-welcome button { display: flex; flex-direction: column; justify-content: center; min-height: 136px; gap: 10px; padding: 22px 20px; border: 1px solid var(--mm-boundary); border-radius: 14px; background: var(--surface-subtle); text-align: left; color: var(--ink); cursor: pointer; }
 .dash .teacher-welcome button:hover { border-color: var(--primary); }
-.dash .teacher-welcome button strong { font-size: 12px; font-weight: 600; }
-.dash .teacher-welcome button span { font-size: 11px; color: var(--muted-ink); line-height: 1.6; }
+.dash .teacher-welcome button strong { font: 600 18px/1.4 var(--font-display); }
+.dash .teacher-welcome button span { font-size: 14px; color: var(--muted-ink); line-height: 1.7; }
 .dash .teacher-message { margin-bottom: 24px; border: 1px solid var(--hairline); padding: 18px; border-radius: 12px; }
 .dash .teacher-message--teacher { background: var(--mm-provenance-tint); border-color: transparent; }
 .dash .teacher-message header { display: flex; align-items: center; gap: 10px; font-size: 12px; margin-bottom: 12px; }
@@ -112,7 +115,7 @@
 .dash .teacher-citations q { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
 .dash .teacher-sources a { color: var(--mm-source); text-decoration: underline; text-underline-offset: 3px; line-height: 1.7; }
 .dash .teacher-thinking { font-size: 13px; color: var(--muted-ink); }
-.dash .teacher-composer { border-top: 1px solid var(--hairline); padding: 16px 20px; background: var(--canvas); }
+.dash .teacher-composer { flex-shrink: 0; border-top: 1px solid var(--hairline); padding: 20px 24px; background: var(--canvas); }
 .dash .teacher-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .dash .teacher-actions button { border: 1px solid var(--hairline); border-radius: 18px; background: var(--canvas); padding: 7px 11px; font-size: 11px; color: var(--muted-ink); cursor: pointer; }
 .dash .teacher-actions button[aria-pressed="true"] { color: var(--on-primary); background: var(--primary); border-color: var(--primary); }
@@ -128,8 +131,7 @@
   .dash .teacher-intro__note { display: none; }
   .dash .teacher-workspace { grid-template-columns: 240px minmax(0, 1fr); gap: 14px; }
   .dash .teacher-materials { padding: 16px; }
-  .dash .teacher-welcome > div { grid-template-columns: 1fr; }
-  .dash .teacher-welcome button { padding: 12px; }
+  .dash .teacher-welcome button { padding: 20px 16px; }
 }
 @media (max-width: 700px) {
   .dash .teacher-workspace { grid-template-columns: minmax(0, 1fr); }
@@ -138,6 +140,10 @@
   .dash .teacher-materials .teacher-members { margin-top: 16px; padding-top: 12px; }
   .dash .teacher-members > div { display: inline-flex; margin: 4px 12px 4px 0; }
   .dash .teacher-classroom { min-height: 650px; height: 85vh; }
+  .dash .teacher-classroom--welcome { height: auto; min-height: 0; }
+  .dash .teacher-classroom--welcome .teacher-messages { padding: 30px 22px; }
+  .dash .teacher-welcome > div { grid-template-columns: 1fr; }
+  .dash .teacher-welcome button { min-height: 110px; }
   .dash .teacher-room-head { align-items: flex-start; flex-direction: column; }
   .dash .teacher-room-head h2 { font-size: 24px; }
   .dash .teacher-intro { padding: 24px; }

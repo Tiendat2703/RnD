@@ -40,6 +40,12 @@ test('creates a Teacher group, reads a file, syncs a second browser and preserve
   await expect(page).toHaveURL(/\/dashboard\/teacher\/[\da-f-]{36}$/);
   const roomId = page.url().split('/').at(-1)!; createdRooms.push(roomId);
   await expect(page.getByRole('heading', { name: 'Hôm nay mình cùng học gì?' })).toBeVisible();
+  const welcome = page.locator('.teacher-welcome');
+  expect(await welcome.getByRole('heading').evaluate(element => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(30);
+  expect(await page.locator('.teacher-classroom--welcome .teacher-messages').evaluate(element => element.scrollHeight <= element.clientHeight + 1)).toBe(true);
+  const welcomeBounds = await welcome.boundingBox();
+  const composerBounds = await page.locator('.teacher-composer').boundingBox();
+  expect(welcomeBounds!.y + welcomeBounds!.height).toBeLessThanOrEqual(composerBounds!.y);
   await page.locator('input[type=file]').setInputFiles({ name: 'xac-suat.txt', mimeType: 'text/plain', buffer: Buffer.from('Xác suất nằm từ 0 đến 1.\n\nP(A|B) = P(A∩B) / P(B), khi P(B) > 0.') });
   await expect(page.getByRole('button', { name: /xac-suat.txt/ })).toBeVisible();
   await expect(page.locator('.teacher-document-preview')).toContainText('P(A|B)');

@@ -96,7 +96,9 @@ export function TeacherRoom({ id }: { id: string }) {
     return () => { active = false; clearTimeout(timer); };
   }, [id, token, Boolean(room), updateRoom]);
 
-  useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [room?.messages.length, sending]);
+  useEffect(() => {
+    if (room?.messages.length || sending || voicePending) bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [room?.messages.length, sending, voicePending]);
 
   async function join() {
     if (!name.trim() || sending) return;
@@ -205,7 +207,7 @@ export function TeacherRoom({ id }: { id: string }) {
           {room.mode === 'group' && <p className="teacher-small">Mọi thành viên cùng xem tài liệu và hội thoại. Nội dung mới tự đồng bộ trong phòng.</p>}
         </section>
       </aside>
-      <section className="teacher-classroom" aria-label="Hội thoại với Teacher">
+      <section className={`teacher-classroom${room.messages.length === 0 ? ' teacher-classroom--welcome' : ''}`} aria-label="Hội thoại với Teacher">
         <div className="teacher-classroom__head"><span className="teacher-avatar teacher-avatar--ai"><IconBook /></span><div><strong>Teacher</strong><small>Học để hiểu, luyện để tự làm được.</small></div><span className="teacher-chat-label">{room.mode === 'group' ? 'Hội thoại chung' : 'Giáo viên của bạn'}</span></div>
         <div className="teacher-messages" role="log" aria-live="polite" aria-relevant="additions text">
           {!room.messages.length && <div className="teacher-welcome"><span className="teacher-eyebrow">CHÀO MỪNG ĐẾN LỚP HỌC</span><h3>Hôm nay mình cùng học gì?</h3>
@@ -221,8 +223,9 @@ export function TeacherRoom({ id }: { id: string }) {
               <span>{citation.documentName} · {citation.locator}</span><q>{citation.quote}</q></button>)}</div>}
             {!!message.sources?.length && <div className="teacher-sources"><strong>Tài liệu tìm trên web</strong>{message.sources.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a>)}</div>}
           </article>)}
-          {sending && !room.busy && <p className="teacher-thinking" role="status">Teacher đang xử lý câu hỏi…</p>}<div ref={bottom} />
+          {sending && !room.busy && <p className="teacher-thinking" role="status">Teacher đang xử lý câu hỏi…</p>}
           {!!voicePending && <p className="teacher-thinking" role="status">Teacher đang xử lý câu hỏi bằng giọng nói{voicePending > 1 ? ` (${voicePending} câu đang chờ)` : ''}…</p>}
+          <div ref={bottom} />
         </div>
         <form className="teacher-composer" onSubmit={e => { e.preventDefault(); void send(); }}>
           <div className="teacher-actions" aria-label="Cách Teacher giúp bạn">{(Object.keys(TEACHER_ACTIONS) as TeacherAction[]).map(value => <button type="button" key={value} aria-pressed={action === value} onClick={() => setAction(value)}>{TEACHER_ACTIONS[value].label}</button>)}</div>
