@@ -41,3 +41,7 @@ This smoke test verifies room connection, agent dispatch, and a state-command ro
 The frontend/backend integration requires a backend-issued LiveKit room token and agent dispatch. Keep the LiveKit API secret on the backend. See [deployment and protocol documentation](agents/sidekick/docs/livekit-deployment.md) for configuration, commands, and limitations.
 
 See the [Sidekick README](agents/sidekick/README.md) for local application setup and provider integration tests.
+
+## Presentation mode
+
+Tạo **Cuộc họp mới → Thuyết trình** để lập checklist từ tài liệu, theo dõi phần trình bày bằng micro và nhận nhắc riêng. Cần extension 0.4.0. Xem [hướng dẫn, kiểm thử và rollback](docs/plans/presentation-mode-verification.md).

@@ -1,3 +1,4 @@
+import { presentationMarkdown, presentationStats } from '../../../lib/presentation';
 // Nhận phiên, ghi JSON, tạo báo cáo. Mọi thao tác trên cùng một id chạy nối tiếp,
 // nên bấm "Lưu phiên" hai lần liền chỉ gọi LLM một lần: lượt sau thấy nội dung y hệt
 // và báo cáo đã có thì trả lại bản cũ.
@@ -64,7 +65,12 @@ export class SessionService {
   private async build(stored: StoredSession): Promise<SavedSessionResponse> {
     let record: StoredReport;
     try {
-      const report = await this.generate(stored.session);
+      const p = stored.session.presentation;
+      const report: MeetingReport = stored.session.mode === 'presentation' && p ? {
+        sessionId: stored.session.id, title: stored.session.title, generatedAt: this.now(), model: 'Checklist — thống kê từ dữ liệu phiên',
+        summary: presentationMarkdown(stored.session.title, p), happenings: [], assignments: [],
+        nextSteps: presentationStats(p).missing.map(i=>({item:i.text,due:null})), openQuestions:[], sources:[], droppedUnverified:0, transcriptTruncated:false,
+      } : await this.generate(stored.session);
       record = { status: 'ok', report, error: null, updatedAt: this.now() };
     } catch (error) {
       console.error(`[meetmate] report failed for ${stored.session.id}:`, error);

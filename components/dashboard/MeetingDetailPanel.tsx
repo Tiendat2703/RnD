@@ -8,6 +8,8 @@
 // sản phẩm này không tóm tắt thay bạn và không có chat với AI về buổi họp.
 //
 // Mọi dữ liệu là của phiên thật do extension ghi (chủ đề, nguồn, bản ghi).
+import { PresentationView } from './PresentationView';
+import { presentationMarkdown } from '../../lib/presentation';
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import { downloadPdf } from "../../lib/downloadPdf";
@@ -112,7 +114,7 @@ export function MeetingDetailPanel() {
   if (!detailOf) return null;
   const { meeting } = detailOf;
   const cards = sessionCards[meeting.id] ?? [];
-  const tabs = tabsFor(cards.length > 0, meeting.id in savedSessions);
+  const tabs = savedSessions[meeting.id]?.presentation ? [{id:'thuyet-trinh',label:'Thuyết trình',icon:IconList},...tabsFor(cards.length>0,true)] : tabsFor(cards.length > 0, meeting.id in savedSessions);
 
   return (
     <div
@@ -262,6 +264,7 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
         ) : null}
       </div>
 
+      {savedSessions[id]?.presentation && tab==='thuyet-trinh' ? <div className="dp__scroll dash-scroll"><PresentationView id={id} title={meeting.title} snapshot={savedSessions[id].presentation!} active={savedSessions[id].endedAt===null}/></div> : null}
       {tab === "ban-ghi" ? (
         <div className="dp__scroll dash-scroll">
           {lines.length === 0 ? (
@@ -358,7 +361,7 @@ function DetailBody({ id, tab }: { id: string; tab: string }) {
                       const state = saves[id];
                       const response = state?.phase === 'done' ? state.res :
                         savedSessions[id]?.syncedAt ? await getSavedSession(id) : null;
-                      const text = response?.report ? reportToMarkdown(response.report) :
+                      const text = savedSessions[id]?.presentation ? presentationMarkdown(meeting.title,savedSessions[id].presentation!) : response?.report ? reportToMarkdown(response.report) :
                         cards.length ? reportMarkdown(meeting.title, cards) :
                         transcriptText ? `Bản ghi cuộc họp (chưa có báo cáo AI)\n\n${transcriptText}\n\n${sourcesText}` : '';
                       if (!text) throw new Error('Phiên chưa có báo cáo hoặc bản ghi để xuất PDF.');

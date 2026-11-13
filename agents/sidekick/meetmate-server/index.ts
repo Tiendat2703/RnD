@@ -34,7 +34,7 @@ const service = new SessionService(new SessionStore(dataDir), (session) => {
 });
 
 const host = process.env.MEETMATE_HOST || '127.0.0.1';
-createApp({ service, teacher, teacherVoice, documents: new DocumentStore(dataDir), allowedOrigins: origins }).listen(port, host, () => {
+createApp({ service, presentationChat: chat, teacher, teacherVoice, documents: new DocumentStore(dataDir), allowedOrigins: origins }).listen(port, host, () => {
   console.log(`MeetMate backend: http://127.0.0.1:${port}`);
   console.log(`  dữ liệu: ${dataDir}`);
   console.log(`  LLM: ${model} @ ${url}${apiKey ? '' : ' (CHƯA có BLAZE_API_KEY)'}`);

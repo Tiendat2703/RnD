@@ -1,8 +1,11 @@
+import type { PresentationSnapshot } from '../../../../lib/presentation';
 import type { AskStep } from './assistant';
 import type { Card, PanelEvent, RunState } from './messages';
 
 /** What the side panel shows; the background keeps it in chrome.storage.session. */
 export type View = {
+  presentation?: PresentationSnapshot;
+  presentationId?: string;
   state: RunState;
   detail?: string;
   tabId?: number;
@@ -20,6 +23,8 @@ const MAX_CARDS = 100;
 
 export function reduce(view: View, event: PanelEvent, now = Date.now()): View {
   switch (event.kind) {
+    case 'presentation':
+      return { ...view, presentation: event.snapshot, presentationId: event.id };
     case 'state':
       return { ...view, state: event.state, detail: event.detail, progress: event.state === 'live' || event.state === 'reconnecting' ? view.progress : null };
     case 'final':

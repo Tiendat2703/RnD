@@ -1,3 +1,4 @@
+import { COVERAGE_LABEL, CORRECTNESS_LABEL, presentationStats, type PresentationAction } from '../../../../lib/presentation';
 import type { AskStep } from './assistant';
 import { FULL_DOC_MAX_CHARS } from './config';
 import { MEETING_KIND_LABEL } from '../../../../lib/types';
@@ -60,6 +61,7 @@ function renderControl(): void {
   toggle.textContent = running() ? 'Dừng' : 'Bắt đầu nghe';
   toggle.className = running() ? 'btn big stop' : 'btn primary big';
   const parts = [elapsed(), `${docs.length} tài liệu`, settings.postToChat ? 'gửi vào chat' : 'không gửi chat', `v${chrome.runtime.getManifest().version}`].filter(Boolean);
+  if(view.presentation) parts.splice(2,1,'Thuyết trình · chỉ micro · không gửi chat');
   $('meta').textContent = running() ? parts.join(' · ')
     : `${parts.join(' · ')} — mẹo: bấm biểu tượng MeetMate trên thanh công cụ khi đang ở tab Meet để bắt đầu nghe ngay`;
 
@@ -113,6 +115,33 @@ function renderCard(c: Card): string {
     <header><span class="chip">${KIND_LABEL[c.kind]}${how}</span><time>${time(c.at)}</time></header>
     ${said}${title}<p class="${c.kind === 'research' ? '' : 'text'}">${esc(c.text)}</p>${quote}${links}${chat}
   </article>`;
+}
+
+function renderPresentation(): void {
+  let container=document.getElementById('presentation');
+  if(!container){container=document.createElement('section');container.id='presentation';container.className='box';document.querySelector('.control')!.after(container);}
+  const p=view.presentation ?? lastSession?.presentation;
+  container.hidden=!p;
+  document.querySelector<HTMLElement>('.results')!.hidden=Boolean(p);
+  if(!p)return;
+  const id=view.presentationId??lastSession?.id??'';
+  const active=running() && Boolean(view.presentation);
+  const stats=presentationStats(p);
+  container.innerHTML='<h2>Thuyết trình · chỉ bạn thấy</h2><p>'+stats.covered+'/'+stats.total+' ý bắt buộc đã nói · '+stats.skipped+' bỏ qua</p>'
+    +'<p>Mức bao phủ không phải điểm chính xác. Không gửi chat Meet. Chia sẻ riêng nội dung, tránh chia sẻ cửa sổ chứa checklist.</p>'
+    +(active?'<button class="btn" data-action="missing">Còn thiếu gì?</button> <button class="btn" data-action="pause">'+(p.paused?'Tiếp tục':'Tạm dừng')+'</button><p><label><input id="presentation-remind" type="checkbox" '+(p.autoRemind?'checked':'')+'> Nhắc khi sắp kết thúc</label></p>':'')
+    +(p.hint?'<p class="notice">'+esc(p.hint)+'</p>':'')+(p.error?'<p role="alert">'+esc(p.error)+'</p>':'')
+    +(p.deviations?.length?'<h3>Sai lệch so với tài liệu</h3>'+p.deviations.map(d=>'<article class="card"><strong>'+esc(d.note)+(d.resolvedBy?' — đã tự sửa':' — cần xem lại')+'</strong><p>'+esc(d.evidence.text)+'</p><blockquote>'+esc(d.citation.text)+'<cite>'+esc(d.citation.docName)+', tr. '+d.citation.page+'</cite></blockquote>'+(d.resolvedBy?'<p>Lời tự sửa: '+esc(d.resolvedBy.text)+'</p>':'')+'</article>').join(''):'')
+    +'<ol class="presentation-items">'+p.items.map((i,n)=>'<li><strong>'+esc(i.text)+'</strong><p>'+COVERAGE_LABEL[i.coverage]+' · '+CORRECTNESS_LABEL[i.correctness]+(i.manual?' · sửa tay':'')+'</p>'
+      +(active?'<select data-item="'+esc(i.id)+'" aria-label="Trạng thái ý '+(n+1)+'">'+Object.entries(COVERAGE_LABEL).map(([v,l])=>'<option value="'+v+'" '+(i.coverage===v?'selected':'')+'>'+l+'</option>').join('')+'</select>'+(i.manual?' <button class="btn" data-auto="'+esc(i.id)+'">Tự theo dõi</button>':''):'')
+      +(i.evidence?'<p>['+Math.floor(i.evidence.atMs/1000)+'s] '+esc(i.evidence.text)+'</p>':'')+(i.note?'<p>'+esc(i.note)+'</p>':'')
+      +(i.citation?'<details><summary>'+esc(i.citation.docName)+' · tr. '+i.citation.page+'</summary><blockquote>'+esc(i.citation.text)+'</blockquote></details>':'<p>Ý chưa có nguồn.</p>')+'</li>').join('')+'</ol>';
+  const action=(action:PresentationAction)=>void send({type:'mm.web',msg:{type:'presentation.action',id,revision:p.revision,action}});
+  container.querySelector('[data-action="missing"]')?.addEventListener('click',()=>action({kind:'missing'}));
+  container.querySelector('[data-action="pause"]')?.addEventListener('click',()=>action({kind:'pause',paused:!p.paused}));
+  container.querySelector('#presentation-remind')?.addEventListener('change',e=>action({kind:'remind',enabled:(e.target as HTMLInputElement).checked}));
+  container.querySelectorAll<HTMLSelectElement>('[data-item]').forEach(el=>el.addEventListener('change',()=>action({kind:'item',itemId:el.dataset.item!,coverage:el.value as keyof typeof COVERAGE_LABEL})));
+  container.querySelectorAll<HTMLElement>('[data-auto]').forEach(el=>el.addEventListener('click',()=>action({kind:'item',itemId:el.dataset.auto!,coverage:'auto'})));
 }
 
 function renderCards(): void {
@@ -185,6 +214,7 @@ async function refreshSessions(): Promise<void> {
   recording = ((await chrome.storage.session.get(CURRENT_KEY))[CURRENT_KEY] as string | undefined) ?? null;
   lastSession = (await listSessions())[0] ?? null;
   renderSession();
+  renderPresentation();
 }
 
 async function choose(id: string | null): Promise<void> {
@@ -195,6 +225,7 @@ async function choose(id: string | null): Promise<void> {
 }
 
 function render(): void {
+  renderPresentation();
   renderSession();
   renderControl();
   renderCards();

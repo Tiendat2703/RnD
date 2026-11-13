@@ -356,3 +356,15 @@ describe('background: thêm tài liệu vào phiên', () => {
     expect(await t.send(add('w1', [{ id: '../x', chunks: [] }]), 9)).toMatchObject({ ok: false });
   });
 });
+
+it('Presentation blocks chat at the background boundary despite a post request',async()=>{
+ const t=await boot({session:{...LIVE,view:{...(LIVE.view as object),presentation:{revision:'r'}}},local:SESSIONS()});
+ await t.send({type:'mm.post',cardId:'bad',messages:['private presentation']});await vi.advanceTimersByTimeAsync(10);
+ expect(t.tabMessage).not.toHaveBeenCalledWith(7,expect.objectContaining({type:'mm.content.post'}));
+});
+it('Presentation snapshots go to the web but never inject a Meet overlay',async()=>{
+ const t=await boot({session:{...LIVE,view:{...(LIVE.view as object),presentation:{revision:'r'}}},local:SESSIONS()});
+ await t.send({type:'mm.event',event:{kind:'final',text:'Private speech',at:2000,source:'mic',lineId:'mic-line'}});await vi.advanceTimersByTimeAsync(10);
+ expect(t.tabMessage).not.toHaveBeenCalledWith(7,expect.objectContaining({type:'mm.panel'}));
+ expect(t.saved().lines[0]).toMatchObject({id:'mic-line',source:'mic'});
+});

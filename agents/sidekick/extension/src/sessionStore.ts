@@ -1,3 +1,4 @@
+import { parsePresentation } from '../../../../lib/presentation';
 // Lưu phiên trong chrome.storage.local, để một cuộc họp không mất khi web console
 // không mở lúc họp, khi tải lại trang, hoặc khi service worker bị dừng.
 //
@@ -41,8 +42,20 @@ function topicIndexFor(s: SavedSession, text: string): number {
 
 export function applyEvent(s: SavedSession, e: ExtToWeb, now: number): SavedSession {
   switch (e.type) {
-    case 'line':
-      return { ...s, lines: [...s.lines, e.line].slice(-MAX_LINES) };
+    case 'presentation': {
+      if (e.id !== s.id) return s;
+      const snapshot = parsePresentation(e.snapshot);
+      if (s.presentation && (snapshot.revision !== s.presentation.revision || snapshot.sequence <= s.presentation.sequence)) return s;
+      return { ...s, mode: 'presentation', presentation: snapshot };
+    }
+    case 'line': {
+      if(s.lines.some(l=>l.id===e.line.id)) return s;
+      const lines=[...s.lines,e.line].slice(-MAX_LINES);
+      // Evidence remains verifiable after the rolling transcript window is trimmed.
+      const pinned=new Set([...(s.presentation?.items.map(i=>i.evidence?.lineId)??[]),...(s.presentation?.deviations??[]).flatMap(d=>[d.evidence.lineId,d.resolvedBy?.lineId])].filter(Boolean));
+      for(const line of s.lines) if(pinned.has(line.id) && !lines.some(l=>l.id===line.id)) lines.unshift(line);
+      return {...s,lines};
+    }
     case 'topic':
       return { ...s, topics: [...s.topics, { topic: e.topic, result: null, posted: 0 }] };
     case 'research': {
@@ -122,7 +135,7 @@ export function startSession(id: string, title: string, kind: MeetingKind): Prom
 }
 
 export function recordEvent(e: ExtToWeb): Promise<void> {
-  if (!['line', 'topic', 'research', 'card', 'posted', 'ended'].includes(e.type)) return Promise.resolve();
+  if (!['presentation', 'line', 'topic', 'research', 'card', 'posted', 'ended'].includes(e.type)) return Promise.resolve();
   return serial(async () => {
     const id = await currentId();
     if (!id) return;

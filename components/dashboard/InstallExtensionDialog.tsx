@@ -136,7 +136,7 @@ export function InstallExtensionDialog() {
     };
     addMeeting(record);
     startLive(installFor, record.id, "extension");
-    pushToast("MeetMate đang nghe — theo dõi ngay trong tab Meet.");
+    pushToast(installFor.mode==='presentation'?'Đang theo dõi thuyết trình — checklist riêng trong side panel và web.':'MeetMate đang nghe — theo dõi ngay trong tab Meet.');
   };
 
   useEffect(() => {
@@ -163,11 +163,12 @@ export function InstallExtensionDialog() {
   const docCount = draft.documentIds.length;
 
   const sendSession = async () => {
+    if(draft.mode==='presentation' && !info?.presentation){setSendError('Cần extension MeetMate 0.4.0 trở lên. Reload extension và tải lại trang web.');return;}
     setSending(true);
     setSendError("");
     let documents: SessionDocument[];
     try {
-      documents = (await Promise.all(draft.documentIds.map((id) => getDocument(id)))).map(toSessionDocument);
+      documents = draft.mode==='presentation' && draft.presentation ? draft.presentation.documents : (await Promise.all(draft.documentIds.map((id) => getDocument(id)))).map(toSessionDocument);
     } catch (e) {
       setSendError(`Không lấy được tài liệu từ backend: ${e instanceof Error ? e.message : String(e)}`);
       setSending(false);
@@ -191,7 +192,8 @@ export function InstallExtensionDialog() {
         title: draft.title,
         kind: draft.kind,
         sources: prefs.sources,
-        autoPost: prefs.autoPost,
+        mode:draft.mode, presentation:draft.presentation,
+        autoPost: draft.mode==='presentation'?false:prefs.autoPost,
         documents,
       },
     });

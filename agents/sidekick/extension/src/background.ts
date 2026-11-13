@@ -1,3 +1,4 @@
+import { parsePresentation, parsePresentationAction } from '../../../../lib/presentation';
 import {
   STATUS_RUNNING,
   STATUS_STARTING,
@@ -58,7 +59,8 @@ async function startFromClick(tabId: number, streamId: Promise<string>): Promise
     return;
   }
   await apply({ kind: 'notice', level: 'info', message: 'Đang bắt đầu nghe…' });
-  if (id instanceof Error) {
+  const presentationMode=(await getDraft())?.mode==='presentation';
+  if (id instanceof Error && !presentationMode) {
     await apply({ kind: 'state', state: 'error', detail: `Không ghi âm được tab Meet: ${id.message}` });
     return;
   }
@@ -74,7 +76,7 @@ async function startFromClick(tabId: number, streamId: Promise<string>): Promise
     await apply({ kind: 'notice', level: 'info', message: 'Cấp quyền micro trong tab vừa mở, rồi quay lại tab Meet và bấm biểu tượng MeetMate lần nữa.' });
     return;
   }
-  await start(tabId, id);
+  await start(tabId, presentationMode ? null : id as string);
 }
 
 const isRunning = (view: View) => view.state === 'live' || view.state === 'starting' || view.state === 'reconnecting';
@@ -121,17 +123,19 @@ async function start(tabId: number, streamId: string | null): Promise<StartReply
   if (!blazeApiKey) return { ok: false, error: 'Thiếu khóa Blaze. Nhập khóa trong phần Cài đặt.' };
   const record = await selectedRecord();
   const draft = record?.draft ?? null;
+  if (draft?.mode === 'presentation' && (!draft.presentation?.confirmed || !draft.presentation.items.length)) return {ok:false,error:'Checklist chưa được xác nhận.'};
   const saved: Settings = { ...DEFAULT_SETTINGS, ...(stored[STORAGE_KEYS.settings] as Partial<Settings> | undefined) };
   // A meeting prepared on the web console with auto-post off never posts to the Meet chat.
-  const settings: Settings = draft && !draft.autoPost ? { ...saved, postToChat: false } : saved;
+  const settings: Settings = draft && (!draft.autoPost || draft.mode === 'presentation') ? { ...saved, postToChat: false } : saved;
   // The library is the chosen web session's documents; a new session (generated id) has none.
   await setDocuments(record?.docs ?? []);
-  await update(() => startView(tabId));
+  await update(() => ({...startView(tabId), ...(draft?.mode==='presentation' ? {presentation:draft.presentation,presentationId:draft.id} : {})}));
   await beginRecording(draft);
+  if(draft?.mode==='presentation') await sendToTab(tabId,{type:'mm.presentation.watch',active:true}).catch(()=>undefined);
   try {
     await ensureOffscreen();
     const reply = (await chrome.runtime.sendMessage({
-      type: 'mm.offscreen.start', streamId, blazeApiKey, exaApiKey: String(stored[STORAGE_KEYS.exa] ?? '').trim(), settings,
+      type: 'mm.offscreen.start', streamId, blazeApiKey, exaApiKey: String(stored[STORAGE_KEYS.exa] ?? '').trim(), settings, presentation:draft?.mode==='presentation'?draft.presentation:undefined, sessionId:draft?.id,
     } satisfies Msg)) as StartReply | undefined;
     if (!reply?.ok) throw new Error(reply?.error ?? 'Không mở được bộ ghi âm');
     return { ok: true };
@@ -149,6 +153,8 @@ async function stop(reason: EndReason | null): Promise<void> {
   await new Promise(r => setTimeout(r, STOP_GRACE_MS));
   await closeOffscreen();
   await update(view => (view.state === 'error' ? view : { ...view, state: 'idle', detail: undefined }));
+  const tabId=(await currentView()).tabId;
+  if(tabId!==undefined) await chrome.tabs.sendMessage(tabId,{type:'mm.presentation.watch',active:false} satisfies Msg).catch(()=>undefined);
   if (reason) await endRecording(reason);
 }
 
@@ -169,9 +175,11 @@ const researchCards = new Set<string>();
 let posting: Promise<void> = Promise.resolve();
 function post(cardId: string, messages: string[]): void {
   posting = posting.then(async () => {
+    if ((await currentView()).presentation) return;
     const { tabId } = await currentView();
     let error = tabId === undefined ? 'Không biết tab Meet nào để gửi' : '';
     for (const text of messages) {
+      if ((await currentView()).presentation) return;
       if (error) break;
       const reply = (await sendToTab(tabId!, { type: 'mm.content.post', text }).catch((e: unknown) => ({
         ok: false as const, error: e instanceof Error ? e.message : String(e),
@@ -235,6 +243,7 @@ async function beginRecording(draft: SessionDraft | null): Promise<void> {
   researchCards.clear();
   // a session the web did not prepare is still recorded, with a default name
   await startSession(draft?.id ?? `ext-${Date.now()}`, draft?.title ?? 'Cuộc họp Google Meet', draft?.kind ?? 'khac');
+  if(draft?.mode==='presentation' && draft.presentation) await emit({type:'presentation',id:draft.id,snapshot:draft.presentation});
   await chrome.storage.session.set({ [WEB_CTX_KEY]: { startedAt: Date.now(), maxSources: draft?.sources ?? 4 } satisfies WebContext });
   await setStatus(STATUS_STARTING);
 }
@@ -307,9 +316,16 @@ async function setStatus(status: string): Promise<void> {
   });
 }
 
+async function sendWebOnly(event: ExtToWeb): Promise<void> {
+  const r=await chrome.storage.session.get(STORAGE_KEYS.webTab); const id=r[STORAGE_KEYS.webTab];
+  if(typeof id==='number') await chrome.tabs.sendMessage(id,{type:'mm.toweb',event} satisfies Msg).catch(()=>undefined);
+}
+
 /** Saves the event first (so nothing is lost if the web is closed), then tells the panel and the web. */
 async function emit(event: ExtToWeb): Promise<void> {
   await recordEvent(event);
+  if (event.type === 'presentation') return sendWebOnly(event);
+  if ((await currentView()).presentation && event.type !== 'ended') return sendWebOnly(event);
   const { tabId } = await currentView();
   if (tabId !== undefined) await sendToTab(tabId, { type: 'mm.panel', event }).catch(() => undefined);
   const r = await chrome.storage.session.get(STORAGE_KEYS.webTab);
@@ -325,6 +341,7 @@ async function info(): Promise<ExtInfo> {
   const draft = await getDraft();
   return {
     version: chrome.runtime.getManifest().version,
+    presentation:true,
     // Exa is optional: without it MeetMate still transcribes and checks documents
     keysSet: !!String(stored[STORAGE_KEYS.blaze] ?? '').trim(),
     mock: false,
@@ -343,12 +360,16 @@ async function setDocuments(docs: Parameters<typeof replaceDocs>[0]): Promise<vo
 
 /** The draft as stored with its documents (drafts.ts); the documents are validated separately. */
 function cleanDraft(raw: SessionDraft): SessionDraft {
+  if(!raw || !/^[A-Za-z0-9_-]{1,64}$/.test(raw.id) || typeof raw.title!=='string' || !raw.title.trim() ||
+    !['san-pham','nghien-cuu','dao-tao','ban-le','khac'].includes(raw.kind) ||
+    (raw.mode!==undefined && raw.mode!=='assistant' && raw.mode!=='presentation')) throw Error('Thông tin phiên không hợp lệ.');
   return {
     id: String(raw.id).slice(0, 64),
     title: String(raw.title).slice(0, 120),
     kind: raw.kind,
     sources: Math.max(1, Math.min(4, Number(raw.sources) || 4)),
-    autoPost: raw.autoPost !== false,
+    autoPost: raw.mode === 'presentation' ? false : raw.autoPost !== false,
+    ...(raw.mode === 'presentation' ? { mode:'presentation' as const, presentation:parsePresentation(raw.presentation) } : {}),
   };
 }
 
@@ -404,6 +425,7 @@ async function endFromMeet(tabId: number, reason: 'left' | 'meet-closed'): Promi
  */
 async function addDocuments(id: string, incoming: ReturnType<typeof storedDocsOf>): Promise<ExtToWeb> {
   const fail = (error: string): ExtToWeb => ({ type: 'documents.added', id, ok: false, error });
+  if (isRunning(await currentView()) && (await currentView()).presentation) return fail('Tài liệu thuyết trình đã khóa. Kết thúc phiên và tạo checklist mới để đổi nguồn.');
   if (!incoming.length) return fail('Không có tài liệu hợp lệ để thêm.');
   if (isRunning(await currentView())) {
     if ((await currentId()) !== id) return fail('MeetMate đang nghe một phiên khác. Mở đúng phiên đang diễn ra để thêm tài liệu.');
@@ -413,6 +435,7 @@ async function addDocuments(id: string, incoming: ReturnType<typeof storedDocsOf
   }
   const record = await getDraftRecord(id);
   if (!record) return fail('Phiên này không còn trong extension (đã kết thúc hoặc đã bị hủy).');
+  if(record.draft.mode==='presentation') return fail('Checklist đã xác nhận: tạo phiên mới để đổi tài liệu.');
   const { docs, added } = mergeDocs(record.docs, incoming);
   if (added) {
     await putDraft({ ...record, docs });
@@ -424,6 +447,14 @@ async function addDocuments(id: string, incoming: ReturnType<typeof storedDocsOf
 
 async function handleWeb(web: Extract<Msg, { type: 'mm.web' }>['msg']): Promise<ExtToWeb | undefined> {
   switch (web.type) {
+    case 'presentation.action': {
+      if (web.id !== await currentId()) return undefined;
+      const view=await currentView();
+      if (!view.presentation || web.revision !== view.presentation.revision) return undefined;
+      const action=parsePresentationAction(web.action);
+      await chrome.runtime.sendMessage({type:'mm.presentation.action',id:web.id,revision:web.revision,action} satisfies Msg);
+      return undefined;
+    }
     case 'ping':
       return { type: 'pong', info: await info() };
     case 'session.prepare': {
@@ -464,6 +495,11 @@ chrome.runtime.onMessage.addListener((msg: Msg, sender, sendResponse) => {
       void stop('stopped').then(() => sendResponse({ ok: true }));
       return true;
     case 'mm.event':
+      if(msg.event.kind==='presentation') {
+        const event=msg.event;
+        void currentId().then(id=>{if(id===event.id) void apply(event);});
+        return false;
+      }
       if (msg.event.kind !== 'partial') void apply(msg.event);
       return false;
     case 'mm.post':
@@ -475,7 +511,7 @@ chrome.runtime.onMessage.addListener((msg: Msg, sender, sendResponse) => {
         void chrome.storage.session.set({ [STORAGE_KEYS.webTab]: sender.tab.id });
         if (sender.tab.url) void chrome.storage.local.set({ [STORAGE_KEYS.webOrigin]: new URL(sender.tab.url).origin });
       }
-      void handleWeb(msg.msg).then(sendResponse, () => sendResponse(undefined));
+      void handleWeb(msg.msg).then(sendResponse, (e:unknown) => sendResponse({type:'error',message:e instanceof Error?e.message:'Lệnh extension không hợp lệ.'} satisfies ExtToWeb));
       return true;
     case 'mm.left':
       if (sender.tab?.id !== undefined) void endFromMeet(sender.tab.id, 'left');

@@ -4,6 +4,8 @@
 //
 // Chọn Assistant để tiếp tục luồng Google Meet, hoặc Teacher để tạo phòng học
 // trên web. Hai loại phiên dùng chung cửa tạo mới nhưng có cấu hình riêng.
+import { PresentationSetup } from './PresentationSetup';
+import type { PresentationSnapshot } from '../../lib/presentation';
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -49,7 +51,8 @@ export function CreateSessionWizard() {
   const editing = wizard.editId ? meetings.find((m) => m.id === wizard.editId) ?? null : null;
 
   const [step, setStep] = useState(0);
-  const [assistant, setAssistant] = useState<'assistant' | 'teacher'>('assistant');
+  const [assistant, setAssistant] = useState<'assistant' | 'teacher' | 'presentation'>('assistant');
+  const [presentation,setPresentation]=useState<PresentationSnapshot|null>(null);
   const [subject, setSubject] = useState('');
   const [level, setLevel] = useState('Cơ bản');
   const [goal, setGoal] = useState('');
@@ -69,7 +72,7 @@ export function CreateSessionWizard() {
   if (wizard.open && !lastOpen.current) {
     lastOpen.current = true;
     setStep(editing ? 1 : 0);
-    setAssistant('assistant');
+    setAssistant('assistant'); setPresentation(null);
     setSubject(''); setGoal(''); setName(''); setLevel('Cơ bản'); setStudyMode('solo'); setCreateError('');
     setKind(wizard.kind ?? editing?.kind ?? "san-pham");
     setTitle(editing?.title ?? "");
@@ -106,7 +109,10 @@ export function CreateSessionWizard() {
       closeWizard();
       return;
     }
+    if(assistant==='presentation' && !presentation?.confirmed){setCreateError('Tạo và xác nhận checklist trước khi bắt đầu.');return;}
     requestInstall({
+      mode:assistant==='presentation'?'presentation':'assistant',
+      ...(assistant==='presentation' && presentation ? {presentation} : {}),
       title: title.trim() || `${MEETING_KIND_LABEL[kind]} · ${meetings.length + 1}`,
       kind,
       // tài liệu đã bị xóa khỏi thư viện trong lúc wizard mở thì không gửi
@@ -185,6 +191,9 @@ export function CreateSessionWizard() {
                   <span>Trợ lý cuộc họp hiện tại. Nghe trên Google Meet, tra tài liệu và tìm nguồn khi bạn gọi.</span>
                   <small>Google Meet · Extension Chrome</small>
                 </button>
+                {process.env.NEXT_PUBLIC_PRESENTATION_ENABLED!=='false' && <button type="button" role="radio" aria-checked={assistant==='presentation'} className="assistant-choice" onClick={()=>setAssistant('presentation')}>
+                  <span className="assistant-choice__tag">THUYẾT TRÌNH</span><strong>Thuyết trình</strong><span>Checklist từ tài liệu, theo dõi ý đã nói và nhắc riêng khi thiếu hoặc lệch.</span><small>Micro của bạn · Không gửi chat Meet</small>
+                </button>}
                 <button type="button" role="radio" aria-checked={assistant === 'teacher'} className="assistant-choice" onClick={() => setAssistant('teacher')}>
                   <span className="assistant-choice__tag">HỌC TẬP</span>
                   <strong>Teacher</strong>
@@ -266,8 +275,8 @@ export function CreateSessionWizard() {
                           <input
                             type="checkbox"
                             checked={on}
-                            onChange={() =>
-                              setDocIds((prev) => (on ? prev.filter((x) => x !== d.id) : [...prev, d.id]))
+                            onChange={() => { setPresentation(null);
+                              setDocIds((prev) => (on ? prev.filter((x) => x !== d.id) : [...prev, d.id])); }
                             }
                           />
                           <span>
@@ -287,6 +296,8 @@ export function CreateSessionWizard() {
                 </>
               )}
             </div>
+          ) : assistant==='presentation' ? (
+            <div className="wiz__body"><PresentationSetup key={docIds.slice().sort().join(',')} documentIds={docIds} onChange={setPresentation}/>{createError&&<p role="alert">{createError}</p>}</div>
           ) : (
             <div className="wiz__body" key="step-2">
               <p className="wiz__eyebrow">Phiên âm và mô hình</p>
@@ -398,7 +409,7 @@ export function CreateSessionWizard() {
                 {nextLabel}
               </button>
             ) : (
-              <button className="btn btn--ink" onClick={finish}>
+              <button className="btn btn--ink" disabled={assistant==='presentation'&&!presentation?.confirmed} onClick={finish}>
                 {nextLabel}
               </button>
             )}

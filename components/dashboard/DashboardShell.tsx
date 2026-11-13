@@ -213,7 +213,7 @@ export function DashboardShell({
   }, [sessionTopics]);
 
   const addMeeting = useCallback((m: MeetingRecord) => {
-    setMeetings((prev) => [m, ...prev]);
+    setMeetings((prev) => [m, ...prev.filter(existing=>existing.id!==m.id)]);
   }, []);
 
   const updateMeeting = useCallback((id: string, patch: Partial<MeetingRecord>) => {
@@ -279,7 +279,7 @@ export function DashboardShell({
       setExtSession(mode === "extension" ? { id: meetingId, startedAt: now } : null);
       // phiên extension được theo dõi ngay trong Meet; web không dựng "phòng họp"
       // toàn trang cho nó. Muốn xem trên web thì "Mở lại phiên" từ danh sách.
-      if (mode === "extension") {
+      if (mode === "extension" && draft.mode !== "presentation") {
         setLive(null);
         return;
       }
@@ -384,7 +384,16 @@ export function DashboardShell({
       ...Object.fromEntries(list.filter((s) => s.endedAt !== null).map((s) => [s.id, s.lines])),
     }));
     setSessionTopics((p) => ({ ...p, ...Object.fromEntries(list.map((s) => [s.id, s.topics])) }));
-    setSavedSessions((p) => ({ ...p, ...Object.fromEntries(list.map((s) => [s.id, s])) }));
+    setSavedSessions(prev=>{
+      const next={...prev};
+      for(const session of list){
+        const old=prev[session.id];
+        const stale=old?.presentation && session.presentation &&
+          (old.presentation.revision!==session.presentation.revision || old.presentation.sequence>session.presentation.sequence);
+        next[session.id]={...session,...(stale?{presentation:old.presentation}:{}),endedAt:old?.endedAt??session.endedAt};
+      }
+      return next;
+    });
     setSessionCards((p) => ({
       ...p,
       ...Object.fromEntries(list.filter((s) => s.cards?.length).map((s) => [s.id, s.cards!])),
@@ -403,6 +412,10 @@ export function DashboardShell({
     const retry = window.setTimeout(ask, 1500);
     const off = onExtensionEvent((ev) => {
       if (ev.type === "sessions") syncSessions(ev.sessions);
+      else if (ev.type === 'presentation') {
+        setSavedSessions(prev=>{const old=prev[ev.id];if(!old || (old.presentation && old.presentation.sequence>=ev.snapshot.sequence))return prev;return {...prev,[ev.id]:{...old,mode:'presentation',presentation:ev.snapshot}};});
+        ask();
+      }
       else if (ev.type === "ended") ask();
     });
     return () => {

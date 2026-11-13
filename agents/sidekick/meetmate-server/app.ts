@@ -1,3 +1,5 @@
+import { generateChecklist } from './presentation';
+import type { Chat } from './llm';
 // HTTP cho web console. Chỉ nghe loopback (xem index.ts) và chỉ nhận origin của web.
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { z } from 'zod';
@@ -14,6 +16,7 @@ export interface AppOptions {
   documents: DocumentStore;
   /** origin web được phép gọi, ví dụ http://localhost:3000 */
   allowedOrigins: string[];
+  presentationChat?: Chat | null;
   teacher?: TeacherService;
   teacherVoice?: TeacherVoiceService;
 }
@@ -37,7 +40,7 @@ const textDocSchema = z.object({
   pages: z.array(z.string().max(2_000_000)).min(1).max(5_000),
 });
 
-export function createApp({ service, documents, allowedOrigins, teacher, teacherVoice }: AppOptions) {
+export function createApp({ service, documents, allowedOrigins, teacher, teacherVoice, presentationChat }: AppOptions) {
   const app = express();
   const allowed = new Set(allowedOrigins);
 
@@ -64,6 +67,14 @@ export function createApp({ service, documents, allowedOrigins, teacher, teacher
 
   app.use(express.json({ limit: '10mb' }));
   if (teacher) app.use('/api/teacher', teacherRouter(teacher, teacherVoice));
+
+  app.post('/api/presentation/checklist', route(async req => {
+    if(process.env.MEETMATE_PRESENTATION_ENABLED==='false') throw new HttpError(503,'Chế độ Thuyết trình đang tạm tắt.');
+    const ids = z.array(z.string().min(1).max(80)).min(1).max(20).safeParse(req.body?.documentIds);
+    if (!ids.success) throw new HttpError(400, 'Chọn ít nhất một tài liệu.');
+    const docs = await Promise.all([...new Set(ids.data)].map(id => documents.get(id)));
+    return generateChecklist(docs, presentationChat ?? null, AbortSignal.timeout(60_000));
+  }));
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });

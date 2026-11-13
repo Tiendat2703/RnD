@@ -12,6 +12,7 @@
 // là tốc độ phát lại, không phải tốc độ phiên. Độ trễ của mô hình thì KHÔNG
 // được nén — bước tìm nguồn vẫn chờ 2–4 giây, vì đó là chi phí người dùng
 // sẽ chờ trong sản phẩm thật.
+import { PresentationView } from './PresentationView';
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "../../lib/utils";
 import {
@@ -85,6 +86,7 @@ export function MeetingMonitor() {
     pushToast,
     openPricing,
     extSession,
+    savedSessions,
   } = useDashboard();
 
   const [now, setNow] = useState(() => Date.now());
@@ -364,6 +366,8 @@ export function MeetingMonitor() {
           : "listening";
 
   if (!live) return null;
+  const presentation=savedSessions[live.meetingId]?.presentation;
+  if(presentation) return <div className="ovl presentation-overlay"><PresentationView id={live.meetingId} title={live.title} snapshot={presentation} active onExit={()=>leaveLive(Math.round(clockSec))} onEnd={()=>endLive(Math.round(clockSec))}/>{extNotice&&<p role="status">{extNotice}</p>}</div>;
 
 
   const confirmExit = () => {

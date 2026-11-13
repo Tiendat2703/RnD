@@ -6,6 +6,7 @@
 export async function startCapture(opts: {
   /** null captures the microphone only (used by automated tests, where tabCapture needs a real click). */
   streamId: string | null;
+  microphoneOnly?: boolean;
   workletUrl: string;
   onFrame: (frame: Int16Array) => void;
   onNotice: (message: string) => void;
@@ -20,7 +21,7 @@ export async function startCapture(opts: {
 
   try {
     let tab: MediaStream | null = null;
-    if (opts.streamId) {
+    if (opts.streamId && !opts.microphoneOnly) {
       tab = await navigator.mediaDevices.getUserMedia({
         audio: { mandatory: { chromeMediaSource: 'tab', chromeMediaSourceId: opts.streamId } },
       } as unknown as MediaStreamConstraints);
@@ -38,6 +39,7 @@ export async function startCapture(opts: {
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streams.push(mic);
+      if (opts.microphoneOnly) mic.getAudioTracks()[0]?.addEventListener('ended', opts.onEnded);
     } catch {
       if (!tab) throw new Error('Không dùng được micro');
       opts.onNotice('Không dùng được micro — chỉ nghe được giọng người khác');

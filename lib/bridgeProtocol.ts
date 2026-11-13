@@ -1,3 +1,4 @@
+import type { PresentationSnapshot, PresentationAction } from './presentation';
 // lib/bridgeProtocol.ts — giao thức giữa web console và extension MeetMate.
 //
 // Web không có kênh nào khác để nói chuyện với extension: một content script
@@ -16,6 +17,8 @@ export const BRIDGE_EXT = "meetmate-ext";
 
 /** Phiên do web tạo, gửi sang extension trước khi người dùng bấm Bắt đầu. */
 export interface SessionDraft {
+  mode?: 'assistant' | 'presentation';
+  presentation?: PresentationSnapshot;
   id: string;
   title: string;
   kind: MeetingKind;
@@ -30,6 +33,7 @@ export interface SessionDraft {
 }
 
 export type WebToExt =
+  | { type: 'presentation.action'; id: string; revision: string; action: PresentationAction }
   | { type: "ping" }
   | { type: "session.prepare"; session: SessionDraft }
   /** dừng phiên đang nghe; không có phiên nào đang nghe thì bỏ phiên `id` đã gửi mà chưa bắt đầu */
@@ -44,6 +48,7 @@ export type WebToExt =
   | { type: "sessions.markSynced"; id: string; syncedAt: number };
 
 export interface ExtInfo {
+  presentation?: boolean;
   version: string;
   /** đã nhập khóa Blaze trong khung bên extension (không gửi giá trị); Exa không bắt buộc */
   keysSet: boolean;
@@ -74,6 +79,8 @@ export interface SavedTopic {
 
 /** Phiên do extension lưu trong chrome.storage.local — nguồn sự thật của web. */
 export interface SavedSession {
+  mode?: 'assistant' | 'presentation';
+  presentation?: PresentationSnapshot;
   id: string;
   title: string;
   kind: MeetingKind;
@@ -93,6 +100,7 @@ export interface SavedSession {
 }
 
 export type ExtToWeb =
+  | { type: 'presentation'; id: string; snapshot: PresentationSnapshot }
   | { type: "sessions"; sessions: SavedSession[] }
   | { type: "pong"; info: ExtInfo }
   /** kết quả `session.addDocuments`: `added` = số tài liệu mới vào kho, `total` = tổng tài liệu của phiên sau đó */

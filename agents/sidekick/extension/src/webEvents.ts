@@ -59,11 +59,13 @@ export function researchOf(card: Card, ctx: WebContext): { topic: Topic; result:
  */
 export function webEventsOf(event: PanelEvent, ctx: WebContext, lineId: () => string): ExtToWeb[] {
   switch (event.kind) {
+    case 'presentation':
+      return [{ type: 'presentation', id: event.id, snapshot: event.snapshot }];
     case 'final':
       return [{
         type: 'line',
         // tab audio and microphone are mixed before STT, so the speaker is unknown
-        line: { id: lineId(), text: event.text, atMs: Math.max(0, event.at - ctx.startedAt), source: 'mixed' },
+        line: { id: event.lineId ?? lineId(), text: event.text, atMs: Math.max(0, event.at - ctx.startedAt), source: event.source ?? 'mixed' },
       }];
     case 'card': {
       const found = researchOf(event.card, ctx);

@@ -8,6 +8,8 @@ declare global {
   interface Window { __meetmateContent?: boolean }
 }
 
+let presentationActive=false;
+const sessionActive=()=>presentationActive || isActive();
 const visible = (el: Element) => (el as HTMLElement).offsetParent !== null || (el as HTMLElement).getClientRects().length > 0;
 const find = (selectors: string[]) => {
   for (const s of selectors) {
@@ -71,12 +73,12 @@ function watchLeave(): void {
   };
   document.addEventListener('click', e => {
     const target = e.target as Element | null;
-    if (!target || !isActive()) return;
+    if (!target || !sessionActive()) return;
     const control = target.closest('button, [role="button"]');
     const label = control?.getAttribute('aria-label') ?? control?.getAttribute('data-tooltip');
     if (target.closest(LEAVE_BUTTON.join(',')) || matchesLeaveLabel(label)) tellLeft();
   }, true);
-  window.addEventListener('pagehide', () => isActive() && tellLeft());
+  window.addEventListener('pagehide', () => sessionActive() && tellLeft());
   /** A short text node standing alone that is exactly the after-call heading. */
   const leftScreenShown = () => {
     const walker = document.createTreeWalker(document.body ?? document, NodeFilter.SHOW_TEXT);
@@ -102,6 +104,7 @@ if (!window.__meetmateContent) {
   let chain: Promise<unknown> = Promise.resolve();
   watchLeave();
   chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
+    if(msg.type==='mm.presentation.watch'){presentationActive=msg.active;return false;}
     if (msg.type === 'mm.panel') {
       applyEvent(msg.event);
       return false;

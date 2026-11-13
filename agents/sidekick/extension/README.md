@@ -36,3 +36,11 @@ Hội thoại không có từ khóa vẫn được ghi transcript và giữ làm
 Nếu đã có `meeting.wav` từ phiên bản cũ, cần tạo lại bằng lệnh trên để kịch bản dùng từ khóa “trợ lý”.
 
 `npm run extension:e2e` không kiểm tra được hai phần: ghi âm tab Meet thật (cần bấm biểu tượng thật) và giao diện chat của Meet thật. Hai phần này cần thử tay trên một cuộc họp thật.
+
+## Chế độ Thuyết trình (0.4.0)
+
+Tạo phiên **Thuyết trình** trên web, chọn tài liệu, tạo và xác nhận checklist trước khi gửi sang extension. Mode này chỉ nghe micro của người trình bày, tự đánh dấu ý đã nói, cảnh báo lệch nguồn và nhắc ý thiếu; không gửi chat Meet và không chèn overlay lên tab Meet. Theo dõi ở side panel hoặc web, sửa tay khi cần, kết thúc rồi tải PDF.
+
+Nếu chia sẻ toàn màn hình/cửa sổ chứa side panel, khán giả vẫn có thể thấy checklist. Chỉ chia sẻ vùng nội dung thích hợp. Sau khi nâng cấp, reload extension và tab web/Meet.
+
+Xem [hướng dẫn và phạm vi nghiệm thu](../../../docs/plans/presentation-mode-verification.md).

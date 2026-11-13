@@ -1,3 +1,4 @@
+import { parsePresentation } from '../../../lib/presentation';
 // Kiểm tra phiên web gửi lên. Hình dạng khớp `SavedSession` trong lib/bridgeProtocol.ts;
 // giới hạn độ dài để một gói lỗi không làm đầy đĩa hoặc prompt.
 import { z } from 'zod';
@@ -24,6 +25,10 @@ const topic = z.object({
 });
 
 export const sessionSchema = z.object({
+  mode: z.enum(['assistant', 'presentation']).optional(),
+  presentation: z.unknown().transform((value, ctx) => {
+    try { return parsePresentation(value); } catch { ctx.addIssue({code:'custom',message:'Checklist không hợp lệ.'}); return z.NEVER; }
+  }).optional(),
   id: z.string().regex(SESSION_ID),
   title: text(200),
   kind: z.enum(['san-pham', 'nghien-cuu', 'dao-tao', 'ban-le', 'khac']),
@@ -34,6 +39,14 @@ export const sessionSchema = z.object({
   // thẻ đối chiếu chỉ được lưu lại, báo cáo không đọc chúng
   cards: z.array(z.unknown()).max(500).optional(),
   syncedAt: z.number().nullable().optional(),
+}).superRefine((s, ctx) => {
+  for(const item of s.presentation?.items??[]) {
+    if(item.evidence && !s.lines.some(l=>l.id===item.evidence!.lineId && l.source==='mic' && l.text===item.evidence!.text)) ctx.addIssue({code:'custom',message:'Căn cứ không trỏ lời micro trong phiên.'});
+  }
+  for(const d of s.presentation?.deviations??[]) for(const e of [d.evidence,d.resolvedBy]) {
+    if(e&&!s.lines.some(l=>l.id===e.lineId&&l.source==='mic'&&l.text===e.text))ctx.addIssue({code:'custom',message:'Cảnh báo không có lời micro làm căn cứ.'});
+  }
+  if (s.mode === 'presentation' && (!s.presentation?.confirmed || !s.presentation.items.length)) ctx.addIssue({code:'custom',message:'Thiếu checklist đã xác nhận.'});
 });
 
 export type IncomingSession = z.infer<typeof sessionSchema>;

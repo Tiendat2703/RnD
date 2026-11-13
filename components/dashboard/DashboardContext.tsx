@@ -1,4 +1,5 @@
 "use client";
+import type { PresentationSnapshot } from '../../lib/presentation';
 
 // components/dashboard/DashboardContext.tsx — state dùng chung cho dashboard.
 //
@@ -73,6 +74,8 @@ export interface EndCounts {
 
 /** Bản nháp mang từ wizard sang dialog cài tiện ích, trước khi phiên tồn tại. */
 export interface PendingMeeting {
+  mode?: 'assistant' | 'presentation';
+  presentation?: PresentationSnapshot;
   title: string;
   kind: MeetingKind;
   /** tài liệu đối chiếu đã chọn trong wizard; nội dung được gửi cho extension kèm phiên */

@@ -1,3 +1,4 @@
+import type { PresentationSnapshot, PresentationAction } from '../../../../lib/presentation';
 import type { ExtToWeb, SessionDraft, WebToExt } from '../../../../lib/bridgeProtocol';
 
 export type { ExtToWeb, SessionDraft, WebToExt };
@@ -34,7 +35,8 @@ export type RunState = 'idle' | 'starting' | 'live' | 'reconnecting' | 'error';
 export type PanelEvent =
   | { kind: 'state'; state: RunState; detail?: string }
   | { kind: 'partial'; text: string }
-  | { kind: 'final'; text: string; at: number }
+  | { kind: 'final'; text: string; at: number; lineId?: string; source?: 'mic' | 'mixed' }
+  | { kind: 'presentation'; id: string; snapshot: PresentationSnapshot }
   | { kind: 'card'; card: Card }
   | { kind: 'chat'; cardId: string; status: ChatStatus; detail?: string }
   | { kind: 'notice'; level: 'info' | 'error'; message: string }
@@ -47,7 +49,8 @@ export type Msg =
   | { type: 'mm.start'; tabId: number; streamId: string | null }
   | { type: 'mm.stop' }
   // background → offscreen; reply StartReply
-  | { type: 'mm.offscreen.start'; streamId: string | null; blazeApiKey: string; exaApiKey: string; settings: Settings }
+  | { type: 'mm.offscreen.start'; streamId: string | null; blazeApiKey: string; exaApiKey: string; settings: Settings; presentation?: PresentationSnapshot; sessionId?: string }
+  | { type: 'mm.presentation.action'; id: string; revision: string; action: PresentationAction }
   | { type: 'mm.offscreen.stop' }
   | { type: 'mm.settings'; settings: Settings }
   // side panel → offscreen: the document library changed
@@ -66,6 +69,7 @@ export type Msg =
   // background → content script in the Meet tab: an event for the in-page panel
   | { type: 'mm.panel'; event: ExtToWeb }
   // content script → background: the user left the call (end-call button or the "you left" screen)
+  | { type: 'mm.presentation.watch'; active: boolean }
   | { type: 'mm.left' }
   // side panel → background: pick which web session the next meeting records (null = a new one
   // with a generated id); reply SelectReply

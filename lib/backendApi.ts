@@ -107,3 +107,7 @@ export const teacherApi = {
   message: async (id: string, token: string, body: { requestId: string; text: string; action: TeacherAction; documentId?: string; source?: 'text' | 'voice'; context?: string[] }) =>
     json<TeacherRoom>(await teacherCall(`/teacher/rooms/${encodeURIComponent(id)}/messages`, { method: 'POST', headers: { 'X-Teacher-Member': token }, body: JSON.stringify(body) })),
 };
+
+export async function generatePresentationChecklist(documentIds: string[]): Promise<import('./presentation').PresentationSnapshot> {
+  return json(await call('/presentation/checklist', {method:'POST', body:JSON.stringify({documentIds})}));
+}

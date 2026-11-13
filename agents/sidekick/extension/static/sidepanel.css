@@ -182,3 +182,5 @@ button, input { font: inherit; color: inherit; }
 .status-line { color: var(--text) !important; font-weight: 500; }
 body[data-state="ok"] .status-line { color: var(--ok) !important; }
 body[data-state="denied"] .status-line { color: var(--danger) !important; }
+
+.presentation-items{padding-left:20px;display:grid;gap:16px}.presentation-items li{padding:12px;border:1px solid #60717d;border-radius:10px;overflow-wrap:anywhere}#presentation{padding:16px}#presentation select{max-width:100%}

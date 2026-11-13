@@ -3696,3 +3696,17 @@ button.nav-item {
 .dropzone__alt summary { cursor: pointer; }
 .dropzone__alt .textarea { margin-top: var(--sp-xs); }
 .field__error { margin: var(--sp-xs) 0 0; font-size: 13px; color: var(--ink); }
+
+/* Presentation: compact private checklist, uses existing theme tokens. */
+.presentation-overlay{overflow:auto;padding:24px;display:block;background:var(--surface,#fff);color:var(--ink,#17212b)}
+.presentation-view,.presentation-setup{max-width:900px;margin:0 auto;padding:20px;display:grid;gap:16px}
+.presentation-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.presentation-items{display:grid;gap:16px;padding:0;list-style:none}
+.presentation-items>li{padding:16px;border:1px solid var(--hairline,#d6dce2);border-radius:12px;overflow-wrap:anywhere}
+.presentation-items>li[data-correctness="contradicted"]{border-width:2px}
+.presentation-items textarea{width:100%;box-sizing:border-box;margin:8px 0}
+.presentation-items blockquote{margin:8px 0;padding-left:12px;border-left:2px solid var(--hairline,#d6dce2)}
+.presentation-hint{padding:16px;border:1px solid var(--hairline,#d6dce2);border-radius:12px}
+
+.presentation-overlay{z-index:65}
+@media(max-width:560px){.presentation-overlay{padding:8px}.presentation-view,.presentation-setup{padding:12px}}

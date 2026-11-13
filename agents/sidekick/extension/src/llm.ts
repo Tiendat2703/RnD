@@ -3,7 +3,7 @@ import { BLAZE_LLM_MODEL, BLAZE_LLM_URL } from './config';
 export type ChatMessage = { role: 'system' | 'user'; content: string };
 export type Chat = (messages: ChatMessage[], signal: AbortSignal) => Promise<string>;
 
-export function blazeChat(apiKey: string, fetcher: typeof fetch = fetch): Chat {
+export function blazeChat(apiKey: string, fetcher: typeof fetch = globalThis.fetch.bind(globalThis)): Chat {
   return async (messages, signal) => {
     const response = await fetcher(BLAZE_LLM_URL, {
       method: 'POST',

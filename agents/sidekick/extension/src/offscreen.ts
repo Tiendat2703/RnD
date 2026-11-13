@@ -1,3 +1,4 @@
+import { createPresentationPipeline } from './presentation-pipeline';
 import { ExaProvider } from '../../server/providers/exa';
 import { startCapture } from './audio';
 import { RESEARCH_MAX_SOURCES, RESEARCH_SOURCE_CHARS } from './config';
@@ -19,7 +20,7 @@ async function loadLibrary(): Promise<DocLibrary | null> {
   return chunks.length ? buildLibrary(chunks) : null;
 }
 
-type Session = { stt: LiveStt; pipeline: Pipeline; stopAudio: () => void };
+type Session = { stt: LiveStt; pipeline: Pipeline; stopAudio: () => void; presentation?: ReturnType<typeof createPresentationPipeline>; id?: string; revision?: string };
 let session: Session | null = null;
 let library: DocLibrary | null = null;
 let settings: Settings | null = null;
@@ -28,11 +29,12 @@ const STATE: Record<SttState, RunState | null> = { connecting: 'starting', live:
 
 function stop(): void {
   if (!session) return;
-  const { stt, pipeline, stopAudio } = session;
+  const { stt, pipeline, stopAudio, presentation } = session;
   session = null;
   stopAudio();
   stt.stop(); // keeps reading the last finals for a second
-  setTimeout(() => pipeline.stop(), 1_200);
+  if(presentation) pipeline.stop();
+  else setTimeout(()=>pipeline.stop(),1_200);
 }
 
 async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise<StartReply> {
@@ -42,7 +44,8 @@ async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise
   if (!library) notice('info', 'Chưa có tài liệu: MeetMate chỉ nghe và research web, chưa đối chiếu được.');
   const chat = blazeChat(msg.blazeApiKey);
   const exaKey = msg.exaApiKey;
-  const pipeline = createPipeline({
+  const presentation = msg.presentation && msg.sessionId ? createPresentationPipeline({id:msg.sessionId,snapshot:msg.presentation,chat,emit}) : undefined;
+  const pipeline = presentation ?? createPipeline({
     chat,
     library: () => library,
     search: exaKey
@@ -72,6 +75,7 @@ async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise
     await stt.start();
     const stopAudio = await startCapture({
       streamId: msg.streamId,
+      microphoneOnly: Boolean(presentation),
       workletUrl: chrome.runtime.getURL('pcm-worklet.js'),
       onFrame: frame => stt.sendFrame(frame),
       onNotice: message => notice('info', message),
@@ -80,7 +84,7 @@ async function start(msg: Extract<Msg, { type: 'mm.offscreen.start' }>): Promise
         emit({ kind: 'state', state: 'idle', detail: 'Tab Meet đã dừng phát âm thanh' });
       },
     });
-    session = { stt, pipeline, stopAudio };
+    session = { stt, pipeline, stopAudio, presentation, id:msg.sessionId, revision:msg.presentation?.revision };
     emit({ kind: 'state', state: 'live' });
     return { ok: true };
   } catch (error) {
@@ -96,6 +100,9 @@ chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
     case 'mm.offscreen.start':
       void start(msg).then(sendResponse);
       return true;
+    case 'mm.presentation.action':
+      if (session?.id === msg.id && session.revision === msg.revision) session.presentation?.action(msg.action);
+      return false;
     case 'mm.offscreen.stop':
       stop();
       return false;
@@ -106,6 +113,7 @@ chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
       session?.pipeline.verify(msg.text);
       return false;
     case 'mm.docs.changed':
+      if (session?.presentation) return false;
       void loadLibrary().then(lib => {
         library = lib;
         if (session) notice('info', `Đã cập nhật tài liệu cho cuộc họp (${lib?.chunks.length ?? 0} đoạn).`);
