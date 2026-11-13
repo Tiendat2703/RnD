@@ -37,7 +37,8 @@ const STATE_LABEL: Record<View['state'], string> = {
   idle: 'Chưa chạy', starting: 'Đang kết nối', live: 'Đang nghe', reconnecting: 'Đang kết nối lại', error: 'Lỗi',
 };
 const KIND_LABEL: Record<Card['kind'], string> = {
-  contradiction: 'Có thể lệch tài liệu', answer: 'Trả lời từ tài liệu', not_in_doc: 'Tài liệu không có', research: 'Nguồn tham khảo',
+  contradiction: 'Mâu thuẫn với tài liệu', partial: 'Khớp một phần', supported: 'Khớp tài liệu',
+  answer: 'Trả lời từ tài liệu', not_in_doc: 'Tài liệu không có', research: 'Nguồn tham khảo',
 };
 const CHAT_LABEL: Record<Card['chat'], string> = {
   pending: 'Đang gửi vào chat…', sent: 'Đã gửi vào chat Meet', failed: 'Không gửi được vào chat', off: 'Chỉ hiện ở đây',
@@ -96,10 +97,20 @@ function renderCard(c: Card): string {
   const links = c.links?.length
     ? `<ol class="links">${c.links.map(l => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.title)}</a><br>${esc(l.reason)}</li>`).join('')}</ol>`
     : '';
-  const chatText = c.repeat ? 'Đã báo trước đó, không gửi lại vào chat' : `${CHAT_LABEL[c.chat]}${c.chatError ? `: ${esc(c.chatError)}` : ''}`;
-  const chat = `<footer class="chat ${c.chat}">${chatText}</footer>`;
+  const own = c.mode === 'auto' || c.mode === 'verify';
+  const chatText = own ? 'Chỉ bạn thấy, không gửi vào chat'
+    : c.repeat ? 'Đã báo trước đó, không gửi lại vào chat' : `${CHAT_LABEL[c.chat]}${c.chatError ? `: ${esc(c.chatError)}` : ''}`;
+  const chat = `<footer class="chat ${own ? 'off' : c.chat}">${chatText}</footer>`;
+  const how = c.mode === 'ask' ? ' · được hỏi' : c.mode === 'auto' ? ' · tự kiểm' : c.mode === 'verify' ? ' · bạn bấm kiểm' : '';
+  // a claim that matches the document is good news: one compact line with its source
+  if (c.kind === 'supported') {
+    return `<article class="card supported">
+      <header><span class="chip">✓ ${KIND_LABEL.supported}${how}</span><time>${time(c.at)}</time></header>
+      ${said}<p>${esc(c.text)}${c.source ? ` <cite>${esc(c.source)}</cite>` : ''}</p>
+    </article>`;
+  }
   return `<article class="card ${c.kind}">
-    <header><span class="chip">${KIND_LABEL[c.kind]}${c.mode === 'ask' ? ' · được hỏi' : ''}</span><time>${time(c.at)}</time></header>
+    <header><span class="chip">${KIND_LABEL[c.kind]}${how}</span><time>${time(c.at)}</time></header>
     ${said}${title}<p class="${c.kind === 'research' ? '' : 'text'}">${esc(c.text)}</p>${quote}${links}${chat}
   </article>`;
 }
@@ -113,7 +124,9 @@ function renderCards(): void {
 function renderTranscript(): void {
   const list = $('transcript');
   const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
-  list.innerHTML = view.transcript.map(l => `<li><time>${time(l.at)}</time> ${esc(l.text)}</li>`).join('');
+  const canCheck = running() && docs.length > 0;
+  list.classList.toggle('checkable', canCheck);
+  list.innerHTML = view.transcript.map((l, i) => `<li data-i="${i}"${canCheck ? ' tabindex="0" title="Bấm để kiểm câu này với tài liệu (chỉ bạn thấy)"' : ''}><time>${time(l.at)}</time> ${esc(l.text)}</li>`).join('');
   if (atBottom) list.scrollTop = list.scrollHeight;
   $('line-count').textContent = view.transcript.length ? `(${view.transcript.length} câu)` : '';
 }
@@ -262,6 +275,7 @@ async function init(): Promise<void> {
   settings = { ...DEFAULT_SETTINGS, ...(local[STORAGE_KEYS.settings] as Partial<Settings> | undefined) };
   $<HTMLInputElement>('post-chat').checked = settings.postToChat;
   $<HTMLInputElement>('web-research').checked = settings.webResearch;
+  $<HTMLInputElement>('auto-check').checked = settings.autoCheck;
   view = ((await chrome.storage.session.get(STORAGE_KEYS.view))[STORAGE_KEYS.view] as View | undefined) ?? EMPTY_VIEW;
   docs = await listDocs();
   ($('settings-box') as HTMLDetailsElement).open = !hasBlazeKey;
@@ -273,6 +287,18 @@ async function init(): Promise<void> {
   bindKey('exa-key', STORAGE_KEYS.exa);
   $('post-chat').addEventListener('change', e => saveSettings({ ...settings, postToChat: (e.target as HTMLInputElement).checked }));
   $('web-research').addEventListener('change', e => saveSettings({ ...settings, webResearch: (e.target as HTMLInputElement).checked }));
+  $('auto-check').addEventListener('change', e => saveSettings({ ...settings, autoCheck: (e.target as HTMLInputElement).checked }));
+  // click (or Enter on) a transcript line: check it against the session's documents
+  const verifyLine = (target: EventTarget | null) => {
+    const li = (target as HTMLElement | null)?.closest<HTMLElement>('li[data-i]');
+    const line = li ? view.transcript[Number(li.dataset.i)] : undefined;
+    if (!line || !running() || !docs.length) return;
+    void chrome.runtime.sendMessage({ type: 'mm.verify', text: line.text } satisfies Msg).catch(() => undefined);
+    localNotice = { level: 'info', message: `Đang kiểm: “${line.text.length > 70 ? `${line.text.slice(0, 69)}…` : line.text}”` };
+    renderControl();
+  };
+  $('transcript').addEventListener('click', e => verifyLine(e.target));
+  $('transcript').addEventListener('keydown', e => { if (e.key === 'Enter') verifyLine(e.target); });
   $('toggle').addEventListener('click', () => void (running() ? stop() : start()));
 
   chrome.storage.onChanged.addListener((changes, area) => {
@@ -281,6 +307,8 @@ async function init(): Promise<void> {
       if (next.transcript.length !== view.transcript.length) partial = '';
       // A newer message from the background replaces whatever the panel said itself.
       if (next.state !== view.state || next.notice?.at !== view.notice?.at) localNotice = null;
+      // a clicked line's verdict arrived: drop the "checking…" note
+      if (next.cards.length !== view.cards.length && localNotice?.message.startsWith('Đang kiểm')) localNotice = null;
       view = next;
       render();
     }

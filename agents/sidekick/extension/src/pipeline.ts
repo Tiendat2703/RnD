@@ -11,6 +11,8 @@ export type Pipeline = {
   /** Called from the STT callback; returns at once, all model work runs in the background. */
   onFinal(text: string): void;
   onPartial(text: string): void;
+  /** The user clicked a transcript line: check it against the documents. */
+  verify(text: string): void;
   stop(): void;
 };
 
@@ -89,6 +91,7 @@ export function createPipeline(deps: {
     emit: onFinding,
     onError: message => error(`Đối chiếu tài liệu: ${message}`),
     progress: (step, question) => deps.emit({ kind: 'progress', step, question }),
+    autoCheck: () => deps.settings().autoCheck !== false,
     now,
   });
 
@@ -103,6 +106,9 @@ export function createPipeline(deps: {
     onPartial(text) {
       if (stopped) return;
       deps.emit({ kind: 'partial', text });
+    },
+    verify(text) {
+      if (!stopped) assistant.verify(text);
     },
     stop() {
       stopped = true;

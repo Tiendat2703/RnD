@@ -80,7 +80,7 @@ describe('parseFindings', () => {
 
   it('repairs a wrong chunkId when the quote is real', () => {
     const raw = reply([{ kind: 'answer', utterance: 'đội mấy người', chunkId: 'hd#4', quote: 'Đội phát triển gồm 7 người', text: '7 người.' }]);
-    expect(parseFindings(raw, lib, 'auto', chunks)[0].chunk?.id).toBe('kh#1');
+    expect(parseFindings(raw, lib, 'ask', chunks)[0].chunk?.id).toBe('kh#1');
   });
 
   it('keeps not_in_doc without a quote, ignores unknown kinds, empty text and broken JSON', () => {
@@ -89,10 +89,24 @@ describe('parseFindings', () => {
       { kind: 'opinion', text: 'x' },
       { kind: 'answer', quote: 'Đội phát triển gồm 7 người', text: '' },
     ]) + '\n```';
-    expect(parseFindings(raw, lib, 'auto', chunks)).toEqual([
-      { kind: 'not_in_doc', mode: 'auto', utterance: 'có ZaloPay không', text: 'Tài liệu không đề cập.', quote: '', chunk: null },
+    expect(parseFindings(raw, lib, 'ask', chunks)).toEqual([
+      { kind: 'not_in_doc', mode: 'ask', utterance: 'có ZaloPay không', text: 'Tài liệu không đề cập.', quote: '', chunk: null },
     ]);
     expect(parseFindings('xin lỗi, tôi không chắc', lib, 'auto', chunks)).toEqual([]);
+  });
+
+  it('keeps only what each mode may report: automatic checks never answer or say "not in the document"', () => {
+    const raw = reply([
+      { kind: 'supported', utterance: 'đội 7 người', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: 'Kế hoạch ghi 7 người.' },
+      { kind: 'partial', utterance: 'đội 7 người', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: 'Gần đúng.' },
+      { kind: 'answer', utterance: 'x', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: '7.' },
+      { kind: 'not_in_doc', utterance: 'x', text: 'Tài liệu không đề cập.' },
+    ]);
+    expect(parseFindings(raw, lib, 'auto', chunks).map(f => f.kind)).toEqual(['supported', 'partial']);
+    expect(parseFindings(raw, lib, 'verify', chunks).map(f => f.kind)).toEqual(['supported', 'partial', 'not_in_doc']);
+    expect(parseFindings(raw, lib, 'ask', chunks).map(f => f.kind)).toEqual(['answer', 'not_in_doc']);
+    // a verdict without a real quote from the documents is dropped like any other
+    expect(parseFindings(reply([{ kind: 'supported', utterance: 'x', chunkId: 'kh#1', quote: 'bịa ra hoàn toàn', text: 'Đúng.' }]), lib, 'auto', chunks)).toEqual([]);
   });
 });
 
@@ -102,10 +116,21 @@ describe('checkDocs', () => {
     let seen: { messages?: ChatMessage[]; signal?: AbortSignal } = {};
     const findings = await checkDocs(async (messages, s) => {
       seen = { messages, signal: s };
-      return reply([{ kind: 'answer', utterance: 'q', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: '7 người.' }]);
-    }, lib, { mode: 'auto', context: [], lines: ['đội mấy người'] }, signal);
+      return reply([{ kind: 'supported', utterance: 'q', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: '7 người.' }]);
+    }, lib, { mode: 'auto', context: [], lines: ['đội có 7 người'] }, signal);
     expect(seen.signal).toBe(signal);
     expect(findings).toHaveLength(1);
+  });
+
+  it('gives a clicked line exactly one verdict', async () => {
+    const input = { mode: 'verify' as const, context: [], lines: ['đội có 9 người'] };
+    const none = await checkDocs(async () => reply([]), lib, input, new AbortController().signal);
+    expect(none).toMatchObject([{ kind: 'not_in_doc', mode: 'verify', utterance: 'đội có 9 người' }]);
+    const two = await checkDocs(async () => reply([
+      { kind: 'contradiction', utterance: 'đội có 9 người', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: 'Kế hoạch ghi 7 người.' },
+      { kind: 'supported', utterance: 'x', chunkId: 'kh#1', quote: 'Đội phát triển gồm 7 người', text: 'x' },
+    ]), lib, input, new AbortController().signal);
+    expect(two.map(f => f.kind)).toEqual(['contradiction']);
   });
 
   it('always answers a direct question exactly once', async () => {

@@ -31,8 +31,8 @@ function setup(settings: Settings = DEFAULT_SETTINGS, reply = '{"items":[]}') {
 }
 
 describe('createPipeline', () => {
-  it('records ordinary speech without document checks or routing calls', async () => {
-    const s = setup();
+  it('records ordinary speech without document checks or routing calls when automatic checks are off', async () => {
+    const s = setup({ ...DEFAULT_SETTINGS, autoCheck: false });
     s.p.onFinal('Theo hợp đồng phí bảo trì là 15.000.000 một tháng.');
     s.p.onFinal('Phí bảo trì bao nhiêu?');
     await flush();
@@ -86,7 +86,7 @@ describe('question source routing', () => {
     const p = createPipeline({
       chat, library: () => options.docs ? lib : null,
       search: options.key === false ? null : search,
-      settings: () => ({ postToChat: true, webResearch: options.web !== false }),
+      settings: () => ({ postToChat: true, webResearch: options.web !== false, autoCheck: false }),
       emit: e => events.push(e), post: (_id, messages) => posts.push(messages),
     });
     return { p, events, posts, search, chat };
@@ -282,3 +282,31 @@ describe('keyword requests feel fast', () => {
     expect(v.progress).toBeNull();
   });
 });
+
+describe('automatic and clicked checks stay with the user', () => {
+  const contradiction = JSON.stringify({ items: [{ kind: 'contradiction', utterance: 'Phí bảo trì là 15 triệu đồng một tháng.',
+    chunkId: chunk.id, quote: chunk.text, text: 'Hợp đồng ghi 12.000.000 đồng mỗi tháng.' }] });
+
+  it('checks a claim on its own and shows the verdict without posting it to the Meet chat', async () => {
+    const s = setup(DEFAULT_SETTINGS, contradiction);
+    s.p.onFinal('Phí bảo trì là 15 triệu đồng một tháng.');
+    await flush();
+    expect(s.prompts).toHaveLength(1);
+    expect(s.prompts[0][1].content).toContain('Chế độ: auto');
+    expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: {
+      kind: 'contradiction', mode: 'auto', source: 'hop-dong.pdf, tr. 3', chat: 'off',
+    } }]);
+    expect(s.posts).toEqual([]);
+  });
+
+  it('checks a clicked line and keeps that verdict out of the chat too', async () => {
+    const s = setup({ ...DEFAULT_SETTINGS, autoCheck: false }, contradiction.replace('"contradiction"', '"supported"'));
+    s.p.onFinal('Phí bảo trì là 12 triệu một tháng.');
+    s.p.verify('Phí bảo trì là 12 triệu một tháng.');
+    await flush();
+    expect(s.prompts[0][1].content).toContain('Chế độ: verify');
+    expect(s.events.filter(e => e.kind === 'card')).toMatchObject([{ card: { kind: 'supported', mode: 'verify', chat: 'off' } }]);
+    expect(s.posts).toEqual([]);
+  });
+});
+

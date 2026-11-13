@@ -18,18 +18,18 @@ import { createPipeline } from '../extension/src/pipeline';
 import { BlazeStt, type SttSocket } from '../extension/src/stt';
 import { ExaProvider } from '../server/providers/exa';
 
-type Kind = 'contradiction' | 'answer' | 'not_in_doc';
+type Kind = 'contradiction' | 'partial' | 'supported' | 'answer' | 'not_in_doc';
 type Expect = 'none' | Kind | Kind[];
 export const MEETING: { say: string; expect: Expect; note: string; ask?: boolean }[] = [
   { say: 'Chào mọi người, hôm nay mình rà soát lại hợp đồng với bên Sao Mai nhé.', expect: 'none', note: 'mở đầu' },
-  { say: 'Theo hợp đồng thì phí bảo trì sau thời gian bảo hành là mười lăm triệu một tháng.', expect: 'none', note: 'không có từ khóa: không đối chiếu' },
-  { say: 'Hạn chót bàn giao toàn bộ hệ thống là ngày ba mươi tháng tư năm hai nghìn không trăm hai mươi bảy.', expect: 'none', note: 'không có từ khóa: không đối chiếu' },
-  { say: 'Bảo hành thì mười hai tháng kể từ ngày ký biên bản nghiệm thu cuối cùng.', expect: 'none', note: 'đúng tài liệu' },
+  { say: 'Theo hợp đồng thì phí bảo trì sau thời gian bảo hành là mười lăm triệu một tháng.', expect: 'contradiction', note: 'tự kiểm (chỉ người dùng thấy): hợp đồng ghi 12 triệu' },
+  { say: 'Hạn chót bàn giao toàn bộ hệ thống là ngày ba mươi tháng tư năm hai nghìn không trăm hai mươi bảy.', expect: ['contradiction', 'partial'], note: 'tự kiểm: hợp đồng ghi 31/03/2027' },
+  { say: 'Bảo hành thì mười hai tháng kể từ ngày ký biên bản nghiệm thu cuối cùng.', expect: 'supported', note: 'tự kiểm: đúng tài liệu' },
   { say: 'Trợ lý ơi, đợt hai thanh toán bao nhiêu phần trăm giá trị hợp đồng?', expect: 'answer', note: 'từ khóa: 40%', ask: true },
   { say: 'Hay là mình đề xuất với Sao Mai tăng phí bảo trì lên mười lăm triệu nhỉ?', expect: 'none', note: 'đề xuất, không phải khẳng định' },
-  { say: 'Đội phát triển bên mình có sáu người thôi.', expect: 'none', note: 'không có từ khóa' },
+  { say: 'Đội phát triển bên mình có sáu người thôi.', expect: ['contradiction', 'partial'], note: 'tự kiểm: kế hoạch ghi 7 người' },
   { say: 'Trợ lý ơi, theo hợp đồng tranh chấp thì sẽ giải quyết ở đâu nhỉ?', expect: 'answer', note: 'từ khóa: VIAC', ask: true },
-  { say: 'Ứng dụng di động mình làm bằng Flutter cho nhanh.', expect: 'none', note: 'không có từ khóa' },
+  { say: 'Ứng dụng di động mình làm bằng Flutter cho nhanh.', expect: 'contradiction', note: 'tự kiểm: kế hoạch ghi React Native' },
   { say: 'Hôm nay trời mưa to quá, mọi người về nhớ cẩn thận nhé.', expect: 'none', note: 'nói chuyện phiếm' },
   { say: 'Trợ lý ơi, ứng dụng trong kế hoạch có hỗ trợ ví ZaloPay không?', expect: 'answer', note: 'từ khóa: ZaloPay để giai đoạn sau', ask: true },
   { say: 'Trợ lý ơi, trong hợp đồng có ghi giá cổ phiếu của Blue River không?', expect: 'not_in_doc', note: 'từ khóa: hỏi rõ nội dung file nhưng file không có', ask: true },

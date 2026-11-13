@@ -5,10 +5,10 @@ import { pageLabel } from './docs/chunk';
 export const citation = (f: Finding) => (f.chunk ? `${f.chunk.docName}, ${pageLabel(f.chunk)}` : '');
 
 /**
- * Everyone in the meeting reads the chat. Unprompted "the document doesn't say" notes stay in
- * the side panel; contradictions, answers and anything asked of MeetMate directly are posted.
+ * Everyone in the meeting reads the chat, so only what was asked of MeetMate out loud ("trợ lý")
+ * goes there. Automatic and clicked checks stay with the user, who decides whether to speak up.
  */
-export const shouldPost = (f: Finding) => f.kind !== 'not_in_doc' || f.mode === 'ask';
+export const shouldPost = (f: Finding) => f.mode === 'ask';
 
 function clip(text: string, max: number): string {
   if (text.length <= max) return text;

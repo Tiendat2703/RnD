@@ -18,6 +18,10 @@ describe('webEvents', () => {
     expect(knowledgeCardOf(card({ kind: 'not_in_doc', mode: 'ask' }), ctx)).toMatchObject({ kind: 'question', status: null });
     expect(knowledgeCardOf(card({ kind: 'answer' }), ctx)).toMatchObject({ kind: 'question', status: null });
     expect(knowledgeCardOf(card({ kind: 'research' }), ctx)).toBeNull();
+    // automatic and clicked checks: all four statuses
+    expect(knowledgeCardOf(card({ kind: 'supported', mode: 'auto' }), ctx)).toMatchObject({ kind: 'claim', status: 'supported' });
+    expect(knowledgeCardOf(card({ kind: 'partial', mode: 'auto' }), ctx)).toMatchObject({ kind: 'claim', status: 'partial' });
+    expect(knowledgeCardOf(card({ kind: 'not_in_doc', mode: 'verify' }), ctx)).toMatchObject({ kind: 'claim', status: 'insufficient' });
   });
 
   it('câu nói một phần thì không có gì để lưu; thông báo lỗi thành sự kiện lỗi', () => {

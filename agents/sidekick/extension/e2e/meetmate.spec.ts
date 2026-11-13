@@ -112,14 +112,29 @@ test('records the meeting and answers keyword-invoked questions in the Meet chat
   expect(messages.every(m => m.startsWith('MeetMate: '))).toBe(true);
   expect(messages.join('\n')).toContain('12.000.000');
   expect(messages.join('\n')).toContain('React Native');
-  // Ordinary incorrect claims must no longer produce automatic contradiction cards.
+  // Only the six "trợ lý" answers reach the chat; automatic checks never do.
+  expect(messages).toHaveLength(6);
   expect(messages.filter(t => t.includes('⚠️'))).toEqual([]);
   for (const m of messages.filter(t => !t.includes('Tài liệu không đề cập'))) {
     expect(m).toMatch(/📄 (hop-dong|ke-hoach)\.pdf, tr\. \d/);
   }
-  await expect(panel.locator('.card.contradiction')).toHaveCount(0);
   await expect(panel.locator('.card .chat.sent').first()).toBeVisible();
-  await expect(panel.locator('#transcript li')).not.toHaveCount(0);
+
+  // Incorrect claims said without the keyword are caught on their own, shown only to the user.
+  const auto = panel.locator('.card.contradiction', { hasText: 'tự kiểm' });
+  await expect.poll(async () => (await auto.allTextContents()).join('\n'), { timeout: 30_000, intervals: [1_000] })
+    .toMatch(/12\.000\.000[\s\S]*React Native|React Native[\s\S]*12\.000\.000/);
+  await expect(auto.first()).toContainText('Chỉ bạn thấy');
+  await expect(panel.locator('.card.supported', { hasText: 'tự kiểm' })).not.toHaveCount(0);
+  console.log(`Automatic checks:\n${(await panel.locator('.card', { hasText: 'tự kiểm' }).allTextContents()).map(c => `  ${c.replace(/\s+/g, ' ').trim()}`).join('\n')}`);
+
+  // Clicking a transcript line checks it against the documents, also only for the user.
+  await panel.locator('details', { hasText: 'Transcript' }).locator('summary').click();
+  const line = panel.locator('#transcript li', { hasText: /trời mưa/i }).first();
+  await line.click();
+  await expect(panel.locator('.card', { hasText: 'bạn bấm kiểm' })).toHaveCount(1, { timeout: 30_000 });
+  console.log(`Clicked check: ${(await panel.locator('.card', { hasText: 'bạn bấm kiểm' }).innerText()).replace(/\s+/g, ' ')}`);
+  expect(await chat.count()).toBe(6);
 
   await panel.locator('#toggle').click();
   await expect(panel.locator('#pill')).toHaveText('Chưa chạy', { timeout: 15_000 });

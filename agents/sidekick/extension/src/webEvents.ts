@@ -26,15 +26,17 @@ export function citationOf(card: Card): Citation[] {
 }
 
 /**
- * A document finding as a Knowledge Card. Only the two statuses the check can actually decide
- * are used: a contradiction found in the documents, or nothing in them about the claim.
- * Answers to questions carry no status (lib/evidence.ts: only claims have one).
+ * A document finding as a Knowledge Card. A claim checked against the documents (automatically,
+ * by a click, or a contradiction found while answering) gets one of the four evidence statuses;
+ * answers to questions carry none (lib/evidence.ts: only claims have one).
  */
 export function knowledgeCardOf(card: Card, ctx: WebContext): KnowledgeCard | null {
   if (card.kind === 'research') return null;
   const atMs = Math.max(0, card.at - ctx.startedAt);
   const base = { id: card.id, quote: card.utterance ?? '', atMs, summary: card.text, citations: citationOf(card) };
   if (card.kind === 'contradiction') return { ...base, kind: 'claim', status: 'contradicted' };
+  if (card.kind === 'partial') return { ...base, kind: 'claim', status: 'partial' };
+  if (card.kind === 'supported') return { ...base, kind: 'claim', status: 'supported' };
   if (card.kind === 'not_in_doc') return { ...base, kind: card.mode === 'ask' ? 'question' : 'claim', status: card.mode === 'ask' ? null : 'insufficient' };
   return { ...base, kind: 'question', status: null };
 }

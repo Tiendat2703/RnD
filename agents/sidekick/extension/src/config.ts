@@ -37,4 +37,6 @@ export const DOC_CONTEXT_LINES = 4;
 export const WAKE_FOLLOWUP_MS = 10_000;
 // Web answers: fewer, shorter sources make Exa reply faster and the LLM read and write less.
 export const RESEARCH_MAX_SOURCES = 3;
+// Automatic checks: lines heard while one runs are sent together, at most this many per call.
+export const AUTO_BATCH_LINES = 4;
 export const RESEARCH_SOURCE_CHARS = 1_500;

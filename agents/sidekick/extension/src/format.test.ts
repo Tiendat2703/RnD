@@ -38,10 +38,12 @@ describe('formatFinding', () => {
 });
 
 describe('shouldPost', () => {
-  it('keeps unprompted not_in_doc notes out of the chat', () => {
-    expect(shouldPost(base)).toBe(true);
-    expect(shouldPost({ ...base, kind: 'answer' })).toBe(true);
-    expect(shouldPost({ ...base, kind: 'not_in_doc', mode: 'auto' })).toBe(false);
+  it('posts only what was asked out loud; automatic and clicked checks stay with the user', () => {
+    expect(shouldPost({ ...base, mode: 'ask' })).toBe(true);
+    expect(shouldPost({ ...base, kind: 'answer', mode: 'ask' })).toBe(true);
     expect(shouldPost({ ...base, kind: 'not_in_doc', mode: 'ask' })).toBe(true);
+    for (const mode of ['auto', 'verify'] as const) {
+      for (const kind of ['contradiction', 'partial', 'supported', 'not_in_doc'] as const) expect(shouldPost({ ...base, kind, mode })).toBe(false);
+    }
   });
 });

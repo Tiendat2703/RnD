@@ -2,16 +2,18 @@ import type { ExtToWeb, SessionDraft, WebToExt } from '../../../../lib/bridgePro
 
 export type { ExtToWeb, SessionDraft, WebToExt };
 
-export type Settings = { postToChat: boolean; webResearch: boolean };
-export const DEFAULT_SETTINGS: Settings = { postToChat: true, webResearch: true };
+/** autoCheck: check claims against the documents on its own; verdicts are shown only to the user. */
+export type Settings = { postToChat: boolean; webResearch: boolean; autoCheck: boolean };
+export const DEFAULT_SETTINGS: Settings = { postToChat: true, webResearch: true, autoCheck: true };
 
-export type CardKind = 'contradiction' | 'answer' | 'not_in_doc' | 'research';
+export type CardKind = 'contradiction' | 'partial' | 'supported' | 'answer' | 'not_in_doc' | 'research';
 export type ChatStatus = 'pending' | 'sent' | 'failed' | 'off';
 export type Card = {
   id: string;
   at: number;
   kind: CardKind;
-  mode?: 'auto' | 'ask';
+  /** auto/verify: only the user sees it (never posted to the Meet chat); ask: a "trợ lý" request */
+  mode?: 'auto' | 'ask' | 'verify';
   /** The research topic, for research cards. */
   title?: string;
   utterance?: string;
@@ -50,6 +52,8 @@ export type Msg =
   | { type: 'mm.settings'; settings: Settings }
   // side panel → offscreen: the document library changed
   | { type: 'mm.docs.changed' }
+  // side panel → offscreen: check this transcript line against the documents (only the user sees it)
+  | { type: 'mm.verify'; text: string }
   // offscreen → background
   | { type: 'mm.post'; cardId: string; messages: string[] }
   | { type: 'mm.event'; event: PanelEvent }

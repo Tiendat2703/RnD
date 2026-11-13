@@ -102,6 +102,9 @@ chrome.runtime.onMessage.addListener((msg: Msg, _sender, sendResponse) => {
     case 'mm.settings':
       settings = msg.settings;
       return false;
+    case 'mm.verify':
+      session?.pipeline.verify(msg.text);
+      return false;
     case 'mm.docs.changed':
       void loadLibrary().then(lib => {
         library = lib;

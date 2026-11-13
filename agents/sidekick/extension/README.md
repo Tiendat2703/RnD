@@ -23,7 +23,9 @@ Câu hỏi được phân loại theo nguồn trước khi trả lời, dựa v�
 - “Trợ lý, phí bảo trì trong hợp đồng bao nhiêu?” hoặc câu hỏi về dữ kiện riêng của nhóm → tra tài liệu và trích dẫn file/trang; không tìm dữ kiện nội bộ trên web khi file thiếu thông tin.
 - “Trợ lý, cái này ở đâu?” khi chưa rõ đối tượng → yêu cầu nói rõ, không trả nhầm “tài liệu không đề cập”.
 
-Hội thoại không có từ khóa vẫn được ghi transcript và giữ làm ngữ cảnh, nhưng không gọi LLM phân nguồn, không đối chiếu tài liệu và không tự research web theo chủ đề. Chỉ sau khi gọi “trợ lý”, câu hỏi mới được phân nguồn và tìm kiếm.
+Hội thoại không có từ khóa vẫn được ghi transcript và giữ làm ngữ cảnh, không gọi LLM phân nguồn và không tự research web. Chỉ câu trả lời cho “trợ lý” được gửi vào chat Meet.
+
+**Tự đối chiếu (chỉ bạn thấy).** Câu có số liệu, tiền, phần trăm, ngày/hạn, số đếm hoặc tên riêng, và nói về thứ có trong tài liệu của phiên, được tự đối chiếu (bộ lọc chạy trên máy: `src/claims.ts`). Ví dụ có người nói “phí bảo trì là 15 triệu một tháng” mà hợp đồng ghi 12.000.000 đồng → khung bên hiện thẻ **Mâu thuẫn với tài liệu** kèm trích dẫn file/trang; câu khớp tài liệu hiện một dòng **✓ Khớp tài liệu**. Câu hỏi, câu đề xuất (“hay là…”, “nếu…”), lời chào và chuyện ngoài lề bị bỏ qua. Muốn kiểm một câu bất kỳ: mở **Transcript** và bấm vào câu đó. Kết quả tự kiểm và bấm-kiểm không bao giờ gửi vào chat Meet. Tắt ở **Cài đặt → Tự đối chiếu…**.
 
 ## Kiểm thử
 

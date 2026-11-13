@@ -120,6 +120,14 @@ button, input { font: inherit; color: inherit; }
 .card.contradiction { border-left-color: var(--warn); }
 .card.answer { border-left-color: var(--ok); }
 .card.research { border-left-color: var(--info); }
+.card.partial { border-left-color: var(--warn); border-left-style: dashed; }
+.card.supported { border-left-color: var(--ok); padding-top: 6px; padding-bottom: 6px; }
+.card.supported p { margin: 0; font-size: 13px; }
+.card.supported .said { color: var(--muted); }
+.supported .chip { color: var(--ok); }
+.partial .chip { color: var(--warn); }
+.transcript.checkable li { cursor: pointer; border-radius: 4px; }
+.transcript.checkable li:hover, .transcript.checkable li:focus-visible { background: var(--surface); outline: none; text-decoration: underline dotted; }
 .card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .chip { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .contradiction .chip { color: var(--warn); }
